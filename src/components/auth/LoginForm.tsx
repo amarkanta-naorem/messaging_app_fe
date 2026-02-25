@@ -10,7 +10,6 @@ import { useAuth } from "@/context/AuthContext";
 export default function LoginForm() {
   const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState("");
-  const [name, setName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
   const [error, setError] = useState("");
@@ -32,13 +31,13 @@ export default function LoginForm() {
   };
 
   const handleVerifyOtp = async () => {
-    if (otp.length !== 6 || !name.trim()) return;
+    if (otp.length !== 6) return;
     setError("");
     setIsLoading(true);
     try {
-      const response = await verifyOtp(phone, otp, name);
+      const response = await verifyOtp(phone, otp);
       login(response.token, response.user);
-      router.push("/");
+      router.push("/chat");
     } catch {
       setError("Failed to verify OTP. Please try again.");
     } finally {
@@ -71,19 +70,6 @@ export default function LoginForm() {
 
         {otpSent && (
           <>
-            <div className="flex flex-col gap-2">
-              <label htmlFor="name" className="text-sm font-medium">Your Name</label>
-              <input
-                id="name"
-                type="text"
-                placeholder="Enter your name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                disabled={isLoading}
-                className="px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-              />
-            </div>
-
             <OtpInput value={otp} onChange={setOtp} disabled={isLoading} />
 
             <button

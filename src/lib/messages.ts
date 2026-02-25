@@ -12,10 +12,12 @@ export interface MessageContent {
 export interface Message {
   id: number;
   senderId: number;
-  receiverId: number;
+  senderName?: string;
+  receiverId?: number;
+  groupId?: number;
   conversationId?: number;
   content: MessageContent;
-  status: "sent" | "delivered" | "stored" | "read";
+  status: "sent" | "delivered" | "stored" | "read" | "failed";
   createdAt: string | number;
   clientMessageId?: string;
 }
@@ -24,9 +26,14 @@ export interface MessagesResponse {
   messages: Message[];
 }
 
-export async function getMessages(conversationId: number): Promise<Message[]> {
+export async function getMessages(conversationId: number, isGroup?: boolean): Promise<Message[]> {
   const token = getToken();
-  const res = await fetch(`${API_BASE}/conversations/${conversationId}/messages`, {
+  // Use different endpoint for group messages vs direct messages
+  const endpoint = isGroup 
+    ? `${API_BASE}/groups/${conversationId}/messages` 
+    : `${API_BASE}/conversations/${conversationId}/messages`;
+  
+  const res = await fetch(endpoint, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
@@ -35,6 +42,10 @@ export async function getMessages(conversationId: number): Promise<Message[]> {
   });
   if (!res.ok) throw new Error("Failed to fetch messages");
   const data = await res.json();
+  // Handle different response structures for groups vs direct messages
+  if (isGroup && data.data?.messages) {
+    return data.data.messages;
+  }
   return data.messages || data;
 }
 
@@ -58,20 +69,23 @@ export async function createDirectConversation(targetUserId: number): Promise<Di
 }
 
 export interface SendMessagePayload {
-  receiverPhone: string;
+  receiverPhone?: string;
+  groupId?: number;
   content: {
     type: "text" | "image" | "video" | "audio" | "document";
     text?: string;
     url?: string;
     caption?: string;
   };
+  clientMessageId?: string;
 }
 
 export interface SendMessageResponse {
   id: number;
-  conversationId: number;
+  conversationId?: number;
+  groupId?: number;
   senderId: number;
-  receiverId: number;
+  receiverId?: number;
   content: {
     type: string;
     text?: string;
@@ -80,7 +94,7 @@ export interface SendMessageResponse {
   createdAt: string;
 }
 
-export async function sendMessageToPhone(payload: SendMessagePayload): Promise<SendMessageResponse> {
+export async function sendMessage(payload: SendMessagePayload): Promise<SendMessageResponse> {
   const token = getToken();
   const res = await fetch(`${API_BASE}/messages`, {
     method: "POST",
@@ -95,4 +109,12 @@ export async function sendMessageToPhone(payload: SendMessagePayload): Promise<S
     throw new Error(error.message || "Failed to send message");
   }
   return res.json();
+}
+
+export async function sendMessageToPhone(payload: SendMessagePayload): Promise<SendMessageResponse> {
+  return sendMessage({ ...payload, receiverPhone: payload.receiverPhone });
+}
+
+export async function sendMessageToGroup(groupId: number, content: SendMessagePayload["content"], clientMessageId?: string): Promise<SendMessageResponse> {
+  return sendMessage({ groupId, content, clientMessageId });
 }

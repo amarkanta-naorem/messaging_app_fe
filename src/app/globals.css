@@ -1,1 +1,49 @@
 @import "tailwindcss";
+
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+/* Enhanced scrollbar with smooth transitions */
+.custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(120, 120, 120, 0.3) transparent;
+    overflow: auto;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 10px;
+    margin: 2px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, rgba(120, 120, 120, 0.3), rgba(120, 120, 120, 0.5));
+    border-radius: 10px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+    transition: all 0.3s ease;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, rgba(120, 120, 120, 0.5), rgba(120, 120, 120, 0.7));
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:active {
+    background: linear-gradient(135deg, rgba(120, 120, 120, 0.7), rgba(120, 120, 120, 0.9));
+}
+
+.custom-scrollbar::-webkit-scrollbar-corner {
+    background: transparent;
+}

@@ -1,5 +1,6 @@
 import { getToken } from "./auth";
 import { API_BASE } from "./config";
+import { parseApiResponse } from "./api";
 
 export interface Participant {
   id: number;
@@ -25,13 +26,11 @@ export interface Conversation {
   lastMessage: LastMessage | null;
   unreadCount: number;
   updatedAt: string;
+  type: string;
+  isGroup?: boolean;
 }
 
-export interface ConversationsResponse {
-  conversations: Conversation[];
-}
-
-export async function getConversations(): Promise<ConversationsResponse> {
+export async function getConversations(): Promise<Conversation[]> {
   const token = getToken();
   const res = await fetch(`${API_BASE}/conversations`, {
     method: "GET",
@@ -40,6 +39,6 @@ export async function getConversations(): Promise<ConversationsResponse> {
       Authorization: `Bearer ${token}`,
     },
   });
-  if (!res.ok) throw new Error("Failed to fetch conversations");
-  return res.json();
+  const { data } = await parseApiResponse<Conversation[]>(res);
+  return data;
 }

@@ -14,7 +14,8 @@ export interface MessageContent {
 
 export interface MessagePayload {
   clientMessageId: string;
-  receiverId: number;
+  receiverId?: number;
+  groupId?: number;
   content: MessageContent;
 }
 
@@ -23,7 +24,9 @@ export interface IncomingMessage {
   serverMessageId?: number;
   clientMessageId: string;
   conversationId?: number;
+  groupId?: number;
   senderId: number;
+  senderName?: string;
   receiverId: number;
   content: MessageContent;
   status: "sent" | "delivered" | "read" | "failed";
