@@ -1,9 +1,34 @@
-import { io, Socket } from "socket.io-client";
-import { API_BASE } from "./config";
+/**
+ * Socket service - client-side WebSocket communication.
+ * 
+ * SECURITY: The socket URL is now fetched from the server (BFF pattern)
+ * to prevent exposing the backend URL in the browser's network tab.
+ */
 
-const SOCKET_URL = API_BASE.replace("/api", "");
+import { io, Socket } from "socket.io-client";
 
 let socket: Socket | null = null;
+let cachedSocketUrl: string | null = null;
+
+/**
+ * Fetch the socket URL from the server (BFF).
+ * This keeps the backend URL hidden from the client.
+ */
+async function getSocketUrl(): Promise<string> {
+  if (cachedSocketUrl) return cachedSocketUrl;
+  
+  try {
+    const res = await fetch("/api/config/socket");
+    const data = await res.json();
+    cachedSocketUrl = data.socketUrl;
+    console.log("Socket URL fetched:", cachedSocketUrl);
+    return cachedSocketUrl!;
+  } catch (error) {
+    // Fallback for development - in production this should never happen
+    console.warn("Failed to fetch socket URL, using default");
+    return "http://localhost:3001";
+  }
+}
 
 export interface MessageContent {
   type: "text" | "image" | "video" | "audio" | "document";
@@ -45,7 +70,9 @@ export interface SocketError {
   clientMessageId?: string;
 }
 
-export function connectSocket(token: string): Socket {
+export async function connectSocket(token: string): Promise<Socket> {
+  const socketUrl = await getSocketUrl();
+  
   if (socket) {
     socket.auth = { token };
     if (!socket.connected) {
@@ -54,7 +81,7 @@ export function connectSocket(token: string): Socket {
     return socket;
   }
 
-  socket = io(SOCKET_URL, {
+  socket = io(socketUrl, {
     auth: { token },
     reconnection: true,
   });

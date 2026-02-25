@@ -1,44 +1,14 @@
-import { getToken } from "./auth";
-import { API_BASE } from "./config";
-import { parseApiResponse } from "./api";
+/**
+ * Conversations module - wraps the conversation service.
+ * Kept for backward compatibility - delegates to services.
+ *
+ * DEPRECATED: Import directly from @/services/conversation.service instead.
+ */
 
-export interface Participant {
-  id: number;
-  name: string;
-  phone: string;
-  avatar: string | null;
-}
+import * as conversationService from "@/services/conversation.service";
+import type { Conversation } from "@/types";
 
-export interface LastMessage {
-  id: number;
-  content: {
-    type: string;
-    text: string;
-  };
-  senderId: number;
-  status: string;
-  createdAt: string;
-}
+export type { Conversation };
 
-export interface Conversation {
-  id: number;
-  participant: Participant;
-  lastMessage: LastMessage | null;
-  unreadCount: number;
-  updatedAt: string;
-  type: string;
-  isGroup?: boolean;
-}
-
-export async function getConversations(): Promise<Conversation[]> {
-  const token = getToken();
-  const res = await fetch(`${API_BASE}/conversations`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-  });
-  const { data } = await parseApiResponse<Conversation[]>(res);
-  return data;
-}
+export const getConversations = conversationService.getConversations;
+export const createDirectConversation = conversationService.createDirectConversation;

@@ -29,9 +29,10 @@ interface AllConversationProps {
   data: (Conversation | Group)[];
   showNewMessage: boolean;
   onClose: () => void;
+  searchQuery?: string;
 }
 
-export default function AllConversation({ data, showNewMessage, onClose }: AllConversationProps) {
+export default function AllConversation({ data, showNewMessage, onClose, searchQuery = "" }: AllConversationProps) {
   const { activeConversation, selectConversation } = useChat();
   const { token } = useAuth();
   const [contacts, setContacts] = useState<Contact[]>([]);
@@ -125,7 +126,18 @@ export default function AllConversation({ data, showNewMessage, onClose }: AllCo
         </div>
       </div>
 
-      {data.map((item) => {
+      {data.filter((item) => {
+        if (!searchQuery.trim()) return true;
+        const query = searchQuery.toLowerCase();
+        if (item.type === 'group') {
+          const group = item as Group;
+          return group.name.toLowerCase().includes(query) ||
+                 (group.description?.toLowerCase().includes(query) ?? false);
+        }
+        const conv = item as Conversation;
+        return conv.participant.name.toLowerCase().includes(query) ||
+               conv.participant.phone?.toLowerCase().includes(query);
+      }).map((item) => {
         if (item.type === 'group') {
           const group = item as Group;
           return (

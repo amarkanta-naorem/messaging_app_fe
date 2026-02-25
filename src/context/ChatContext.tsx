@@ -2,9 +2,10 @@
 
 import { createContext, useContext, useEffect, useState, useCallback, ReactNode, useRef } from "react";
 import { useAuth } from "./AuthContext";
-import { Conversation, getConversations } from "@/lib/conversations";
-import { Message, getMessages, MessageContent, sendMessage as sendMessageApi } from "@/lib/messages";
-import { connectSocket, disconnectSocket, sendMessage as socketSendMessage, onNewMessage, offNewMessage, onMessageError, offMessageError, onError, offError, IncomingMessage, SocketError } from "@/lib/socket";
+import { getConversations } from "@/lib/conversations";
+import { getMessages as fetchMessages, MessageContent, sendMessage as sendMessageApi } from "@/lib/messages";
+import { connectSocket, disconnectSocket, sendMessage as socketSendMessage, onNewMessage, offNewMessage, onMessageError, offMessageError, onError, offError, IncomingMessage, SocketError, MessagePayload, getSocket } from "@/lib/socket";
+import type { Conversation, Message } from "@/types";
 
 interface ChatContextType {
   conversations: Conversation[];
@@ -29,6 +30,11 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [socketError, setSocketError] = useState<string | null>(null);
   const activeConversationRef = useRef<Conversation | null>(null);
+  
+  // Refs for callbacks to use in socket event handlers
+  const handleNewMessageRef = useRef<((message: IncomingMessage) => void) | null>(null);
+  const handleMessageErrorRef = useRef<((error: SocketError) => void) | null>(null);
+  const handleSocketErrorRef = useRef<((error: SocketError) => void) | null>(null);
 
   useEffect(() => {
     activeConversationRef.current = activeConversation;
@@ -37,17 +43,64 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!token) return;
 
-    const socket = connectSocket(token);
+    let mounted = true;
 
-    socket.on("connect_error", (error) => {
-      setSocketError(`Connection error: ${error.message}`);
-    });
+    const setupSocket = async () => {
+      try {
+        const socket = await connectSocket(token);
 
-    socket.on("connect", () => {
-      setSocketError(null);
-    });
+        socket.on("connect_error", (error: Error) => {
+          if (mounted) {
+            setSocketError(`Connection error: ${error.message}`);
+          }
+        });
+
+        socket.on("connect", () => {
+          if (mounted) {
+            setSocketError(null);
+          }
+        });
+        
+        // Set up message listeners when socket connects
+        // Using refs to always call the latest callback version
+        socket.on("message:new", (message: IncomingMessage) => {
+          console.log("Received message:new event:", message);
+          if (handleNewMessageRef.current) {
+            handleNewMessageRef.current(message);
+          }
+        });
+
+        socket.on("message:error", (error: SocketError) => {
+          console.log("Received message:error event:", error);
+          if (handleMessageErrorRef.current) {
+            handleMessageErrorRef.current(error);
+          }
+        });
+
+        socket.on("error", (error: SocketError) => {
+          console.log("Received error event:", error);
+          if (handleSocketErrorRef.current) {
+            handleSocketErrorRef.current(error);
+          }
+        });
+      } catch (err) {
+        if (mounted) {
+          setSocketError("Failed to connect to chat server");
+        }
+      }
+    };
+
+    setupSocket();
 
     return () => {
+      mounted = false;
+      // Clean up socket listeners
+      const socket = getSocket();
+      if (socket) {
+        socket.off("message:new");
+        socket.off("message:error");
+        socket.off("error");
+      }
       disconnectSocket();
     };
   }, [token]);
@@ -138,6 +191,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
       // Skip if we couldn't resolve and it's not our own message
       if (resolvedConversationId === null && !isOwnMessage) {
+        console.log("Could not resolve conversation for message:", message);
         return;
       }
 
@@ -166,6 +220,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         content: normalizedContent,
       };
 
+      // Add message to UI if it's for the current conversation OR if it's a new message from someone
       if (currentConv && resolvedConversationId === currentConv.id) {
         setMessages((prev: any) => {
           // First, try to replace by clientMessageId (deduplication)
@@ -246,19 +301,18 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  // Update refs when callbacks change
   useEffect(() => {
-    if (!token) return;
+    handleNewMessageRef.current = handleNewMessage;
+  }, [handleNewMessage]);
 
-    onNewMessage(handleNewMessage);
-    onMessageError(handleMessageError);
-    onError(handleSocketError);
+  useEffect(() => {
+    handleMessageErrorRef.current = handleMessageError;
+  }, [handleMessageError]);
 
-    return () => {
-      offNewMessage(handleNewMessage);
-      offMessageError(handleMessageError);
-      offError(handleSocketError);
-    };
-  }, [token, handleNewMessage, handleMessageError, handleSocketError]);
+  useEffect(() => {
+    handleSocketErrorRef.current = handleSocketError;
+  }, [handleSocketError]);
 
   useEffect(() => {
     if (user) {
@@ -271,9 +325,10 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     setLoadingMessages(true);
     const isGroup = (conversation as any).isGroup || conversation.type === 'group';
     try {
-      const msgs = await getMessages(conversation.id, isGroup);
+      const msgs = await fetchMessages(conversation.id, isGroup);
+      const msgArray = Array.isArray(msgs) ? msgs : [];
       // Add groupId to messages for group conversations to ensure consistency with WebSocket
-      setMessages(msgs.map((msg) => ({
+      setMessages(msgArray.map((msg) => ({
         ...msg,
         groupId: isGroup ? conversation.id : msg.groupId,
         content: normalizeMessageContent(msg.content),
@@ -299,6 +354,14 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       const conversation = activeConversation as any;
       const isGroup = conversation.isGroup || conversation.type === 'group';
 
+      // Debug: Log conversation info
+      console.log("Conversation info:", {
+        id: conversation.id,
+        isGroup,
+        participantId: conversation.participant?.id,
+        participant: conversation.participant
+      });
+
       const optimisticMessage: Message = {
         id: Date.now(),
         senderId: user.id,
@@ -313,9 +376,9 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
       setMessages((prev) => [...prev, optimisticMessage]);
 
-      const payload: any = {
+      const payload: MessagePayload = {
         clientMessageId,
-        content: messageContent,
+        content: messageContent as MessagePayload["content"],
       };
 
       if (isGroup) {
@@ -324,47 +387,44 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         payload.receiverId = conversation.participant.id;
       }
 
-      // Use REST API for group messages, WebSocket for direct messages
+      // Debug: Log the payload
+      console.log("Sending message via WebSocket:", payload);
+      console.log("Socket connected:", getSocket()?.connected);
+
+      // Use WebSocket for real-time delivery if connected
+      // Use REST API for reliable message delivery
+      // REST API triggers real-time broadcast on backend according to README
+      const restPayload: any = {
+        content: payload.content,
+        clientMessageId: payload.clientMessageId,
+      };
       if (isGroup) {
-        // Use REST API for group messages
-        sendMessageApi(payload)
-          .then((response) => {
-            setMessages((prev) =>
-              prev.map((msg) =>
-                msg.clientMessageId === clientMessageId
-                  ? { ...msg, id: response.id, status: response.status as Message["status"] }
-                  : msg
-              )
-            );
-          })
-          .catch((error) => {
-            console.error("Send failed:", error.message);
-            setMessages((prev) =>
-              prev.filter((msg) => msg.clientMessageId !== clientMessageId)
-            );
-          });
+        restPayload.groupId = payload.groupId;
       } else {
-        // Use WebSocket for direct messages
-        socketSendMessage(
-          payload,
-          (response) => {
-            if ("code" in response) {
-              setMessages((prev) =>
-                prev.filter((msg) => msg.clientMessageId !== clientMessageId)
-              );
-              console.error("Send failed:", response.message);
-            } else {
-              setMessages((prev) =>
-                prev.map((msg) =>
-                  msg.clientMessageId === clientMessageId
-                    ? { ...msg, id: response.messageId, status: response.status }
-                    : msg
-                )
-              );
-            }
-          }
-        );
+        restPayload.receiverPhone = conversation.participant.phone;
       }
+      
+      sendMessageApi(restPayload)
+        .then((apiResponse) => {
+          console.log("REST API response:", apiResponse);
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.clientMessageId === clientMessageId
+                ? { ...msg, id: apiResponse.id, status: apiResponse.status as Message["status"] }
+                : msg
+            )
+          );
+        })
+        .catch((error) => {
+          console.error("REST API failed:", error.message);
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.clientMessageId === clientMessageId
+                ? { ...msg, status: "failed" as const }
+                : msg
+            )
+          );
+        });
     },
     [activeConversation, user]
   );

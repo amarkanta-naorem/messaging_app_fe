@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { Search, Eye, Plus, SquarePen } from "lucide-react";
 import { ContactDrawer } from "@/components/employee/contact-drawer";
+import { AddEmployeeDrawer } from "@/components/employee/add-employee-drawer";
 import { Employee, formatDate } from "@/components/employee/utils";
 
 export default function EmployeePage() {
@@ -15,28 +16,29 @@ export default function EmployeePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedPhone, setSelectedPhone] = useState<string | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isAddEmployeeOpen, setIsAddEmployeeOpen] = useState(false);
+
+  const fetchEmployees = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(`${API_BASE}/contacts/organization`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await response.json();
+      if (data.success) {
+        setEmployees(data.data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch employees:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (!token) return;
-
-    const fetchEmployees = async () => {
-      try {
-        const response = await fetch(`${API_BASE}/contacts/organization`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        const data = await response.json();
-        if (data.success) {
-          setEmployees(data.data);
-        }
-      } catch (error) {
-        console.error("Failed to fetch employees:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchEmployees();
   }, [token]);
 
@@ -63,7 +65,10 @@ export default function EmployeePage() {
           <h1 className="text-2xl font-bold text-slate-800">Employees</h1>
           <p className="text-slate-500">Manage your organization's employees</p>
         </div>
-        <button className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg transition-colors shadow-sm">
+        <button
+          onClick={() => setIsAddEmployeeOpen(true)}
+          className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg transition-colors shadow-sm cursor-pointer"
+        >
           <Plus size={20} />
           <span>Add Employee</span>
         </button>
@@ -178,6 +183,14 @@ export default function EmployeePage() {
         isOpen={isDrawerOpen}
         onClose={handleCloseDrawer}
         phone={selectedPhone}
+      />
+
+      <AddEmployeeDrawer
+        isOpen={isAddEmployeeOpen}
+        onClose={() => setIsAddEmployeeOpen(false)}
+        onEmployeeAdded={() => {
+          fetchEmployees();
+        }}
       />
     </div>
   );

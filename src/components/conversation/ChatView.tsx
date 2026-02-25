@@ -128,7 +128,7 @@ export default function ChatView() {
               const showAvatar = !isOwn && isGroup && isFirstFromSender;
               
               return (
-                <div key={msg.id || (msg as any).clientMessageId} className={`flex ${isOwn ? "justify-end" : "justify-start"} mb-1`}>
+                <div key={msg.id || (msg as any).clientMessageId} className={`flex ${isOwn ? "justify-end" : "justify-start"} mb-5`}>
                   <div className="flex items-end max-w-[65%]">
                     
                     {/* Avatar */}
@@ -164,7 +164,7 @@ export default function ChatView() {
                         </span>
                         <span className="text-[10px] text-[#667] float-right ml-1 mt-1">
                           {msg.createdAt && FormatTime(msg.createdAt.toString())}
-                          {isOwn && <span className="ml-1">{getStatusIcon(msg.status)}</span>}
+                          {/* {isOwn && <span className="ml-1">{getStatusIcon(msg.status)}</span>} */}
                         </span>
                       </div>
                     </div>
