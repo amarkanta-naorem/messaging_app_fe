@@ -1,34 +1,69 @@
+/**
+ * Chat Context
+ * Uses Redux for state management with proper lifecycle handling
+ */
+
 "use client";
 
-import { createContext, useContext, useEffect, useState, useCallback, ReactNode, useRef } from "react";
+import { createContext, useContext, useCallback, ReactNode, useEffect, useRef } from "react";
 import { useAuth } from "./AuthContext";
 import { getConversations } from "@/lib/conversations";
-import { getMessages as fetchMessages, MessageContent, sendMessage as sendMessageApi } from "@/lib/messages";
-import { connectSocket, disconnectSocket, sendMessage as socketSendMessage, onNewMessage, offNewMessage, onMessageError, offMessageError, onError, offError, IncomingMessage, SocketError, MessagePayload, getSocket } from "@/lib/socket";
+import { MessageContent, sendMessage as sendMessageApi } from "@/lib/messages";
+import { connectSocket, disconnectSocket, IncomingMessage, SocketError, MessagePayload, getSocket } from "@/lib/socket";
+import { useAppDispatch, useAppSelector } from "@/store/store";
+import {
+  fetchConversations,
+  fetchMessagesForConversation,
+  setActiveConversation,
+  addMessageOptimistic,
+  updateMessageInState,
+  replaceOptimisticMessage,
+  addIncomingMessage,
+  updateConversationLastMessage,
+  setChatSocketError,
+  selectConversations,
+  selectActiveConversationId,
+  selectActiveConversation,
+  selectMessagesForConversation,
+  selectLoadingConversations,
+  selectLoadingMessages,
+  selectSendingMessage,
+  selectSocketError,
+} from "@/store/store";
 import type { Conversation, Message } from "@/types";
 
 interface ChatContextType {
   conversations: Conversation[];
   activeConversation: Conversation | null;
+  activeConversationId: number | null;
   messages: Message[];
   loadingConversations: boolean;
   loadingMessages: boolean;
+  sendingMessage: boolean;
   socketError: string | null;
-  selectConversation: (conversation: Conversation) => void;
+  selectConversation: (conversation: Conversation | null) => void;
   sendMessage: (content: string | { type: string; text?: string; url?: string; caption?: string }) => void;
-  refreshConversations: () => Promise<void>;
+  refreshConversations: () => void;
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
 
 export function ChatProvider({ children }: { children: ReactNode }) {
+  const dispatch = useAppDispatch();
   const { token, user } = useAuth();
-  const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [loadingConversations, setLoadingConversations] = useState(true);
-  const [loadingMessages, setLoadingMessages] = useState(false);
-  const [socketError, setSocketError] = useState<string | null>(null);
+  
+  // Redux selectors
+  const conversations = useAppSelector(selectConversations);
+  const activeConversationId = useAppSelector(selectActiveConversationId);
+  const activeConversation = useAppSelector(selectActiveConversation);
+  const loadingConversations = useAppSelector(selectLoadingConversations);
+  const loadingMessages = useAppSelector(selectLoadingMessages);
+  const sendingMessage = useAppSelector(selectSendingMessage);
+  const socketError = useAppSelector(selectSocketError);
+  
+  // Get messages for active conversation
+  const messages = useAppSelector(activeConversationId ? selectMessagesForConversation(activeConversationId) : () => []);
+  
   const activeConversationRef = useRef<Conversation | null>(null);
   
   // Refs for callbacks to use in socket event handlers
@@ -51,18 +86,16 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
         socket.on("connect_error", (error: Error) => {
           if (mounted) {
-            setSocketError(`Connection error: ${error.message}`);
+            dispatch(setChatSocketError(`Connection error: ${error.message}`));
           }
         });
 
         socket.on("connect", () => {
           if (mounted) {
-            setSocketError(null);
+            dispatch(setChatSocketError(null));
           }
         });
         
-        // Set up message listeners when socket connects
-        // Using refs to always call the latest callback version
         socket.on("message:new", (message: IncomingMessage) => {
           console.log("Received message:new event:", message);
           if (handleNewMessageRef.current) {
@@ -85,7 +118,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         });
       } catch (err) {
         if (mounted) {
-          setSocketError("Failed to connect to chat server");
+          dispatch(setChatSocketError("Failed to connect to chat server"));
         }
       }
     };
@@ -94,7 +127,6 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
     return () => {
       mounted = false;
-      // Clean up socket listeners
       const socket = getSocket();
       if (socket) {
         socket.off("message:new");
@@ -103,7 +135,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       }
       disconnectSocket();
     };
-  }, [token]);
+  }, [token, dispatch]);
 
   const normalizeMessageContent = useCallback((content: Message["content"] | IncomingMessage["content"]) => {
     if (typeof content === "string") {
@@ -118,46 +150,36 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const refreshConversations = useCallback(async () => {
-    try {
-      setLoadingConversations(true);
-      const data = await getConversations();
-      setConversations(data);
-    } catch (err) {
-      console.error("Failed to fetch conversations:", err);
-    } finally {
-      setLoadingConversations(false);
+  const refreshConversations = useCallback(() => {
+    if (user) {
+      (dispatch as any)(fetchConversations());
     }
-  }, []);
+  }, [user, dispatch]);
 
   const resolveConversationId = useCallback(async (message: IncomingMessage): Promise<number | null> => {
-    // If message already has conversationId, use it
     if (typeof message.conversationId === "number") {
       return message.conversationId;
     }
 
-    // Handle group messages - match by groupId
     if (message.groupId) {
       const currentConv = activeConversationRef.current;
       if (currentConv && (currentConv as any).isGroup && currentConv.id === message.groupId) {
         return message.groupId;
       }
-      // For group messages, we need to find the conversation with matching groupId
       try {
         const data = await getConversations();
         const groupConv = data.find((conv) => (conv as any).isGroup && conv.id === message.groupId);
         if (groupConv) {
-          setConversations(data);
+          (dispatch as any)({ type: "chat/setConversations", payload: data });
           return groupConv.id;
         }
-        setConversations(data);
+        (dispatch as any)({ type: "chat/setConversations", payload: data });
       } catch (err) {
         console.error("Failed to resolve group conversation:", err);
       }
       return null;
     }
 
-    // Handle direct messages - match by senderId to participant
     if (!message.senderId || message.senderId === user?.id) {
       return null;
     }
@@ -166,16 +188,16 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       const data = await getConversations();
       const match = data.find((conv) => conv.participant.id === message.senderId);
       if (match) {
-        setConversations(data);
+        (dispatch as any)({ type: "chat/setConversations", payload: data });
         return match.id;
       }
-      setConversations(data);
+      (dispatch as any)({ type: "chat/setConversations", payload: data });
     } catch (err) {
       console.error("Failed to resolve conversation:", err);
     }
 
     return null;
-  }, [user?.id]);
+  }, [user?.id, dispatch]);
 
   const handleNewMessage = useCallback((message: IncomingMessage) => {
     const currentConv = activeConversationRef.current;
@@ -184,31 +206,20 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
     void (async () => {
       const isOwnMessage = message.senderId === user?.id;
-      
-      // For sender's own messages, we still need to resolve the conversation for deduplication
-      // but we don't need to show notifications or update unread counts
       const resolvedConversationId = await resolveConversationId(message);
 
-      // Skip if we couldn't resolve and it's not our own message
       if (resolvedConversationId === null && !isOwnMessage) {
         console.log("Could not resolve conversation for message:", message);
         return;
       }
 
-      // For own messages, we need to find the conversation to do deduplication
       if (resolvedConversationId === null && isOwnMessage) {
-        // Try to find the conversation by groupId or from conversations list
         if (message.groupId && currentConv && (currentConv as any).isGroup && currentConv.id === message.groupId) {
-          // This is our own group message - do deduplication only
-          setMessages((prev: any) => {
-            const nextMessages = prev.map((msg: any) => {
-              if (message.clientMessageId && msg.clientMessageId === message.clientMessageId) {
-                return { ...msg, id: serverMessageId ?? msg.id, status: message.status };
-              }
-              return msg;
-            });
-            return nextMessages;
-          });
+          (dispatch as any)(updateMessageInState({
+            conversationId: currentConv.id,
+            clientMessageId: message.clientMessageId!,
+            updates: { id: serverMessageId ?? message.id, status: message.status }
+          }));
           return;
         }
         return;
@@ -216,92 +227,83 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
       const normalizedMessage = {
         ...message,
-        conversationId: resolvedConversationId,
+        conversationId: resolvedConversationId ?? undefined,
         content: normalizedContent,
       };
 
-      // Add message to UI if it's for the current conversation OR if it's a new message from someone
       if (currentConv && resolvedConversationId === currentConv.id) {
-        setMessages((prev: any) => {
-          // First, try to replace by clientMessageId (deduplication)
-          let replaced = false;
-          const nextMessages = prev.map((msg: any) => {
-            if (message.clientMessageId && msg.clientMessageId === message.clientMessageId) {
-              replaced = true;
-              return { ...msg, ...normalizedMessage, id: serverMessageId ?? msg.id, status: message.status };
+        let replaced = false;
+        
+        const existingIndex = messages.findIndex((msg) => 
+          message.clientMessageId && msg.clientMessageId === message.clientMessageId
+        );
+        
+        if (existingIndex !== -1) {
+          replaced = true;
+          (dispatch as any)(updateMessageInState({
+            conversationId: currentConv.id,
+            clientMessageId: message.clientMessageId,
+            updates: { 
+              ...normalizedMessage, 
+              id: serverMessageId ?? message.id, 
+              status: message.status,
+              createdAt: normalizedMessage.createdAt ?? new Date().toISOString()
             }
-            return msg;
-          });
+          }));
+        }
 
-          if (replaced) return nextMessages;
-
-          // Check for duplicate by serverMessageId
-          if (serverMessageId && prev.some((msg: any) => msg.id === serverMessageId)) {
-            return prev;
-          }
-          
-          // Don't add own messages again - they were already added optimistically
-          if (isOwnMessage) {
-            return prev;
-          }
-
-          return [...prev, { ...normalizedMessage, id: serverMessageId ?? message.id ?? Date.now() }];
-        });
+        if (!replaced && serverMessageId && messages.some((msg) => msg.id === serverMessageId)) {
+          return;
+        }
+        
+        if (!replaced && !isOwnMessage) {
+          (dispatch as any)(addIncomingMessage({ 
+            conversationId: currentConv.id,
+            message: { 
+              ...normalizedMessage, 
+              id: serverMessageId ?? message.id ?? Date.now(),
+              createdAt: normalizedMessage.createdAt ?? new Date().toISOString()
+            }
+          }));
+        }
       }
 
-      // Update conversations list - only for other users' messages
       if (!isOwnMessage) {
-        setConversations((prev: any) => {
-          const conversationExists = prev.some((conv: any) => conv.id === resolvedConversationId);
-
-          if (conversationExists) {
-            return prev.map((conv: any) =>
-              conv.id === resolvedConversationId
-                ? {
-                    ...conv,
-                    lastMessage: {
-                      id: serverMessageId ?? message.id ?? Date.now(),
-                      content: normalizedContent,
-                      senderId: message.senderId,
-                      status: message.status,
-                      createdAt: message.createdAt,
-                    },
-                    unreadCount: currentConv?.id === resolvedConversationId ? conv.unreadCount : conv.unreadCount + 1,
-                  }
-                : conv
-            );
-          }
-
-          refreshConversations();
-          return prev;
-        });
+        (dispatch as any)(updateConversationLastMessage({
+          conversationId: resolvedConversationId!,
+          lastMessage: {
+            id: serverMessageId ?? message.id ?? Date.now(),
+            content: normalizedContent,
+            senderId: message.senderId,
+            status: message.status,
+            createdAt: String(message.createdAt) ?? new Date().toISOString(),
+          },
+          unreadCount: currentConv?.id === resolvedConversationId ? 0 : undefined,
+        }));
       }
     })();
-  }, [normalizeMessageContent, refreshConversations, resolveConversationId, user?.id]);
+  }, [normalizeMessageContent, resolveConversationId, user?.id, messages, dispatch]);
 
   const handleMessageError = useCallback((error: SocketError) => {
-    if (error.clientMessageId) {
-      setMessages((prev) =>
-        prev.map((msg) =>
-          msg.clientMessageId === error.clientMessageId
-            ? { ...msg, status: "sent" as const }
-            : msg
-        )
-      );
+    if (error.clientMessageId && activeConversationId) {
+      (dispatch as any)(updateMessageInState({
+        conversationId: activeConversationId,
+        clientMessageId: error.clientMessageId,
+        updates: { status: "failed" as const }
+      }));
     }
     console.error("Message error:", error.code, error.message);
-  }, []);
+  }, [activeConversationId, dispatch]);
 
   const handleSocketError = useCallback((error: SocketError) => {
     if (error.code === "UNAUTHORIZED") {
-      setSocketError("Authentication failed. Please log in again.");
+      dispatch(setChatSocketError("Authentication failed. Please log in again."));
       disconnectSocket();
     } else {
-      setSocketError(error.message);
+      dispatch(setChatSocketError(error.message));
     }
-  }, []);
+  }, [dispatch]);
 
-  // Update refs when callbacks change
   useEffect(() => {
     handleNewMessageRef.current = handleNewMessage;
   }, [handleNewMessage]);
@@ -314,32 +316,28 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     handleSocketErrorRef.current = handleSocketError;
   }, [handleSocketError]);
 
+  // Only fetch conversations once when user is available
+  // This effect runs only on initial mount to prevent duplicate fetching
+  const hasFetchedRef = useRef(false);
   useEffect(() => {
-    if (user) {
+    if (user && !hasFetchedRef.current) {
+      hasFetchedRef.current = true;
       refreshConversations();
     }
-  }, [user, refreshConversations]);
+  }, [user]);
 
-  const selectConversation = useCallback(async (conversation: Conversation) => {
-    setActiveConversation(conversation);
-    setLoadingMessages(true);
-    const isGroup = (conversation as any).isGroup || conversation.type === 'group';
-    try {
-      const msgs = await fetchMessages(conversation.id, isGroup);
-      const msgArray = Array.isArray(msgs) ? msgs : [];
-      // Add groupId to messages for group conversations to ensure consistency with WebSocket
-      setMessages(msgArray.map((msg) => ({
-        ...msg,
-        groupId: isGroup ? conversation.id : msg.groupId,
-        content: normalizeMessageContent(msg.content),
-      })));
-    } catch (err) {
-      console.error("Failed to fetch messages:", err);
-      setMessages([]);
-    } finally {
-      setLoadingMessages(false);
+  const selectConversation = useCallback(async (conversation: Conversation | null) => {
+    if (conversation === null) {
+      dispatch(setActiveConversation(null));
+      return;
     }
-  }, [normalizeMessageContent]);
+
+    // Store the full conversation object to preserve participant data
+    dispatch(setActiveConversation(conversation));
+    
+    const isGroup = (conversation as any).isGroup || conversation.type === 'group';
+    (dispatch as any)(fetchMessagesForConversation({ conversationId: conversation.id, isGroup }));
+  }, [dispatch]);
 
   const sendMessage = useCallback(
     (content: string | { type: string; text?: string; url?: string; caption?: string }) => {
@@ -347,14 +345,11 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
       const clientMessageId = crypto.randomUUID();
 
-      const messageContent = typeof content === "string" 
-        ? { type: "text" as const, text: content } 
-        : content;
+      const messageContent = typeof content === "string" ? { type: "text" as const, text: content } : content;
 
       const conversation = activeConversation as any;
       const isGroup = conversation.isGroup || conversation.type === 'group';
 
-      // Debug: Log conversation info
       console.log("Conversation info:", {
         id: conversation.id,
         isGroup,
@@ -365,7 +360,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       const optimisticMessage: Message = {
         id: Date.now(),
         senderId: user.id,
-        receiverId: isGroup ? undefined : activeConversation.participant.id,
+        receiverId: isGroup ? undefined : activeConversation.participant?.id,
         groupId: isGroup ? activeConversation.id : undefined,
         conversationId: activeConversation.id,
         content: messageContent as MessageContent,
@@ -374,7 +369,10 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         clientMessageId,
       };
 
-      setMessages((prev) => [...prev, optimisticMessage]);
+      (dispatch as any)(addMessageOptimistic({ 
+        conversationId: activeConversation.id,
+        message: optimisticMessage 
+      }));
 
       const payload: MessagePayload = {
         clientMessageId,
@@ -387,13 +385,9 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         payload.receiverId = conversation.participant.id;
       }
 
-      // Debug: Log the payload
       console.log("Sending message via WebSocket:", payload);
       console.log("Socket connected:", getSocket()?.connected);
 
-      // Use WebSocket for real-time delivery if connected
-      // Use REST API for reliable message delivery
-      // REST API triggers real-time broadcast on backend according to README
       const restPayload: any = {
         content: payload.content,
         clientMessageId: payload.clientMessageId,
@@ -407,26 +401,22 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       sendMessageApi(restPayload)
         .then((apiResponse) => {
           console.log("REST API response:", apiResponse);
-          setMessages((prev) =>
-            prev.map((msg) =>
-              msg.clientMessageId === clientMessageId
-                ? { ...msg, id: apiResponse.id, status: apiResponse.status as Message["status"] }
-                : msg
-            )
-          );
+          (dispatch as any)(replaceOptimisticMessage({
+            conversationId: activeConversation.id,
+            clientMessageId,
+            serverMessage: { ...optimisticMessage, id: apiResponse.id, status: apiResponse.status as Message["status"] }
+          }));
         })
         .catch((error) => {
           console.error("REST API failed:", error.message);
-          setMessages((prev) =>
-            prev.map((msg) =>
-              msg.clientMessageId === clientMessageId
-                ? { ...msg, status: "failed" as const }
-                : msg
-            )
-          );
+          (dispatch as any)(updateMessageInState({
+            conversationId: activeConversation.id,
+            clientMessageId,
+            updates: { status: "failed" as const }
+          }));
         });
     },
-    [activeConversation, user]
+    [activeConversation, user, dispatch]
   );
 
   return (
@@ -434,9 +424,11 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       value={{
         conversations,
         activeConversation,
+        activeConversationId,
         messages,
         loadingConversations,
         loadingMessages,
+        sendingMessage,
         socketError,
         selectConversation,
         sendMessage,
@@ -455,3 +447,5 @@ export function useChat() {
   }
   return context;
 }
+
+export default ChatContext;

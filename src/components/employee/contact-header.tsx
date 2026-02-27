@@ -8,8 +8,8 @@ interface ContactDetails {
 }
 
 export const ContactHeader = ({ contact }: { contact: ContactDetails }) => (
-  <div className="flex flex-col items-center p-6 bg-slate-50 border-b border-slate-200">
-    <div className="w-24 h-24 rounded-full bg-slate-200 flex items-center justify-center overflow-hidden mb-4 shadow-md">
+  <div className="flex flex-col items-center p-6 bg-[var(--bg-secondary)] border-b border-[var(--border-primary)]">
+    <div className="w-24 h-24 rounded-full bg-[var(--bg-tertiary)] flex items-center justify-center overflow-hidden mb-4 shadow-md">
       {contact.avatar ? (
         <Image
           src={contact.avatar}
@@ -19,10 +19,10 @@ export const ContactHeader = ({ contact }: { contact: ContactDetails }) => (
           className="w-full h-full object-cover"
         />
       ) : (
-        <User size={40} className="text-slate-400" />
+        <User size={40} className="text-[var(--text-muted)]" />
       )}
     </div>
-    <h2 className="text-xl font-bold text-slate-800 text-center">{contact.name}</h2>
-    <p className="text-slate-500 font-medium mt-1">{contact.phone}</p>
+    <h2 className="text-xl font-bold text-[var(--text-primary)] text-center">{contact.name}</h2>
+    <p className="text-[var(--text-muted)] font-medium mt-1">{contact.phone}</p>
   </div>
 );

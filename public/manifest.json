@@ -1,0 +1,16 @@
+{
+  "name": "GlobiChat",
+  "short_name": "GlobiChat",
+  "description": "A modern messaging platform for seamless team communication",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#25D366",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    }
+  ]
+}

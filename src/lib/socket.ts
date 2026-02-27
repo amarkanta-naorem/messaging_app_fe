@@ -13,19 +13,28 @@ let cachedSocketUrl: string | null = null;
 /**
  * Fetch the socket URL from the server (BFF).
  * This keeps the backend URL hidden from the client.
+ * Includes timeout to prevent hanging.
  */
 async function getSocketUrl(): Promise<string> {
   if (cachedSocketUrl) return cachedSocketUrl;
   
   try {
-    const res = await fetch("/api/config/socket");
+    // Add timeout controller to prevent hanging
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    
+    const res = await fetch("/api/config/socket", {
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+    
     const data = await res.json();
     cachedSocketUrl = data.socketUrl;
     console.log("Socket URL fetched:", cachedSocketUrl);
     return cachedSocketUrl!;
   } catch (error) {
     // Fallback for development - in production this should never happen
-    console.warn("Failed to fetch socket URL, using default");
+    console.warn("Failed to fetch socket URL, using default:", error);
     return "http://localhost:3001";
   }
 }
@@ -83,7 +92,13 @@ export async function connectSocket(token: string): Promise<Socket> {
 
   socket = io(socketUrl, {
     auth: { token },
+    // Limit reconnection attempts to prevent infinite loading
     reconnection: true,
+    reconnectionAttempts: 5,
+    reconnectionDelay: 1000,
+    reconnectionDelayMax: 5000,
+    // Add timeout for initial connection
+    timeout: 10000,
   });
 
   socket.on("connect", () => {
@@ -96,6 +111,14 @@ export async function connectSocket(token: string): Promise<Socket> {
 
   socket.on("connect_error", (error) => {
     console.error("Socket connection error:", error.message);
+    // Don't retry indefinitely - give up after max attempts
+    if (socket && (socket as any).io?.reconnectionAttempts) {
+      const attempts = (socket as any).io.reconnectionAttempts;
+      if (attempts >= 5) {
+        console.error("Max reconnection attempts reached");
+        socket.disconnect();
+      }
+    }
   });
 
   return socket;

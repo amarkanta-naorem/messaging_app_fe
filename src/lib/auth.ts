@@ -14,6 +14,9 @@ export type { User, SendOtpResponse, VerifyOtpResponse, ProfileResponse, UpdateP
 export const sendOtp = authService.sendOtp;
 export const resendOtp = authService.resendOtp;
 export const verifyOtp = authService.verifyOtp;
+export const sendOtpNewOrganisation = authService.sendOtpNewOrganisation;
+export const resendOtpNewOrganisation = authService.resendOtpNewOrganisation;
+export const verifyOtpNewOrganisation = authService.verifyOtpNewOrganisation;
 export const getProfile = authService.getProfile;
 export const updateProfile = authService.updateProfile;
 export const getToken = authService.getToken;

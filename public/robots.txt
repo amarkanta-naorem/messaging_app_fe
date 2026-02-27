@@ -1,0 +1,11 @@
+# Robots.txt for GlobiChat
+
+User-agent: *
+Allow: /
+
+# Sitemaps
+Sitemap: https://globichat.app/sitemap.xml
+
+# Disallow sensitive paths
+Disallow: /api/
+Disallow: /chat/

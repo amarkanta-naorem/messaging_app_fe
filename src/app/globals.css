@@ -1,5 +1,176 @@
 @import "tailwindcss";
 
+/* Theme CSS Variables - Light Theme (Default) */
+:root,
+[data-theme="light"] {
+  /* Background Colors */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f0f2f5;
+  --bg-tertiary: #e9edef;
+  --bg-hover: #f2f2f2;
+  --bg-active: #e6e6e6;
+  --bg-card: #ffffff;
+  --bg-input: #f0f2f5;
+  
+  /* Text Colors */
+  --text-primary: #111b21;
+  --text-secondary: #54656f;
+  --text-tertiary: #667781;
+  --text-muted: #8696a1;
+  --text-inverse: #ffffff;
+  --text-link: #25d366;
+  
+  /* Border Colors */
+  --border-primary: #e9edef;
+  --border-secondary: #dfe3e5;
+  --border-focus: #25d366;
+  
+  /* Accent Colors */
+  --accent-primary: #25d366;
+  --accent-secondary: #00a884;
+  --accent-hover: #1da851;
+  --accent-muted: #dcf8c6;
+  
+  /* Status Colors */
+  --status-online: #25d366;
+  --status-offline: #9ca3af;
+  --status-typing: #25d366;
+  --status-typing-bg: #dcf8c6;
+  
+  /* Chat Colors */
+  --chat-bg: #efeae2;
+  --chat-bubble-outgoing: #dcf8c6;
+  --chat-bubble-incoming: #ffffff;
+  --chat-timestamp: #667781;
+  
+  /* Sidebar Colors */
+  --sidebar-bg: #ffffff;
+  --sidebar-hover: #f2f2f2;
+  --sidebar-active: #e6e6e6;
+  --sidebar-border: #e9edef;
+  
+  /* Header Colors */
+  --header-bg: #f0f2f5;
+  --header-border: #e9edef;
+  
+  /* Shadow */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  
+  /* Scrollbar */
+  --scrollbar-thumb: rgba(120, 120, 120, 0.3);
+  --scrollbar-thumb-hover: rgba(120, 120, 120, 0.5);
+  
+  /* Overlay */
+  --overlay-bg: rgba(0, 0, 0, 0.5);
+  --overlay-light: rgba(0, 0, 0, 0.3);
+  
+  /* Brand Colors */
+  --brand-primary: #25d366;
+  --brand-secondary: #128c7e;
+  --brand-dark: #075e54;
+  
+  /* Error/Success/Warning */
+  --color-error: #dc2626;
+  --color-success: #16a34a;
+  --color-warning: #d97706;
+  --color-info: #2563eb;
+  
+  /* Red accent for logo */
+  --color-red: #dc2626;
+  
+  /* Focus ring */
+  --focus-ring: 0 0 0 2px rgba(37, 211, 102, 0.4);
+}
+
+/* Dark Theme */
+[data-theme="dark"],
+.dark {
+  /* Background Colors */
+  --bg-primary: #121212;
+  --bg-secondary: #1e1e1e;
+  --bg-tertiary: #2d2d2d;
+  --bg-hover: #2a2a2a;
+  --bg-active: #333333;
+  --bg-card: #1e1e1e;
+  --bg-input: #2d2d2d;
+  
+  /* Text Colors */
+  --text-primary: #e1e1e1;
+  --text-secondary: #aebac4;
+  --text-tertiary: #8696a1;
+  --text-muted: #6b7a85;
+  --text-inverse: #121212;
+  --text-link: #25d366;
+  
+  /* Border Colors */
+  --border-primary: #2d2d2d;
+  --border-secondary: #3d3d3d;
+  --border-focus: #25d366;
+  
+  /* Accent Colors */
+  --accent-primary: #25d366;
+  --accent-secondary: #00a884;
+  --accent-hover: #1da851;
+  --accent-muted: #2d4234;
+  
+  /* Status Colors */
+  --status-online: #25d366;
+  --status-offline: #6b7a85;
+  --status-typing: #25d366;
+  --status-typing-bg: #2d4234;
+  
+  /* Chat Colors */
+  --chat-bg: #121212;
+  --chat-bubble-outgoing: #005c4b;
+  --chat-bubble-incoming: #2d2d2d;
+  --chat-timestamp: #8696a1;
+  
+  /* Sidebar Colors */
+  --sidebar-bg: #1e1e1e;
+  --sidebar-hover: #2a2a2a;
+  --sidebar-active: #333333;
+  --sidebar-border: #2d2d2d;
+  
+  /* Header Colors */
+  --header-bg: #1e1e1e;
+  --header-border: #2d2d2d;
+  
+  /* Shadow */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.4);
+  
+  /* Scrollbar */
+  --scrollbar-thumb: rgba(120, 120, 120, 0.4);
+  --scrollbar-thumb-hover: rgba(120, 120, 120, 0.6);
+  
+  /* Overlay */
+  --overlay-bg: rgba(0, 0, 0, 0.7);
+  --overlay-light: rgba(0, 0, 0, 0.5);
+  
+  /* Brand Colors */
+  --brand-primary: #25d366;
+  --brand-secondary: #128c7e;
+  --brand-dark: #075e54;
+  
+  /* Error/Success/Warning */
+  --color-error: #ef4444;
+  --color-success: #22c55e;
+  --color-warning: #f59e0b;
+  --color-info: #3b82f6;
+  
+  /* Red accent for logo */
+  --color-red: #ef4444;
+  
+  /* Focus ring */
+  --focus-ring: 0 0 0 2px rgba(37, 211, 102, 0.3);
+}
+
+/* Scrollbar Styles */
 .no-scrollbar::-webkit-scrollbar {
     display: none;
 }
@@ -12,7 +183,7 @@
 /* Enhanced scrollbar with smooth transitions */
 .custom-scrollbar {
     scrollbar-width: thin;
-    scrollbar-color: rgba(120, 120, 120, 0.3) transparent;
+    scrollbar-color: var(--scrollbar-thumb) transparent;
     overflow: auto;
 }
 
@@ -28,7 +199,7 @@
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: linear-gradient(135deg, rgba(120, 120, 120, 0.3), rgba(120, 120, 120, 0.5));
+    background: linear-gradient(135deg, var(--scrollbar-thumb), var(--scrollbar-thumb-hover));
     border-radius: 10px;
     border: 2px solid transparent;
     background-clip: padding-box;
@@ -36,14 +207,635 @@
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(135deg, rgba(120, 120, 120, 0.5), rgba(120, 120, 120, 0.7));
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: linear-gradient(135deg, var(--scrollbar-thumb-hover), var(--scrollbar-thumb));
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:active {
-    background: linear-gradient(135deg, rgba(120, 120, 120, 0.7), rgba(120, 120, 120, 0.9));
+    background: linear-gradient(135deg, var(--scrollbar-thumb-hover), var(--scrollbar-thumb));
 }
 
 .custom-scrollbar::-webkit-scrollbar-corner {
     background: transparent;
+}
+
+/* Utility Classes for Theme Support */
+@layer utilities {
+  .theme-bg-primary { background-color: var(--bg-primary); }
+  .theme-bg-secondary { background-color: var(--bg-secondary); }
+  .theme-bg-tertiary { background-color: var(--bg-tertiary); }
+  .theme-bg-hover { background-color: var(--bg-hover); }
+  .theme-bg-active { background-color: var(--bg-active); }
+  .theme-bg-card { background-color: var(--bg-card); }
+  .theme-bg-input { background-color: var(--bg-input); }
+  
+  .theme-text-primary { color: var(--text-primary); }
+  .theme-text-secondary { color: var(--text-secondary); }
+  .theme-text-tertiary { color: var(--text-tertiary); }
+  .theme-text-muted { color: var(--text-muted); }
+  .theme-text-inverse { color: var(--text-inverse); }
+  .theme-text-link { color: var(--text-link); }
+  
+  .theme-border-primary { border-color: var(--border-primary); }
+  .theme-border-secondary { border-color: var(--border-secondary); }
+  .theme-border-focus { border-color: var(--border-focus); }
+  
+  .theme-accent-primary { color: var(--accent-primary); }
+  .theme-accent-secondary { color: var(--accent-secondary); }
+  
+  .theme-chat-bg { background-color: var(--chat-bg); }
+  .theme-chat-bubble-outgoing { background-color: var(--chat-bubble-outgoing); }
+  .theme-chat-bubble-incoming { background-color: var(--chat-bubble-incoming); }
+  
+  .theme-sidebar-bg { background-color: var(--sidebar-bg); }
+  .theme-sidebar-hover { background-color: var(--sidebar-hover); }
+  .theme-sidebar-active { background-color: var(--sidebar-active); }
+  
+  .theme-header-bg { background-color: var(--header-bg); }
+  
+  .theme-shadow { box-shadow: var(--shadow-md); }
+  .theme-shadow-lg { box-shadow: var(--shadow-lg); }
+}
+
+/* Base styles with theme variables */
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Ensure smooth transitions for theme changes */
+* {
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+/* ============================================
+   PREMIUM UI DESIGN SYSTEM EXTENSIONS
+   ============================================ */
+
+/* Extended Color Palette for Premium UI */
+:root,
+[data-theme="light"] {
+  /* Premium Accent Colors */
+  --accent-gradient-start: #8b5cf6;
+  --accent-gradient-end: #7c3aed;
+  --accent-glow: rgba(139, 92, 246, 0.15);
+  
+  /* Surface Colors */
+  --surface-elevated: #ffffff;
+  --surface-overlay: rgba(255, 255, 255, 0.8);
+  
+  /* Input Enhancements */
+  --input-bg: #f8fafc;
+  --input-border: #e2e8f0;
+  --input-border-hover: #cbd5e1;
+  --input-focus-ring: rgba(139, 92, 246, 0.25);
+  --input-focus-border: #8b5cf6;
+  
+  /* Button Enhancements */
+  --button-primary-bg: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  --button-primary-hover: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+  --button-secondary-bg: #f1f5f9;
+  --button-secondary-hover: #e2e8f0;
+  --button-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+  --button-shadow-hover: 0 10px 15px -3px rgba(139, 92, 246, 0.25), 0 4px 6px -4px rgba(139, 92, 246, 0.15);
+  
+  /* Glass Effect */
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.3);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  
+  /* Divider */
+  --divider: #e2e8f0;
+  
+  /* Text Enhancement */
+  --text-highlight: #0f172a;
+}
+
+[data-theme="dark"],
+.dark {
+  /* Premium Accent Colors - Dark Mode */
+  --accent-gradient-start: #a78bfa;
+  --accent-gradient-end: #8b5cf6;
+  --accent-glow: rgba(167, 139, 250, 0.15);
+  
+  /* Surface Colors - Dark Mode */
+  --surface-elevated: #1e293b;
+  --surface-overlay: rgba(30, 41, 59, 0.8);
+  
+  /* Input Enhancements - Dark Mode */
+  --input-bg: #1e293b;
+  --input-border: #334155;
+  --input-border-hover: #475569;
+  --input-focus-ring: rgba(167, 139, 250, 0.25);
+  --input-focus-border: #a78bfa;
+  
+  /* Button Enhancements - Dark Mode */
+  --button-primary-bg: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%);
+  --button-primary-hover: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  --button-secondary-bg: #334155;
+  --button-secondary-hover: #475569;
+  --button-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -2px rgba(0, 0, 0, 0.2);
+  --button-shadow-hover: 0 10px 15px -3px rgba(167, 139, 250, 0.2), 0 4px 6px -4px rgba(167, 139, 250, 0.1);
+  
+  /* Glass Effect - Dark Mode */
+  --glass-bg: rgba(30, 41, 59, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  
+  /* Divider - Dark Mode */
+  --divider: #334155;
+  
+  /* Text Enhancement - Dark Mode */
+  --text-highlight: #f8fafc;
+}
+
+/* ============================================
+   PREMIUM INPUT STYLES
+   ============================================ */
+
+.premium-input {
+  width: 100%;
+  padding: 0.875rem 1rem;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  background-color: var(--input-bg);
+  border: 1.5px solid var(--input-border);
+  border-radius: 0.75rem;
+  color: var(--text-primary);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  outline: none;
+}
+
+.premium-input:hover {
+  border-color: var(--input-border-hover);
+}
+
+.premium-input:focus {
+  border-color: var(--input-focus-border);
+  box-shadow: 0 0 0 4px var(--input-focus-ring), var(--button-shadow);
+}
+
+.premium-input::placeholder {
+  color: var(--text-muted);
+  opacity: 0.8;
+}
+
+.premium-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background-color: var(--bg-tertiary);
+}
+
+/* Input with icon */
+.premium-input-with-icon {
+  padding-left: 2.75rem;
+}
+
+/* ============================================
+   PREMIUM BUTTON STYLES
+   ============================================ */
+
+.premium-button-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.9375rem 1.5rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: #ffffff;
+  background: var(--button-primary-bg);
+  border: none;
+  border-radius: 0.75rem;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: var(--button-shadow);
+  position: relative;
+  overflow: hidden;
+}
+
+.premium-button-primary::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 50%);
+  opacity: 0;
+  transition: opacity 0.25s;
+}
+
+.premium-button-primary:hover:not(:disabled) {
+  background: var(--button-primary-hover);
+  box-shadow: var(--button-shadow-hover);
+  transform: translateY(-1px);
+}
+
+.premium-button-primary:hover::before {
+  opacity: 1;
+}
+
+.premium-button-primary:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: var(--button-shadow);
+}
+
+.premium-button-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Secondary Button */
+.premium-button-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.9375rem 1.5rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--text-primary);
+  background-color: var(--button-secondary-bg);
+  border: 1.5px solid var(--border-primary);
+  border-radius: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.premium-button-secondary:hover:not(:disabled) {
+  background-color: var(--button-secondary-hover);
+  border-color: var(--border-secondary);
+}
+
+.premium-button-secondary:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+/* Ghost Button */
+.premium-button-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: transparent;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.premium-button-ghost:hover:not(:disabled) {
+  color: var(--text-primary);
+  background-color: var(--bg-hover);
+}
+
+/* ============================================
+   PREMIUM CARD STYLES
+   ============================================ */
+
+.premium-card {
+  background-color: var(--surface-elevated);
+  border: 1px solid var(--border-primary);
+  border-radius: 1rem;
+  box-shadow: var(--glass-shadow);
+  overflow: hidden;
+}
+
+.premium-card-glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  border-radius: 1rem;
+  box-shadow: var(--glass-shadow);
+}
+
+/* ============================================
+   FORM FIELD STYLES
+   ============================================ */
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  letter-spacing: 0.01em;
+}
+
+.form-label-optional {
+  font-weight: 400;
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+}
+
+.form-error {
+  font-size: 0.8125rem;
+  color: var(--color-error);
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  animation: slideIn 0.2s ease;
+}
+
+/* ============================================
+   ERROR/ALERT STYLES
+   ============================================ */
+
+.premium-alert-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+  background-color: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 0.75rem;
+  color: var(--color-error);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  animation: slideIn 0.25s ease;
+}
+
+.premium-alert-error svg {
+  flex-shrink: 0;
+  margin-top: 0.125rem;
+}
+
+/* ============================================
+   ANIMATION UTILITIES
+   ============================================ */
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-slide-in {
+  animation: slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease;
+}
+
+.animate-pulse-subtle {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* ============================================
+   LOADING SPINNER
+   ============================================ */
+
+.premium-spinner {
+  width: 1.25rem;
+  height: 1.25rem;
+  border: 2px solid transparent;
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+/* ============================================
+   FOCUS VISIBLE STYLES
+   ============================================ */
+
+.focus-visible-ring:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--input-focus-ring);
+}
+
+/* ============================================
+   OTP INPUT STYLES
+   ============================================ */
+
+.otp-input {
+  width: 3rem;
+  height: 3.5rem;
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  background-color: var(--input-bg);
+  border: 2px solid var(--input-border);
+  border-radius: 0.75rem;
+  color: var(--text-primary);
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.otp-input:hover {
+  border-color: var(--input-border-hover);
+}
+
+.otp-input:focus {
+  border-color: var(--input-focus-border);
+  box-shadow: 0 0 0 4px var(--input-focus-ring);
+}
+
+/* ============================================
+   DIVIDER / OR TEXT
+   ============================================ */
+
+.divider-with-text {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+
+.divider-line {
+  flex: 1;
+  height: 1px;
+  background: var(--divider);
+}
+
+.divider-text {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* ============================================
+   LINK STYLES
+   ============================================ */
+
+.premium-link {
+  color: var(--accent-gradient-start);
+  font-weight: 600;
+  text-decoration: none;
+  transition: color 0.2s ease;
+  position: relative;
+}
+
+.premium-link::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 1.5px;
+  background: var(--accent-gradient-start);
+  transition: width 0.2s ease;
+}
+
+.premium-link:hover::after {
+  width: 100%;
+}
+
+.premium-link:hover {
+  color: var(--accent-gradient-end);
+}
+
+/* ============================================
+   LOGIN & NEW ORGANISATION PAGE ANIMATIONS
+   ============================================ */
+
+/* Gradient animation for background */
+@keyframes gradient-shift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.animate-gradient {
+  background-size: 200% 200%;
+  animation: gradient-shift 8s ease infinite;
+}
+
+/* Fade in animation for content */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.6s ease-out forwards;
+  opacity: 0;
+}
+
+/* Smooth transitions for all interactive elements */
+* {
+  transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+/* Enhanced focus states */
+*:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+
+/* ============================================
+   OTP INPUT STYLES
+   ============================================ */
+
+.otp-input {
+  width: 100%;
+  height: 56px;
+  font-size: 1.5rem;
+  font-weight: 600;
+  text-align: center;
+  border-radius: 0.75rem;
+  border: 2px solid;
+  outline: none;
+  transition: all 0.2s ease;
+  caret-color: #8b5cf6;
+}
+
+.otp-input:hover {
+  border-color: #a78bfa !important;
+}
+
+.otp-input:focus {
+  border-color: #8b5cf6 !important;
+  box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.15), 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  transform: scale(1.02);
+}
+
+.otp-input.filled {
+  border-color: #8b5cf6;
+  background-color: #f5f3ff;
+}
+
+.otp-input::placeholder {
+  color: #94a3b8;
+}
+
+/* Dark mode OTP input */
+.dark .otp-input {
+  background-color: #1e293b;
+  border-color: #334155;
+  color: #f1f5f9;
+}
+
+.dark .otp-input:focus {
+  border-color: #a78bfa !important;
+  box-shadow: 0 0 0 4px rgba(167, 139, 250, 0.2);
+}
+
+/* Ensure inputs are accessible */
+.otp-input:not(:disabled) {
+  cursor: pointer;
+}
+
+.otp-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }

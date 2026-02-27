@@ -37,7 +37,7 @@ export default function SecureLayout({ children }: { children: React.ReactNode }
   }
 
   return (
-    <div className="relative flex gap-4 min-h-screen bg-slate-50 p-4">
+    <div className="relative flex gap-4 min-h-screen bg-(--bg-primary) p-4">
       <Sidebar />
       <main className="relative flex-1">{children}</main>
       <Link href="/chat" className="absolute right-8 bottom-8 flex items-center justify-center w-10 h-10 bg-[#25D366] hover:bg-[#1da851] text-white rounded-full shadow-xl transition-all duration-300 hover:scale-110 z-50" >

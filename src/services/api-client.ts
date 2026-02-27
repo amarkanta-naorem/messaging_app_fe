@@ -36,6 +36,7 @@ function buildHeaders(token?: string | null): Record<string, string> {
 /**
  * Generic fetch wrapper that targets our BFF API routes.
  * Throws AppError on non-OK responses.
+ * Includes timeout to prevent hanging requests.
  */
 async function _request<T>(
   path: string,
@@ -43,25 +44,41 @@ async function _request<T>(
 ): Promise<T> {
   const url = `/api${path}`;
 
-  const response = await fetch(url, {
-    ...options,
-    headers: {
-      ...buildHeaders(),
-      ...(options.headers as Record<string, string> | undefined),
-    },
-  });
+  // Add timeout controller
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
 
-  const data = await response.json().catch(() => null);
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal,
+      headers: {
+        ...buildHeaders(),
+        ...(options.headers as Record<string, string> | undefined),
+      },
+    });
 
-  if (!response.ok) {
-    const message =
-      data && typeof data === "object" && "message" in data
-        ? String(data.message)
-        : "Request failed";
-    throw new AppError(message, response.status, data?.errors);
+    clearTimeout(timeoutId);
+
+    const data = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      const message =
+        data && typeof data === "object" && "message" in data
+          ? String(data.message)
+          : "Request failed";
+      throw new AppError(message, response.status, data?.errors);
+    }
+
+    return data as T;
+  } catch (error: any) {
+    clearTimeout(timeoutId);
+    // Handle abort errors specifically
+    if (error.name === 'AbortError') {
+      throw new AppError("Request timed out", 408);
+    }
+    throw error;
   }
-
-  return data as T;
 }
 
 /**

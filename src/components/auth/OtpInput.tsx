@@ -1,84 +1,60 @@
 "use client";
 
+import React from "react";
+import { OtpDigit } from "./OtpDigit";
+
 interface OtpInputProps {
   value: string;
   onChange: (value: string) => void;
   disabled?: boolean;
 }
 
-export default function OtpInput({ value, onChange, disabled }: OtpInputProps) {
+const OtpInput: React.FC<OtpInputProps> = ({ value, onChange, disabled }) => {
   const handleChange = (index: number, digit: string) => {
-    if (!/^\d*$/.test(digit)) return;
     const digits = value.padEnd(6, "").split("").slice(0, 6);
-    digits[index] = digit.slice(-1);
+    digits[index] = digit;
     onChange(digits.join(""));
   };
 
+  const handlePaste = (e: React.ClipboardEvent) => {
+    e.preventDefault();
+    const pastedData = e.clipboardData.getData('text');
+    // Extract only digits from pasted content
+    const digits = pastedData.replace(/\D/g, '').slice(0, 6);
+    
+    if (digits.length > 0) {
+      onChange(digits);
+      // Focus the last filled input or the first empty input
+      const inputs = document.querySelectorAll('.otp-input');
+      const focusIndex = Math.min(digits.length, 5);
+      const inputToFocus = inputs[focusIndex] as HTMLInputElement;
+      if (inputToFocus) {
+        inputToFocus.focus();
+      }
+    }
+  };
+
   return (
-    <div className="flex flex-col gap-2">
-      <label className="text-sm font-medium">Verification Code</label>
-      <div className="flex gap-2 justify-center">
-        <input
-          type="text"
-          inputMode="numeric"
-          maxLength={1}
-          value={value[0] || ""}
-          onChange={(e) => handleChange(0, e.target.value)}
-          disabled={disabled}
-          className="w-10 h-12 text-center text-xl font-semibold border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-          aria-label="Digit 1"
-        />
-        <input
-          type="text"
-          inputMode="numeric"
-          maxLength={1}
-          value={value[1] || ""}
-          onChange={(e) => handleChange(1, e.target.value)}
-          disabled={disabled}
-          className="w-10 h-12 text-center text-xl font-semibold border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-          aria-label="Digit 2"
-        />
-        <input
-          type="text"
-          inputMode="numeric"
-          maxLength={1}
-          value={value[2] || ""}
-          onChange={(e) => handleChange(2, e.target.value)}
-          disabled={disabled}
-          className="w-10 h-12 text-center text-xl font-semibold border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-          aria-label="Digit 3"
-        />
-        <input
-          type="text"
-          inputMode="numeric"
-          maxLength={1}
-          value={value[3] || ""}
-          onChange={(e) => handleChange(3, e.target.value)}
-          disabled={disabled}
-          className="w-10 h-12 text-center text-xl font-semibold border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-          aria-label="Digit 4"
-        />
-        <input
-          type="text"
-          inputMode="numeric"
-          maxLength={1}
-          value={value[4] || ""}
-          onChange={(e) => handleChange(4, e.target.value)}
-          disabled={disabled}
-          className="w-10 h-12 text-center text-xl font-semibold border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-          aria-label="Digit 5"
-        />
-        <input
-          type="text"
-          inputMode="numeric"
-          maxLength={1}
-          value={value[5] || ""}
-          onChange={(e) => handleChange(5, e.target.value)}
-          disabled={disabled}
-          className="w-10 h-12 text-center text-xl font-semibold border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-          aria-label="Digit 6"
-        />
+    <div className="flex flex-col gap-2.5" onPaste={handlePaste}>
+      <label className="form-label" style={{ color: '#334155' }}>Verification Code</label>
+      <div className="flex gap-2.5 justify-center">
+        {[0, 1, 2, 3, 4, 5].map((index) => (
+          <OtpDigit
+            key={index}
+            value={value[index] || ""}
+            onChange={(digit) => handleChange(index, digit)}
+            disabled={disabled}
+            isFirst={index === 0}
+            isLast={index === 5}
+            aria-label={`Digit ${index + 1}`}
+          />
+        ))}
       </div>
+      <p className="text-center text-sm text-slate-500 mt-2">
+        Enter the 6-digit code sent to your phone
+      </p>
     </div>
   );
-}
+};
+
+export default OtpInput;

@@ -152,26 +152,26 @@ export const ContactDrawer = ({ isOpen, onClose, phone, conversation }: ContactD
       <div className={`absolute inset-0 bg-black/20 backdrop-blur-sm transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0'}`} onClick={onClose}/>
       
       {/* Drawer */}
-      <div className={`absolute inset-y-0 right-0 w-full max-w-md bg-white shadow-2xl transform transition-transform duration-300 ease-in-out flex flex-col ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+      <div className={`absolute inset-y-0 right-0 w-full max-w-md bg-(--bg-card) theme-bg-card shadow-2xl transform transition-transform duration-300 ease-in-out flex flex-col ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
         {/* Drawer Header (Close Button) */}
-        <div className="flex items-center justify-between p-4 border-b border-slate-100">
-          <h3 className="font-semibold text-slate-700">Contact Info</h3>
-          <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-500">
+        <div className="flex items-center justify-between p-4 border-b border-(--border-primary)">
+          <h3 className="font-semibold text-(--text-primary)">Contact Info</h3>
+          <button onClick={onClose} className="p-2 hover:bg-(--bg-hover) rounded-full transition-colors text-(--text-muted) cursor-pointer">
             <X size={20} />
           </button>
         </div>
 
         {/* Drawer Content */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto custom-scrollbar">
           {loading ? (
             <div className="p-8 flex flex-col items-center justify-center space-y-4 animate-pulse">
-              <div className="w-24 h-24 bg-slate-200 rounded-full"></div>
-              <div className="h-6 bg-slate-200 rounded w-1/2"></div>
-              <div className="h-4 bg-slate-200 rounded w-1/3"></div>
+              <div className="w-24 h-24 bg-(--bg-tertiary) rounded-full"></div>
+              <div className="h-6 bg-(--bg-tertiary) rounded w-1/2"></div>
+              <div className="h-4 bg-(--bg-tertiary) rounded w-1/3"></div>
               <div className="w-full space-y-2 mt-8">
-                <div className="h-12 bg-slate-200 rounded"></div>
-                <div className="h-12 bg-slate-200 rounded"></div>
-                <div className="h-12 bg-slate-200 rounded"></div>
+                <div className="h-12 bg-(--bg-tertiary) rounded"></div>
+                <div className="h-12 bg-(--bg-tertiary) rounded"></div>
+                <div className="h-12 bg-(--bg-tertiary) rounded"></div>
               </div>
             </div>
           ) : error ? (
@@ -182,32 +182,32 @@ export const ContactDrawer = ({ isOpen, onClose, phone, conversation }: ContactD
             <>
               <ContactHeader contact={contact as ContactDetails} />
               
-              <div className="p-6 space-y-6 border-b border-slate-200">
+              <div className="p-6 space-y-6 border-b border-(--border-primary)">
                 <div className="space-y-4">
                   {contact.email && (
                     <div className="flex items-start gap-3">
-                      <Mail size={20} className="text-slate-400 shrink-0 mt-0.5" />
+                      <Mail size={20} className="text-(--text-muted) shrink-0 mt-0.5" />
                       <div>
-                        <p className="text-sm text-slate-500">Email</p>
-                        <p className="text-slate-800">{contact.email}</p>
+                        <p className="text-sm text-(--text-muted)">Email</p>
+                        <p className="text-(--text-primary)">{contact.email}</p>
                       </div>
                     </div>
                   )}
                   
                   <div className="flex items-start gap-3">
-                    <Info size={20} className="text-slate-400 shrink-0 mt-0.5" />
-                    <div>
-                      <p className="text-sm text-slate-500">Bio</p>
-                      <p className="text-slate-800">{contact.bio || "No bio available"}</p>
+                      <Info size={20} className="text-(--text-muted) shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-sm text-(--text-muted)">Bio</p>
+                        <p className="text-(--text-primary)">{contact.bio || "No bio available"}</p>
+                      </div>
                     </div>
-                  </div>
 
                   {contact.joinedAt && (
                     <div className="flex items-start gap-3">
-                      <Calendar size={20} className="text-slate-400 shrink-0 mt-0.5" />
+                      <Calendar size={20} className="text-(--text-muted) shrink-0 mt-0.5" />
                       <div>
-                        <p className="text-sm text-slate-500">{contact.isGroup ? 'Created At' : 'Joined'}</p>
-                        <p className="text-slate-800">{formatDate(contact.joinedAt)}</p>
+                        <p className="text-sm text-(--text-muted)">{contact.isGroup ? 'Created At' : 'Joined'}</p>
+                        <p className="text-(--text-primary)">{formatDate(contact.joinedAt)}</p>
                       </div>
                     </div>
                   )}
@@ -219,13 +219,13 @@ export const ContactDrawer = ({ isOpen, onClose, phone, conversation }: ContactD
               {contact.isGroup && contact.group_members && (
                 <div className="p-6">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-2">
+                    <h3 className="text-sm font-semibold text-(--text-muted) uppercase tracking-wider flex items-center gap-2">
                       <Users size={16} />
                       {contact.group_members.length} Members
                     </h3>
                     <button 
                       onClick={() => setIsAddMembersOpen(true)}
-                      className="text-[#008069] text-sm font-medium hover:underline flex items-center gap-1 cursor-pointer"
+                      className="text-(--accent-primary) text-sm font-medium hover:underline flex items-center gap-1 cursor-pointer"
                     >
                       <UserPlus size={16} />
                       Add Members
@@ -233,17 +233,17 @@ export const ContactDrawer = ({ isOpen, onClose, phone, conversation }: ContactD
                   </div>
                   <div className="space-y-3">
                     {contact.group_members.map((member) => (
-                      <div key={member.id} className="flex items-center justify-between gap-3 p-2 rounded-lg hover:bg-slate-50 transition-colors">
+                      <div key={member.id} className="flex items-center justify-between gap-3 p-2 rounded-lg hover:bg-(--bg-hover) transition-colors">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center overflow-hidden shrink-0">
-                            <span className="text-slate-500 font-medium text-lg">
+                          <div className="w-10 h-10 rounded-full bg-(--bg-tertiary) flex items-center justify-center overflow-hidden shrink-0">
+                            <span className="text-(--text-muted) font-medium text-lg">
                               {member.name.charAt(0).toUpperCase()}
                             </span>
                           </div>
-                          <span className="font-medium text-slate-700">{member.name}</span>
+                          <span className="font-medium text-(--text-primary)">{member.name}</span>
                         </div>
                         {member.role === 'admin' && (
-                          <span className="text-xs text-emerald-600 font-semibold bg-emerald-100 px-2 py-0.5 rounded-full">Admin</span>
+                          <span className="text-xs text-(--accent-primary) font-semibold bg-(--accent-muted) px-2 py-0.5 rounded-full">Admin</span>
                         )}
                       </div>
                     ))}

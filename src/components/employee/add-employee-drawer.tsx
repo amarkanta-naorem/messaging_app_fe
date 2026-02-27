@@ -187,49 +187,33 @@ export const AddEmployeeDrawer = ({
   };
 
   return (
-    <div
-      className={`fixed inset-0 z-60 ${isOpen ? "pointer-events-auto" : "pointer-events-none"}`}
-    >
+    <div className={`fixed inset-0 z-60 ${isOpen ? "pointer-events-auto" : "pointer-events-none"}`}>
       {/* Overlay */}
-      <div
-        className={`absolute inset-0 bg-black/20 backdrop-blur-sm transition-opacity duration-300 ${isOpen ? "opacity-100" : "opacity-0"}`}
-        onClick={onClose}
-      />
+      <div className={`absolute inset-0 bg-(--overlay-light) backdrop-blur-sm transition-opacity duration-300 ${isOpen ? "opacity-100" : "opacity-0"}`} onClick={onClose} />
 
       {/* Drawer */}
-      <div
-        className={`absolute inset-y-0 right-0 w-full max-w-md bg-white shadow-2xl transform transition-transform duration-300 ease-in-out flex flex-col ${isOpen ? "translate-x-0" : "translate-x-full"}`}
-      >
+      <div className={`absolute inset-y-0 right-0 w-full max-w-md bg-(--bg-card) theme-bg-card shadow-2xl transform transition-transform duration-300 ease-in-out flex flex-col ${isOpen ? "translate-x-0" : "translate-x-full"}`}>
         {/* Header */}
-        <div className="flex flex-col p-4 border-b border-slate-100 bg-emerald-600 text-white shrink-0">
+        <div className="flex flex-col p-4 border-b border-(--border-primary) bg-(--bg-secondary) text-(--text-primary) shrink-0">
           <div className="flex items-center justify-between mb-1">
             <h3 className="font-semibold text-lg">Add Employee</h3>
-            <button
-              onClick={onClose}
-              className="p-1 hover:bg-white/10 rounded-full transition-colors cursor-pointer"
-            >
+            <button onClick={onClose} className="p-1 hover:bg-(--bg-hover) rounded-full transition-colors cursor-pointer text-(--text-secondary)">
               <X size={20} />
             </button>
           </div>
-          <p className="text-xs text-white/80">
-            Add a new employee to your organisation
-          </p>
+          <p className="text-xs text-(--text-secondary)">Add a new employee to your organisation</p>
         </div>
 
         {/* Form Content */}
         <div className="flex-1 overflow-y-auto custom-scrollbar">
           <div className="p-5 space-y-4">
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-                {error}
-              </div>
+              <div className="bg-(--color-error)/10 border border-(--color-error)/20 text-(--color-error) px-4 py-3 rounded-lg text-sm">{error}</div>
             )}
 
             {/* Name */}
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                Name <span className="text-red-500">*</span>
-              </label>
+              <label className="block text-sm font-medium text-(--text-primary) mb-1">Name <span className="text-red-500">*</span></label>
               <input
                 type="text"
                 value={name}
@@ -239,7 +223,7 @@ export const AddEmployeeDrawer = ({
                     setFieldErrors((prev) => ({ ...prev, name: "" }));
                 }}
                 placeholder="John Doe"
-                className={`w-full px-3 py-2 rounded-lg border ${fieldErrors.name ? "border-red-400 focus:ring-red-500/20 focus:border-red-500" : "border-slate-200 focus:ring-emerald-500/20 focus:border-emerald-500"} focus:outline-none focus:ring-2 transition-all text-sm`}
+                className={`w-full px-3 py-2 rounded-lg border ${fieldErrors.name ? "border-red-400 focus:ring-red-500/20 focus:border-red-500" : "border-(--border-secondary) focus:ring-emerald-500/20 focus:border-emerald-500"} focus:outline-none focus:ring-2 transition-all text-sm bg-(--bg-input) text-(--text-primary) placeholder:text-(--text-muted)`}
               />
               {fieldErrors.name && (
                 <p className="text-red-500 text-xs mt-1">{fieldErrors.name}</p>
@@ -248,7 +232,7 @@ export const AddEmployeeDrawer = ({
 
             {/* Phone */}
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
+              <label className="block text-sm font-medium text-(--text-primary) mb-1">
                 Phone <span className="text-red-500">*</span>
               </label>
               <input
@@ -260,7 +244,7 @@ export const AddEmployeeDrawer = ({
                     setFieldErrors((prev) => ({ ...prev, phone: "" }));
                 }}
                 placeholder="+1234567890"
-                className={`w-full px-3 py-2 rounded-lg border ${fieldErrors.phone ? "border-red-400 focus:ring-red-500/20 focus:border-red-500" : "border-slate-200 focus:ring-emerald-500/20 focus:border-emerald-500"} focus:outline-none focus:ring-2 transition-all text-sm`}
+                className={`w-full px-3 py-2 rounded-lg border ${fieldErrors.phone ? "border-red-400 focus:ring-red-500/20 focus:border-red-500" : "border-(--border-secondary) focus:ring-emerald-500/20 focus:border-emerald-500"} focus:outline-none focus:ring-2 transition-all text-sm bg-(--bg-input) text-(--text-primary) placeholder:text-(--text-muted)`}
               />
               {fieldErrors.phone && (
                 <p className="text-red-500 text-xs mt-1">
@@ -271,7 +255,7 @@ export const AddEmployeeDrawer = ({
 
             {/* Email */}
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
+              <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">
                 Email <span className="text-red-500">*</span>
               </label>
               <input
@@ -283,7 +267,7 @@ export const AddEmployeeDrawer = ({
                     setFieldErrors((prev) => ({ ...prev, email: "" }));
                 }}
                 placeholder="john.doe@example.com"
-                className={`w-full px-3 py-2 rounded-lg border ${fieldErrors.email ? "border-red-400 focus:ring-red-500/20 focus:border-red-500" : "border-slate-200 focus:ring-emerald-500/20 focus:border-emerald-500"} focus:outline-none focus:ring-2 transition-all text-sm`}
+                className={`w-full px-3 py-2 rounded-lg border ${fieldErrors.email ? "border-red-400 focus:ring-red-500/20 focus:border-red-500" : "border-[var(--border-secondary)] focus:ring-emerald-500/20 focus:border-emerald-500"} focus:outline-none focus:ring-2 transition-all text-sm bg-[var(--bg-input)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)]`}
               />
               {fieldErrors.email && (
                 <p className="text-red-500 text-xs mt-1">
@@ -294,9 +278,9 @@ export const AddEmployeeDrawer = ({
 
             {/* Avatar URL */}
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
+              <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">
                 Avatar URL{" "}
-                <span className="text-slate-400 font-normal">(optional)</span>
+                <span className="text-[var(--text-muted)] font-normal">(optional)</span>
               </label>
               <input
                 type="text"
@@ -307,7 +291,7 @@ export const AddEmployeeDrawer = ({
                     setFieldErrors((prev) => ({ ...prev, avatar: "" }));
                 }}
                 placeholder="https://example.com/avatar.jpg"
-                className={`w-full px-3 py-2 rounded-lg border ${fieldErrors.avatar ? "border-red-400 focus:ring-red-500/20 focus:border-red-500" : "border-slate-200 focus:ring-emerald-500/20 focus:border-emerald-500"} focus:outline-none focus:ring-2 transition-all text-sm`}
+                className={`w-full px-3 py-2 rounded-lg border ${fieldErrors.avatar ? "border-red-400 focus:ring-red-500/20 focus:border-red-500" : "border-[var(--border-secondary)] focus:ring-emerald-500/20 focus:border-emerald-500"} focus:outline-none focus:ring-2 transition-all text-sm bg-[var(--bg-input)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)]`}
               />
               {fieldErrors.avatar && (
                 <p className="text-red-500 text-xs mt-1">
@@ -318,9 +302,9 @@ export const AddEmployeeDrawer = ({
 
             {/* Groups Selection */}
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
+              <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">
                 Assign to Groups{" "}
-                <span className="text-slate-400 font-normal">(optional)</span>
+                <span className="text-[var(--text-muted)] font-normal">(optional)</span>
               </label>
 
               {selectedGroupIds.size > 0 && (
@@ -331,7 +315,7 @@ export const AddEmployeeDrawer = ({
                     return (
                       <span
                         key={gId}
-                        className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 text-xs font-medium px-2.5 py-1 rounded-full border border-emerald-200"
+                        className="inline-flex items-center gap-1 bg-[var(--accent-muted)] text-[var(--accent-secondary)] text-xs font-medium px-2.5 py-1 rounded-full border border-[var(--accent-secondary)]/20"
                       >
                         {group.name}
                         <button
@@ -346,18 +330,18 @@ export const AddEmployeeDrawer = ({
                 </div>
               )}
 
-              <div className="border border-slate-200 rounded-lg overflow-hidden">
+              <div className="border border-[var(--border-secondary)] rounded-lg overflow-hidden">
                 {/* Group Search */}
-                <div className="p-2 border-b border-slate-100 bg-slate-50">
+                <div className="p-2 border-b border-[var(--border-primary)] bg-[var(--bg-secondary)]">
                   <div className="relative">
                     <Search
-                      className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400"
+                      className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)]"
                       size={16}
                     />
                     <input
                       type="text"
                       placeholder="Search groups..."
-                      className="w-full pl-8 pr-3 py-1.5 rounded border border-slate-200 focus:outline-none focus:border-emerald-500 text-xs"
+                      className="w-full pl-8 pr-3 py-1.5 rounded border border-[var(--border-secondary)] focus:outline-none focus:border-emerald-500 text-xs bg-[var(--bg-input)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)]"
                       value={groupSearchQuery}
                       onChange={(e) => setGroupSearchQuery(e.target.value)}
                     />
@@ -373,15 +357,15 @@ export const AddEmployeeDrawer = ({
                           key={i}
                           className="flex items-center gap-3 animate-pulse"
                         >
-                          <div className="w-8 h-8 bg-slate-200 rounded-full shrink-0" />
+                          <div className="w-8 h-8 bg-[var(--bg-tertiary)] rounded-full shrink-0" />
                           <div className="flex-1 space-y-1">
-                            <div className="h-3 bg-slate-200 rounded w-1/3" />
+                            <div className="h-3 bg-[var(--bg-tertiary)] rounded w-1/3" />
                           </div>
                         </div>
                       ))}
                     </div>
                   ) : filteredGroups.length === 0 ? (
-                    <div className="p-4 text-center text-slate-500 text-xs">
+                    <div className="p-4 text-center text-[var(--text-muted)] text-xs">
                       {groups.length === 0
                         ? "No groups available"
                         : "No groups match your search"}
@@ -390,10 +374,10 @@ export const AddEmployeeDrawer = ({
                     filteredGroups.map((group) => (
                       <div
                         key={group.id}
-                        className={`flex items-center gap-3 px-3 py-2 hover:bg-slate-50 cursor-pointer transition-colors ${selectedGroupIds.has(group.id) ? "bg-emerald-50/50" : ""}`}
+                        className={`flex items-center gap-3 px-3 py-2 hover:bg-[var(--bg-hover)] cursor-pointer transition-colors ${selectedGroupIds.has(group.id) ? "bg-[var(--accent-muted)]/50" : ""}`}
                         onClick={() => toggleGroup(group.id)}
                       >
-                        <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center overflow-hidden shrink-0">
+                        <div className="w-8 h-8 rounded-full bg-[var(--bg-tertiary)] flex items-center justify-center overflow-hidden shrink-0">
                           {group.logo ? (
                             <Image
                               src={group.logo}
@@ -403,24 +387,24 @@ export const AddEmployeeDrawer = ({
                               className="w-full h-full object-cover"
                             />
                           ) : (
-                            <User size={16} className="text-slate-400" />
+                            <User size={16} className="text-[var(--text-muted)]" />
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h4 className="text-sm font-medium text-slate-800 truncate">
+                          <h4 className="text-sm font-medium text-[var(--text-primary)] truncate">
                             {group.name}
                           </h4>
                           {group.description && (
-                            <p className="text-xs text-slate-500 truncate">
+                            <p className="text-xs text-[var(--text-muted)] truncate">
                               {group.description}
                             </p>
                           )}
                         </div>
                         <div
-                          className={`w-5 h-5 rounded border flex items-center justify-center transition-all duration-200 ${selectedGroupIds.has(group.id) ? "bg-emerald-500 border-emerald-500" : "border-slate-300"}`}
+                          className={`w-5 h-5 rounded border flex items-center justify-center transition-all duration-200 ${selectedGroupIds.has(group.id) ? "bg-[var(--accent-primary)] border-[var(--accent-primary)]" : "border-[var(--border-secondary)]"}`}
                         >
                           {selectedGroupIds.has(group.id) && (
-                            <Check size={14} className="text-white" />
+                            <Check size={14} className="text-[var(--text-inverse)]" />
                           )}
                         </div>
                       </div>
@@ -433,18 +417,18 @@ export const AddEmployeeDrawer = ({
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-slate-100 bg-white shrink-0">
+        <div className="p-4 border-t border-[var(--border-primary)] bg-[var(--bg-card)] shrink-0">
           <div className="flex gap-3">
             <button
               onClick={onClose}
-              className="flex-1 py-2.5 rounded-lg font-medium text-sm border border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
+              className="flex-1 py-2.5 rounded-lg font-medium text-sm border border-[var(--border-secondary)] text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-colors cursor-pointer"
             >
               Cancel
             </button>
             <button
               onClick={handleSubmit}
               disabled={submitting}
-              className="flex-1 bg-emerald-500 text-white py-2.5 rounded-lg font-medium text-sm hover:bg-emerald-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
+              className="flex-1 bg-[var(--accent-primary)] text-white py-2.5 rounded-lg font-medium text-sm hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
             >
               {submitting && <Loader2 size={16} className="animate-spin" />}
               {submitting ? "Adding..." : "Add Employee"}
