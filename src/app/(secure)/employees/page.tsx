@@ -1,7 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { API_BASE } from "@/lib/config";
+import { get } from "@/services/api-client";
+import type { ApiEnvelope } from "@/types/api";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { Search, Eye, Plus, SquarePen } from "lucide-react";
@@ -10,7 +11,7 @@ import { AddEmployeeDrawer } from "@/components/employee/add-employee-drawer";
 import { Employee, formatDate } from "@/components/employee/utils";
 
 export default function EmployeePage() {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -18,17 +19,16 @@ export default function EmployeePage() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isAddEmployeeOpen, setIsAddEmployeeOpen] = useState(false);
 
+  // Check if user has permission to add employees (admin or owner)
+  const userRole = user?.organisation_employees?.role;
+  const canAddEmployee = userRole === "admin" || userRole === "owner";
+
   const fetchEmployees = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_BASE}/contacts/organization`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      const data = await response.json();
-      if (data.success) {
-        setEmployees(data.data);
+      const response = await get<ApiEnvelope<Employee[]>>(`/contacts/organization`);
+      if (response.success) {
+        setEmployees(response.data);
       }
     } catch (error) {
       console.error("Failed to fetch employees:", error);
@@ -63,11 +63,13 @@ export default function EmployeePage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-(--text-primary)">Employees</h1>
-          <p className="text-(--text-secondary)">Manage your organization's employees</p>
+          <p className="text-(--text-secondary)">Manage your organization&apos;s employees</p>
         </div>
         <button
           onClick={() => setIsAddEmployeeOpen(true)}
           className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg transition-colors shadow-sm cursor-pointer"
+          disabled={!canAddEmployee}
+          title={!canAddEmployee ? "Only admins and owners can add employees" : "Add Employee"}
         >
           <Plus size={20} />
           <span>Add Employee</span>

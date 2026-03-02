@@ -12,6 +12,12 @@ interface MessageContent {
   text?: string;
   url?: string;
   caption?: string;
+  file?: {
+    name?: string;
+    size?: number;
+    mimeType?: string;
+    url?: string;
+  };
 }
 
 interface Message {
@@ -23,6 +29,13 @@ interface Message {
   senderName?: string;
   senderAvatar?: string;
   isFromCurrentUser?: boolean;
+  status?: "sent" | "delivered" | "stored" | "read" | "failed";
+  metadata?: {
+    fileName?: string;
+    fileSize?: number;
+    mimeType?: string;
+    fileUrl?: string;
+  };
 }
 
 interface MessageListProps {

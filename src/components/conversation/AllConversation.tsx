@@ -4,7 +4,8 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useChat } from "@/context/ChatContext";
 import { Conversation } from "@/lib/conversations";
-import { API_BASE } from "@/lib/config";
+import { get } from "@/services/api-client";
+import type { ApiEnvelope } from "@/types/api";
 
 // Sub-components
 import { ConversationItem } from "./ConversationItem";
@@ -49,19 +50,11 @@ export default function AllConversation({ data, showNewMessage, onClose, searchQ
         setContactsError(null);
         setContacts([]);
         try {
-          const response = await fetch(`${API_BASE}/contacts/organization`, {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            });
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-          const result = await response.json();
-          if (result.success) {
-            setContacts(result.data);
+          const response = await get<ApiEnvelope<Contact[]>>(`/contacts/organization`);
+          if (response.success) {
+            setContacts(response.data);
           } else {
-            throw new Error(result.message || "Failed to fetch contacts");
+            throw new Error(response.message || "Failed to fetch contacts");
           }
         } catch (err) {
           setContactsError(
@@ -122,13 +115,13 @@ export default function AllConversation({ data, showNewMessage, onClose, searchQ
   };
 
   return (
-    <div className="relative h-full bg-[var(--bg-card)]">
+    <div className="relative h-full bg-(--bg-card)">
       {/* Contact list for new message */}
-      <div className={`absolute inset-0 bg-[var(--bg-card)] transition-transform duration-300 ease-in-out flex flex-col ${showNewMessage ? "translate-x-0" : "-translate-x-full"}`}>
+      <div className={`absolute inset-0 bg-(--bg-card) transition-transform duration-300 ease-in-out flex flex-col ${showNewMessage ? "translate-x-0" : "-translate-x-full"}`}>
         <div className="flex-1 overflow-y-auto">
           <div className="pb-2">
             {loadingContacts && (
-              <div className="p-4 text-center text-[var(--text-muted)]">Loading contacts...</div>
+              <div className="p-4 text-center text-(--text-muted)">Loading contacts...</div>
             )}
             {contactsError && (
               <div className="p-4 text-center text-red-500">{contactsError}</div>

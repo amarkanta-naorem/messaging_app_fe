@@ -2,12 +2,20 @@
  * Message-related type definitions.
  */
 
+export interface MessageFile {
+  name: string;
+  size: number;
+  mimeType: string;
+  url: string;
+}
+
 export interface MessageContent {
-  type: "text" | "image" | "video" | "audio" | "document";
+  type: "text" | "image" | "video" | "audio" | "document" | "file";
   text?: string;
   value?: string;
   url?: string;
   caption?: string;
+  file?: MessageFile;
 }
 
 export interface Message {
@@ -36,7 +44,7 @@ export interface SendMessagePayload {
   receiverPhone?: string;
   groupId?: number;
   content: {
-    type: "text" | "image" | "video" | "audio" | "document";
+    type: "text" | "image" | "video" | "audio" | "document" | "file";
     text?: string;
     url?: string;
     caption?: string;
@@ -44,15 +52,36 @@ export interface SendMessagePayload {
   clientMessageId?: string;
 }
 
+export interface SendFileMessagePayload {
+  clientMessageId?: string;
+  receiverPhone?: string;
+  groupId?: number;
+  content: string | { type: string; caption?: string }; // Can be stringified JSON or object
+  file: File;
+}
+
 export interface SendMessageResponse {
   id: number;
   conversationId?: number;
   groupId?: number;
   senderId: number;
+  senderName?: string;
+  senderAvatar?: string;
   receiverId?: number;
   content: {
     type: string;
     text?: string;
+    url?: string;
+    caption?: string;
+    file?: MessageFile;
+  };
+  metadata?: {
+    fileName: string;
+    fileSize: number;
+    mimeType: string;
+    fileUrl: string;
+    extension: string;
+    uploadedAt: string;
   };
   status: string;
   createdAt: string;

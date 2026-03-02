@@ -5,10 +5,10 @@
 
 "use client";
 
-import { createContext, useContext, useCallback, ReactNode, useEffect, useRef } from "react";
+import { createContext, useContext, useCallback, ReactNode, useEffect, useRef, useState } from "react";
 import { useAuth } from "./AuthContext";
 import { getConversations } from "@/lib/conversations";
-import { MessageContent, sendMessage as sendMessageApi } from "@/lib/messages";
+import { MessageContent, sendMessage as sendMessageApi, sendFileMessage, MessageContent as MsgContent, Message } from "@/lib/messages";
 import { connectSocket, disconnectSocket, IncomingMessage, SocketError, MessagePayload, getSocket } from "@/lib/socket";
 import { useAppDispatch, useAppSelector } from "@/store/store";
 import {
@@ -30,19 +30,20 @@ import {
   selectSendingMessage,
   selectSocketError,
 } from "@/store/store";
-import type { Conversation, Message } from "@/types";
+import type { Conversation, Message as ChatMessage } from "@/types";
 
 interface ChatContextType {
   conversations: Conversation[];
   activeConversation: Conversation | null;
   activeConversationId: number | null;
-  messages: Message[];
+  messages: ChatMessage[];
   loadingConversations: boolean;
   loadingMessages: boolean;
   sendingMessage: boolean;
   socketError: string | null;
   selectConversation: (conversation: Conversation | null) => void;
   sendMessage: (content: string | { type: string; text?: string; url?: string; caption?: string }) => void;
+  sendFile: (file: File, caption?: string) => Promise<void>;
   refreshConversations: () => void;
 }
 
@@ -419,6 +420,99 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     [activeConversation, user, dispatch]
   );
 
+  /**
+   * Send a file message
+   */
+  const sendFile = useCallback(
+    async (file: File, caption?: string) => {
+      if (!activeConversation || !user) return;
+
+      const clientMessageId = crypto.randomUUID();
+      const conversation = activeConversation as any;
+      const isGroup = conversation.isGroup || conversation.type === 'group';
+
+      // Determine file type for display
+      let fileType: string;
+      if (file.type.startsWith("image/")) {
+        fileType = "image";
+      } else if (file.type.startsWith("video/")) {
+        fileType = "video";
+      } else if (file.type.startsWith("audio/")) {
+        fileType = "audio";
+      } else {
+        fileType = "file";
+      }
+
+      // Create optimistic message for UI display
+      const optimisticMessage: Message = {
+        id: Date.now(),
+        senderId: user.id,
+        receiverId: isGroup ? undefined : activeConversation.participant?.id,
+        groupId: isGroup ? activeConversation.id : undefined,
+        conversationId: activeConversation.id,
+        content: {
+          type: fileType as any,
+          file: {
+            name: file.name,
+            size: file.size,
+            mimeType: file.type,
+            url: URL.createObjectURL(file),
+          },
+          caption: caption || "",
+        } as any,
+        status: "sent",
+        createdAt: new Date().toISOString(),
+        clientMessageId,
+      };
+
+      (dispatch as any)(addMessageOptimistic({ 
+        conversationId: activeConversation.id,
+        message: optimisticMessage 
+      }));
+
+      try {
+        // According to API contract, file messages should have type: "file"
+        const content = JSON.stringify({
+          type: "file",
+          caption: caption || "",
+        });
+
+        const payload: any = {
+          clientMessageId,
+          content,
+          file,
+        };
+
+        if (isGroup) {
+          payload.groupId = conversation.id;
+        } else {
+          payload.receiverPhone = conversation.participant.phone;
+        }
+
+        const apiResponse = await sendFileMessage(payload);
+        
+        (dispatch as any)(replaceOptimisticMessage({
+          conversationId: activeConversation.id,
+          clientMessageId,
+          serverMessage: { 
+            ...optimisticMessage, 
+            id: apiResponse.id, 
+            status: apiResponse.status as Message["status"],
+            content: apiResponse.content as unknown as MessageContent,
+          }
+        }));
+      } catch (error: any) {
+        console.error("Failed to send file:", error.message);
+        (dispatch as any)(updateMessageInState({
+          conversationId: activeConversation.id,
+          clientMessageId,
+          updates: { status: "failed" as const }
+        }));
+      }
+    },
+    [activeConversation, user, dispatch]
+  );
+
   return (
     <ChatContext.Provider
       value={{
@@ -432,6 +526,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         socketError,
         selectConversation,
         sendMessage,
+        sendFile,
         refreshConversations,
       }}
     >

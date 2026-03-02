@@ -12,14 +12,21 @@ import { ChatHeader } from "./ChatHeader";
 import { MessageList } from "./MessageList";
 import { MessageInput } from "./MessageInput";
 
+interface FileAttachment {
+  file: File;
+  preview?: string;
+  type: "image" | "video" | "audio" | "document";
+}
+
 export default function ChatView() {
   const { user } = useAuth();
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const { activeConversation, messages, loadingMessages, sendMessage, selectConversation } = useChat();
+  const { activeConversation, messages, loadingMessages, sendMessage, sendFile, selectConversation, sendingMessage } = useChat();
   const [showContactDrawer, setShowContactDrawer] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const { isDark } = useTheme();
+  const [isSending, setIsSending] = useState(false);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -35,9 +42,24 @@ export default function ChatView() {
     inputRef.current?.focus();
   }, [activeConversation?.id]);
 
-  const handleSend = async (text: string) => {
+  const handleSend = async (text: string, attachments?: FileAttachment[]) => {
     if (activeConversation) {
-      sendMessage(text);
+      setIsSending(true);
+      try {
+        // If there are attachments, send them as file messages
+        if (attachments && attachments.length > 0) {
+          for (const attachment of attachments) {
+            await sendFile(attachment.file, text || undefined);
+          }
+        } else if (text.trim()) {
+          // Send text-only message
+          sendMessage(text);
+        }
+      } catch (error) {
+        console.error("Failed to send message:", error);
+      } finally {
+        setIsSending(false);
+      }
       inputRef.current?.focus();
     }
   };
@@ -105,7 +127,10 @@ export default function ChatView() {
         />
 
         {/* Input */}
-        <MessageInput onSend={handleSend} />
+        <MessageInput 
+          onSend={handleSend} 
+          isSending={isSending || sendingMessage}
+        />
         
         {/* Context Menu */}
         {contextMenu && (

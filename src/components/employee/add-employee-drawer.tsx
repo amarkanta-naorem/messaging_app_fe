@@ -3,7 +3,8 @@
 import { useState, useEffect, useMemo } from "react";
 import { X, Search, Check, Loader2, User } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import { API_BASE } from "@/lib/config";
+import { post, get } from "@/services/api-client";
+import type { ApiEnvelope } from "@/types/api";
 import Image from "next/image";
 
 interface OrgGroup {
@@ -15,6 +16,27 @@ interface OrgGroup {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+interface EmployeeResponse {
+  id: number;
+  organisationId: number;
+  user: {
+    id: number;
+    name: string;
+    phone: string;
+    email: string;
+    avatar: string | null;
+  };
+  status: string;
+  role: string;
+  joinedAt: string;
+  groups: Array<{
+    id: number;
+    name: string;
+    logo: string | null;
+    role: string;
+  }>;
 }
 
 interface AddEmployeeDrawerProps {
@@ -76,15 +98,11 @@ export const AddEmployeeDrawer = ({
   const fetchGroups = async () => {
     setGroupsLoading(true);
     try {
-      const response = await fetch(
-        `${API_BASE}/organizations/${organisationId}/groups`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+      const response = await get<ApiEnvelope<OrgGroup[]>>(
+        `/organizations/${organisationId}/groups`
       );
-      const result = await response.json();
-      if (result.success) {
-        setGroups(result.data);
+      if (response.success) {
+        setGroups(response.data);
       }
     } catch (err) {
       console.error("Failed to fetch groups:", err);
@@ -158,25 +176,16 @@ export const AddEmployeeDrawer = ({
         body.groupIds = Array.from(selectedGroupIds);
       }
 
-      const response = await fetch(
-        `${API_BASE}/organizations/${organisationId}/employees`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(body),
-        }
+      const response = await post<ApiEnvelope<EmployeeResponse>>(
+        `/organizations/${organisationId}/employees`,
+        body
       );
 
-      const result = await response.json();
-
-      if (result.success) {
+      if (response.success) {
         onEmployeeAdded();
         onClose();
       } else {
-        setError(result.message || "Failed to create employee");
+        setError(response.message || "Failed to create employee");
       }
     } catch (err) {
       console.error("Failed to create employee:", err);

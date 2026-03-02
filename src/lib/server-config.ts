@@ -5,8 +5,11 @@
  */
 
 // Server-side environment variable (not prefixed with NEXT_PUBLIC_)
-// Falls back to localhost for development
-export const API_BASE_URL = process.env.API_BASE_URL || "http://localhost:3000/api";
+// Falls back to the production backend API
+// In production, this should be set to the actual backend URL
+export const API_BASE_URL = process.env.API_BASE_URL 
+  || process.env.NEXT_PUBLIC_API_BASE_URL 
+  || "https://whatclone.globizsapp.com/api";
 
 // Socket URL - points to the backend WebSocket server
 // This should be the backend API server, not the frontend

@@ -7,9 +7,9 @@
 
 import * as messageService from "@/services/message.service";
 import * as conversationService from "@/services/conversation.service";
-import type { Message, MessageContent, MessagesResponse, SendMessagePayload, SendMessageResponse } from "@/types";
+import type { Message, MessageContent, MessagesResponse, SendMessagePayload, SendMessageResponse, SendFileMessagePayload } from "@/types";
 
-export type { MessageContent, Message, MessagesResponse, SendMessagePayload, SendMessageResponse };
+export type { MessageContent, Message, MessagesResponse, SendMessagePayload, SendMessageResponse, SendFileMessagePayload };
 
 export async function getMessages(conversationId: number, isGroup?: boolean): Promise<Message[]> {
   if (isGroup) {
@@ -20,6 +20,7 @@ export async function getMessages(conversationId: number, isGroup?: boolean): Pr
 
 export const createDirectConversation = conversationService.createDirectConversation;
 export const sendMessage = messageService.sendMessage;
+export const sendFileMessage = messageService.sendFileMessage;
 
 export async function sendMessageToPhone(payload: SendMessagePayload): Promise<SendMessageResponse> {
   return messageService.sendMessage({ ...payload, receiverPhone: payload.receiverPhone });

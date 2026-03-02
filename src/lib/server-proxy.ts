@@ -18,6 +18,8 @@ interface ProxyOptions {
   body?: unknown;
   /** Optional query string to append */
   query?: string;
+  /** Whether this is a multipart/form-data request */
+  isMultipart?: boolean;
 }
 
 /**
@@ -31,6 +33,7 @@ export async function proxyRequest({
   request,
   body,
   query,
+  isMultipart = false,
 }: ProxyOptions): Promise<Response> {
   const token = extractBearerToken(request.headers);
 
@@ -41,7 +44,6 @@ export async function proxyRequest({
   const url = `${API_BASE_URL}${path}${query ? `?${query}` : ""}`;
 
   const headers: Record<string, string> = {
-    "Content-Type": "application/json",
     Authorization: `Bearer ${token}`,
   };
 
@@ -51,7 +53,14 @@ export async function proxyRequest({
   };
 
   if (body !== undefined && method !== "GET") {
-    fetchOptions.body = JSON.stringify(body);
+    if (isMultipart && body instanceof FormData) {
+      // For multipart requests, let the browser set the content-type with boundary
+      delete headers["Content-Type"];
+      fetchOptions.body = body;
+    } else {
+      headers["Content-Type"] = "application/json";
+      fetchOptions.body = JSON.stringify(body);
+    }
   }
 
   try {

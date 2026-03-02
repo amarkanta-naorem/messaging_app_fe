@@ -1,4 +1,5 @@
-import { API_BASE } from "@/lib/config";
+import { get } from "@/services/api-client";
+import type { ApiEnvelope } from "@/types/api";
 import { useEffect, useState } from "react";
 import { ContactHeader } from "./contact-header";
 import { useAuth } from "@/context/AuthContext";
@@ -51,12 +52,16 @@ const formatDate = (dateString?: string) => {
 };
 
 export const ContactDrawer = ({ isOpen, onClose, phone, conversation }: ContactDrawerProps) => {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const [contact, setContact] = useState<Partial<ContactDetails> | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isAddMembersOpen, setIsAddMembersOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+
+  // Check if user has permission to add members (admin or owner)
+  const userRole = user?.organisation_employees?.role;
+  const canAddMembers = userRole === "admin" || userRole === "owner";
 
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
@@ -80,14 +85,9 @@ export const ContactDrawer = ({ isOpen, onClose, phone, conversation }: ContactD
         setError(null);
         setContact(null);
         try {
-          const response = await fetch(`${API_BASE}/groups/${conversation.id}`, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          });
-          const data = await response.json();
-          if (data.success) {
-            const groupData = data.data;
+          const response = await get<ApiEnvelope<any>>(`/groups/${conversation.id}`);
+          if (response.success) {
+            const groupData = response.data;
             setContact({
               id: groupData.id,
               name: groupData.name,
@@ -98,7 +98,7 @@ export const ContactDrawer = ({ isOpen, onClose, phone, conversation }: ContactD
               joinedAt: groupData.createdAt,
             });
           } else {
-            setError(data.message || "Failed to fetch group details");
+            setError(response.message || "Failed to fetch group details");
           }
         } catch (err) {
           console.error("Failed to fetch group details:", err);
@@ -120,16 +120,11 @@ export const ContactDrawer = ({ isOpen, onClose, phone, conversation }: ContactD
         setError(null);
         setContact(null);
         try {
-          const response = await fetch(`${API_BASE}/contacts/${phoneToFetch}/organization`, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          });
-          const data = await response.json();
-          if (data.success) {
-            setContact(data.data);
+          const response = await get<ApiEnvelope<any>>(`/contacts/${phoneToFetch}/organization`);
+          if (response.success) {
+            setContact(response.data);
           } else {
-            setError(data.message || "Failed to fetch contact details");
+            setError(response.message || "Failed to fetch contact details");
           }
         } catch (err) {
           console.error("Failed to fetch contact details:", err);
@@ -225,7 +220,9 @@ export const ContactDrawer = ({ isOpen, onClose, phone, conversation }: ContactD
                     </h3>
                     <button 
                       onClick={() => setIsAddMembersOpen(true)}
-                      className="text-(--accent-primary) text-sm font-medium hover:underline flex items-center gap-1 cursor-pointer"
+                      className="text-(--accent-primary) text-sm font-medium hover:underline flex items-center gap-1 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={!canAddMembers}
+                      title={!canAddMembers ? "Only admins and owners can add members" : "Add Members"}
                     >
                       <UserPlus size={16} />
                       Add Members
