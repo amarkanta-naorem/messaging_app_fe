@@ -1,9 +1,3 @@
-/**
- * MessageList - Container component for displaying a list of messages.
- * Handles message grouping and avatar/name display logic.
- * Optimized for modern WhatsApp-style UI/UX
- */
-
 import { useEffect, useRef, useMemo } from "react";
 import { MessageBubble } from "./MessageBubble";
 
@@ -51,13 +45,7 @@ interface MessageListProps {
   onMessagesChange?: () => void;
 }
 
-export function MessageList({
-  messages,
-  currentUserId,
-  isGroup = false,
-  loading = false,
-  onMessagesChange,
-}: MessageListProps) {
+export function MessageList({ messages, currentUserId, isGroup = false, loading = false, onMessagesChange }: MessageListProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Process messages to add grouping metadata
