@@ -21,7 +21,6 @@ export default function EmployeePage() {
 
   // Check if user has permission to add employees (admin or owner)
   const userRole = user?.organisation_employees?.role;
-  const canAddEmployee = userRole === "admin" || userRole === "owner";
 
   const fetchEmployees = async () => {
     try {
@@ -67,9 +66,8 @@ export default function EmployeePage() {
         </div>
         <button
           onClick={() => setIsAddEmployeeOpen(true)}
-          className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg transition-colors shadow-sm cursor-pointer"
-          disabled={!canAddEmployee}
-          title={!canAddEmployee ? "Only admins and owners can add employees" : "Add Employee"}
+          className={`flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg transition-colors shadow-sm cursor-pointer`}
+          title={"Add Employee"}
         >
           <Plus size={20} />
           <span>Add Employee</span>

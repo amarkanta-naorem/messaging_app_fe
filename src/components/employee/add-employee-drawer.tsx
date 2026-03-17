@@ -156,7 +156,10 @@ export const AddEmployeeDrawer = ({
 
   const handleSubmit = async () => {
     if (!validate()) return;
-    if (!token || !organisationId) return;
+    if (!token || !organisationId) {
+      setError("Authentication or organization information is missing. Please refresh and try again.");
+      return;
+    }
 
     setSubmitting(true);
     setError(null);
@@ -176,10 +179,7 @@ export const AddEmployeeDrawer = ({
         body.groupIds = Array.from(selectedGroupIds);
       }
 
-      const response = await post<ApiEnvelope<EmployeeResponse>>(
-        `/organizations/${organisationId}/employees`,
-        body
-      );
+      const response = await post<ApiEnvelope<EmployeeResponse>>(`/organizations/${organisationId}/employees`, body);
 
       if (response.success) {
         onEmployeeAdded();
@@ -435,8 +435,8 @@ export const AddEmployeeDrawer = ({
               Cancel
             </button>
             <button
+              disabled={submitting || !token || !organisationId}
               onClick={handleSubmit}
-              disabled={submitting}
               className="flex-1 bg-[var(--accent-primary)] text-white py-2.5 rounded-lg font-medium text-sm hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
             >
               {submitting && <Loader2 size={16} className="animate-spin" />}
