@@ -141,7 +141,7 @@ export default function AllConversation({ data, showNewMessage, onClose, searchQ
           const group = item as Group;
           return (
             <ConversationItem
-              key={group.id}
+              key={`group-${group.id}`}
               id={group.id}
               name={group.name}
               avatar={group.logo}
@@ -156,7 +156,7 @@ export default function AllConversation({ data, showNewMessage, onClose, searchQ
         const conv = item as Conversation;
         return (
           <ConversationItem
-            key={conv.id}
+            key={`conversation-${conv.id}`}
             id={conv.id}
             participant={conv.participant}
             lastMessage={conv.lastMessage}

@@ -160,7 +160,7 @@ export function MessageInput({ onSend, onFileUpload, placeholder = "Type a messa
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
           disabled={disabled || isSending}
-          className="flex-1 h-9 px-3 rounded-2xl bg-(--bg-input) border border-gray-300 text-[14px] outline-none focus:ring-2 focus:ring-emerald-500/20 text-(--text-primary) placeholder:text-(--text-muted)"
+          className="flex-1 h-9 px-3 rounded-lg bg-(--bg-input) border border-gray-500 text-[14px] outline-none focus:ring-1 focus:ring-emerald-500/20 text-(--text-primary) placeholder:text-(--text-muted)"
         />
         
         {/* Send Button */}
