@@ -6,17 +6,11 @@
 import Image from "next/image";
 
 export interface AvatarProps {
-  /** Image source URL */
   src?: string | null;
-  /** Display name for generating initials fallback */
   name?: string;
-  /** Size variant */
   size?: "xs" | "sm" | "md" | "lg" | "xl";
-  /** Additional CSS classes */
   className?: string;
-  /** Whether to show a status indicator */
   showStatus?: boolean;
-  /** Status color (for online indicator) */
   statusColor?: "online" | "offline" | "away";
 }
 
@@ -36,14 +30,7 @@ const statusSizeClasses = {
   xl: "w-4 h-4 border-2",
 };
 
-export function Avatar({
-  src,
-  name = "",
-  size = "md",
-  className = "",
-  showStatus = false,
-  statusColor = "online",
-}: AvatarProps) {
+export function Avatar({ src, name = "", size = "md", className = "", showStatus = false, statusColor = "online" }: AvatarProps) {
   const initials = name.charAt(0).toUpperCase();
   
   const statusColors = {
@@ -54,15 +41,15 @@ export function Avatar({
 
   return (
     <div className={`relative inline-block shrink-0 ${className}`}>
-      <div className={`${sizeClasses[size]} rounded-full bg-[var(--bg-tertiary)] overflow-hidden flex items-center justify-center`}>
+      <div className={`${sizeClasses[size]} rounded-full bg-(--bg-tertiary) overflow-hidden flex items-center justify-center`}>
         {src ? (
           <Image src={src} alt={name || "Avatar"} fill className="object-cover" />
         ) : (
-          <span className="text-[var(--text-inverse)] font-semibold">{initials}</span>
+          <span className="text-(--text-inverse) font-semibold">{initials}</span>
         )}
       </div>
       {showStatus && (
-        <span className={`absolute bottom-0 right-0 ${statusSizeClasses[size]} ${statusColors[statusColor]} border-[var(--bg-card)] rounded-full`}/>
+        <span className={`absolute bottom-0 right-0 ${statusSizeClasses[size]} ${statusColors[statusColor]} border-(--bg-card) rounded-full`}/>
       )}
     </div>
   );

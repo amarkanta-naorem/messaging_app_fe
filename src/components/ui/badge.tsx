@@ -5,15 +5,10 @@
 import { ReactNode } from "react";
 
 export interface BadgeProps {
-  /** Badge content */
   children: ReactNode;
-  /** Badge variant */
   variant?: "default" | "success" | "warning" | "danger" | "primary";
-  /** Size of the badge */
   size?: "sm" | "md";
-  /** Whether to use pill/rounded style */
   pill?: boolean;
-  /** Additional CSS classes */
   className?: string;
 }
 
@@ -30,13 +25,7 @@ const sizeClasses = {
   md: "text-xs px-2 py-1 min-w-[20px] h-5",
 };
 
-export function Badge({
-  children,
-  variant = "default",
-  size = "md",
-  pill = false,
-  className = "",
-}: BadgeProps) {
+export function Badge({ children, variant = "default", size = "md", pill = false, className = "" }: BadgeProps) {
   return (
     <span
       className={`

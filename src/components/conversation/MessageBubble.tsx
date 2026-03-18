@@ -249,7 +249,7 @@ const ImageMsg = memo(function ImageMsg({ url, caption}: ImageMsgProps) {
 
   return (
     <>
-      <div className="relative cursor-pointer rounded-lg overflow-hidden group inline-block" onClick={() => setIsExpanded(true)}>
+      <div className="relative cursor-pointer rounded-[17px] overflow-hidden group inline-block" onClick={() => setIsExpanded(true)}>
         {isLoading && (
           <div className="absolute inset-0 bg-[#e4e6e9] dark:bg-[#3d4a51] flex items-center justify-center">
             <Loader2 size={24} className="animate-spin text-[#8696a1]" />
@@ -259,7 +259,7 @@ const ImageMsg = memo(function ImageMsg({ url, caption}: ImageMsgProps) {
         <img
           src={url}
           alt={caption || "Image"}
-          className={`max-w-70 max-h-80 object-cover block transition-opacity ${isLoading ? "opacity-0" : "opacity-100"}`}
+          className={`w-auto object-cover block transition-opacity ${isLoading ? "opacity-0" : "opacity-100"}`}
           loading="lazy"
           onLoad={() => setIsLoading(false)}
           onError={() => {
@@ -305,12 +305,12 @@ const VideoMsg = memo(function VideoMsg({ url, caption }: VideoMsgProps) {
 
   return (
     <>
-      <div className="inline-block rounded-lg overflow-hidden">
+      <div className="inline-block rounded-[17px] overflow-hidden">
         <div className="relative cursor-pointer group" onClick={() => setIsExpanded(true)}>
           {thumbnailUrl ? (
-            <img src={thumbnailUrl} alt="Video thumbnail" className="max-w-70 max-h-80 object-cover"/>
+            <img src={thumbnailUrl} alt="Video thumbnail" className="w-auto object-cover"/>
           ) : (
-            <div className="max-w-70 max-h-80 bg-[#2a2f32] flex items-center justify-center">{getFileIcon("video", 48)}</div>
+            <div className="w-auto bg-[#2a2f32] flex items-center justify-center">{getFileIcon("video", 48)}</div>
           )}
 
           <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/30 transition-colors">
@@ -379,7 +379,7 @@ const AudioMsg = memo(function AudioMsg({ url, isOwn }: AudioMsgProps) {
   });
 
   return (
-    <div className={`flex items-center gap-3 py-3 px-4 rounded-lg min-w-55 cursor-pointer active:scale-[0.98] transition-transform ${isOwn ? "bg-[#d9fdd3] hover:bg-[#cff5c5]" : "bg-[#f0f2f5] hover:bg-[#e4e6e9]"}`} onClick={toggle} role="button" aria-label={playing ? "Pause audio" : "Play audio"}>
+    <div className={`flex items-center gap-3 py-3 px-2 rounded cursor-pointer active:scale-[0.98] transition-transform ${isOwn ? "bg-[#d9fdd3] hover:bg-[#cff5c5]" : "bg-[#f0f2f5] hover:bg-[#e4e6e9]"}`} onClick={toggle} role="button" aria-label={playing ? "Pause audio" : "Play audio"}>
       <button className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-colors ${isOwn ? "bg-[#00a884] hover:bg-[#008f6d]" : "bg-[#54656f] hover:bg-[#3d4a51]"}`}>
         {playing ? (
           <Pause size={18} className="text-white" fill="white" />
@@ -428,8 +428,8 @@ const FileMsg = memo(function FileMsg({ fileData, caption, isOwn }: FileMsgProps
   if (category === "image" && fileUrl) {
     return (
       <>
-        <div className="relative cursor-pointer rounded-lg overflow-hidden group inline-block" onClick={() => setShowPreview(true)}>
-          <img src={fileUrl} alt={fileName} className="max-w-60 max-h-55 object-cover block" loading="lazy"/>
+        <div className="relative cursor-pointer rounded overflow-hidden group inline-block" onClick={() => setShowPreview(true)}>
+          <img src={fileUrl} alt={fileName} width={200} height={200} className="object-cover block" loading="lazy"/>
           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/15 transition-colors" />
           
           {sizeStr && (
@@ -457,7 +457,7 @@ const FileMsg = memo(function FileMsg({ fileData, caption, isOwn }: FileMsgProps
 
   return (
     <>
-      <a href={fileUrl} target="_blank" rel="noopener noreferrer" className={`flex items-center gap-3 p-3 rounded-xl min-w-55 max-w-70 transition-all duration-150 active:scale-[0.98] ${isOwn ? "bg-[#cbf3d6] hover:bg-[#b8e9c9] active:bg-[#a8d9b9]" : "bg-[#f0f2f5] hover:bg-[#e4e6e9] active:bg-[#d4d6d9]"} no-underline`} onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}>
+      <a href={fileUrl} target="_blank" rel="noopener noreferrer" className={`flex items-center gap-3 p-2 rounded-lg w-auto transition-all duration-150 active:scale-[0.98] ${isOwn ? "bg-[#cbf3d6] hover:bg-[#b8e9c9] active:bg-[#a8d9b9]" : "bg-[#f0f2f5] hover:bg-[#e4e6e9] active:bg-[#d4d6d9]"} no-underline`} onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}>
         {/* File type icon */}
         <div className={`w-12 h-12 rounded-lg flex items-center justify-center shrink-0 transition-colors ${isOwn ? "bg-[#00a884]/15 text-[#00a884]" : "bg-[#dcdfe3] text-[#54656f]"}`}>
           {category === "image" ? (
@@ -473,7 +473,7 @@ const FileMsg = memo(function FileMsg({ fileData, caption, isOwn }: FileMsgProps
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5">
-            <p className="text-[13px] text-[#111921] dark:text-[#e9ecef] font-medium truncate block">{fileName}</p>
+            <p className="text-[13px] text-[#111921] font-medium truncate block">{fileName}</p>
             {extension && (
               <span className="shrink-0 px-1.5 py-0.5 bg-black/5 dark:bg-white/10 rounded text-[10px] font-medium text-[#667781]">{extension}</span>
             )}
@@ -583,37 +583,49 @@ export const MessageBubble = memo(function MessageBubble({ message, isOwn, showA
   }, [contentType, url, caption, fileData, metadataFileData, text, isOwn]);
 
   const bubbleClass = useMemo(() => {
-    const base = "px-3 py-1.5 min-w-[120px] max-w-[75%] md:max-w-[65%] relative shadow-sm";
-    if (isOwn) {
-      return `${base} bg-[#d9fdd3] dark:bg-[#005c4b] rounded-tl-[18px] rounded-bl-[18px] rounded-br-[4px] rounded-tr-[18px]`;
-    }
-    return `${base} bg-[#ffffff] dark:bg-[#2a2f32] rounded-tl-[4px] rounded-bl-[18px] rounded-br-[18px] rounded-tr-[18px]`;
+    const base = "min-w-[7rem] max-w-[25rem] relative shadow-sm";
+    const bg = isOwn ? "bg-[#d9fdd3] dark:bg-[#005c4b]" : "bg-[#ffffff] dark:bg-[#2a2f32]";
+
+    // Fixed tail styling - more subtle like in the image
+    const tail = isOwn
+      ? `after:content-[''] after:absolute after:-right-[7.5px] after:bottom-[0px] after:w-0 after:h-0 
+         after:border-t-[8px] after:border-t-transparent 
+         after:border-b-[0px] after:border-b-transparent 
+         after:border-l-[10px] after:border-l-[#d9fdd3] 
+         dark:after:border-l-[#005c4b] rounded-t-lg rounded-bl-lg`
+      : `after:content-[''] after:absolute after:-left-[7.5px] after:bottom-0 after:w-0 after:h-0 
+         after:border-t-[8px] after:border-t-transparent 
+         after:border-b-[0px] after:border-b-transparent 
+         after:border-r-[10px] after:border-r-[#ffffff] 
+         dark:after:border-r-[#2a2f32] rounded-t-lg rounded-br-lg`;
+
+    return `${base} ${bg} ${tail} px-2 py-1`;
   }, [isOwn]);
 
   return (
-    <div className={`flex ${isOwn ? "justify-end" : "justify-start"} mb-1.5 last:mb-0`} role="message">
-      <div className="flex items-end max-w-[85%] md:max-w-[75%]">
+    <div className={`flex ${isOwn ? "justify-end" : "justify-start"} mb-1 last:mb-0`} role="message">
+      <div className={`flex items-end ${isOwn ? "pr-2" : "pl-2"} max-w-[85%] md:max-w-[75%]`}>
         {showAvatar && !isOwn && (
-          <div className="w-8 h-8 rounded-full bg-[#e9ecef] dark:bg-[#3d4a51] shrink-0 mr-1.5 self-end overflow-hidden">
+          <div className="w-9 h-9 rounded-full bg-[#e9ecef] dark:bg-[#3d4a51] shrink-0 mr-1.5 mb-0.5 overflow-hidden">
             {message.senderAvatar ? (
-              <Image src={message.senderAvatar} alt="Avatar" width={32} height={32} className="w-full h-full object-cover"/>
+              <Image src={message.senderAvatar} alt="Avatar" width={36} height={36} className="w-full h-full object-cover"/>
             ) : (
-              <div className="w-full h-full flex items-center justify-center text-white text-xs font-medium bg-[#00a884]">{message.senderName?.charAt(0)?.toUpperCase() || "?"}</div>
+              <div className="w-full h-full flex items-center justify-center text-white text-sm font-medium bg-[#00a884]">{message.senderName?.charAt(0)?.toUpperCase() || "?"}</div>
             )}
           </div>
         )}
 
-        {!showAvatar && !isOwn && <div className="w-8 mr-1.5 shrink-0" />}
+        {!showAvatar && !isOwn && <div className="w-9 mr-1.5 shrink-0" />}
 
         <div className="flex flex-col">
           {showSenderName && !isOwn && (
-            <div className="text-[#00a884] text-[11.5px] font-medium ml-1 mb-0.5">{message.senderName}</div>
+            <div className="text-[#00a884] text-xs font-medium ml-2 mb-0.5">{message.senderName}</div>
           )}
 
           <div className={bubbleClass}>
             {renderedContent}
-            <div className="flex items-center justify-end gap-1 mt-1">
-              <span className="text-[10.5px] text-[#667781] dark:text-[#aebac2] leading-none">{messageTime}</span>
+            <div className="flex items-center justify-end gap-1 mt-0.5">
+              <span className="text-[10px] text-[#667781] dark:text-[#aebac2] leading-none">{messageTime}</span>
             </div>
           </div>
         </div>

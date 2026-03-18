@@ -4,7 +4,7 @@
  */
 
 import { useState, useRef, KeyboardEvent, ChangeEvent } from "react";
-import { SendHorizontal, Paperclip, X, Image as ImageIcon, File, Video, Mic } from "lucide-react";
+import { SendHorizontal, Paperclip, X, File, Video, Mic } from "lucide-react";
 
 interface FileAttachment {
   file: File;
@@ -13,15 +13,10 @@ interface FileAttachment {
 }
 
 interface MessageInputProps {
-  /** Callback when send button is clicked or Enter is pressed */
   onSend: (text: string, attachments?: FileAttachment[]) => void;
-  /** Callback for file upload */
   onFileUpload?: (file: File) => Promise<void>;
-  /** Placeholder text */
   placeholder?: string;
-  /** Whether the input is disabled */
   disabled?: boolean;
-  /** Whether a message is being sent (loading state) */
   isSending?: boolean;
 }
 
@@ -35,16 +30,9 @@ function getFileType(mimeType: string): FileAttachment["type"] {
   return "document";
 }
 
-export function MessageInput({
-  onSend,
-  onFileUpload,
-  placeholder = "Type a message...",
-  disabled = false,
-  isSending = false,
-}: MessageInputProps) {
+export function MessageInput({ onSend, onFileUpload, placeholder = "Type a message...", disabled = false, isSending = false }: MessageInputProps) {
   const [inputText, setInputText] = useState("");
   const [attachments, setAttachments] = useState<FileAttachment[]>([]);
-  const [isUploading, setIsUploading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -119,22 +107,11 @@ export function MessageInput({
       {attachments.length > 0 && (
         <div className="flex gap-2 mb-2 overflow-x-auto pb-2">
           {attachments.map((attachment, index) => (
-            <div 
-              key={index} 
-              className="relative group shrink-0"
-            >
+            <div key={index} className="relative group shrink-0">
               {attachment.type === "image" && attachment.preview ? (
                 <div className="relative">
-                  <img 
-                    src={attachment.preview} 
-                    alt={attachment.file.name}
-                    className="w-20 h-20 object-cover rounded-lg"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => removeAttachment(index)}
-                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
+                  <img src={attachment.preview} alt={attachment.file.name} className="w-20 h-20 object-cover rounded-lg"/>
+                  <button type="button" onClick={() => removeAttachment(index)} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                     <X size={14} />
                   </button>
                 </div>
@@ -150,11 +127,7 @@ export function MessageInput({
                   <span className="text-xs text-(--text-primary) max-w-24 truncate">
                     {attachment.file.name}
                   </span>
-                  <button
-                    type="button"
-                    onClick={() => removeAttachment(index)}
-                    className="text-red-500 hover:text-red-700"
-                  >
+                  <button type="button" onClick={() => removeAttachment(index)} className="text-red-500 hover:text-red-700">
                     <X size={14} />
                   </button>
                 </div>
@@ -167,14 +140,7 @@ export function MessageInput({
       {/* Input Row */}
       <div className="flex items-center gap-2">
         {/* File Attachment Button */}
-        <input
-          ref={fileInputRef}
-          type="file"
-          multiple
-          onChange={handleFileSelect}
-          className="hidden"
-          accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip"
-        />
+        <input ref={fileInputRef} type="file" multiple onChange={handleFileSelect} className="hidden" accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip"/>
         <button
           type="button"
           onClick={openFilePicker}

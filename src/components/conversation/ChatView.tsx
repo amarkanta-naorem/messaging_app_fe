@@ -1,16 +1,14 @@
 "use client";
 
-import { useChat } from "@/context/ChatContext";
-import { useAuth } from "@/context/AuthContext";
-import { useState, useRef, useEffect } from "react";
-import { ContactDrawer } from "../employee/contact-drawer";
-import { useTheme } from "../providers/ThemeProvider";
-
-// Sub-components
-import { ChatEmptyState } from "./ChatEmptyState";
 import { ChatHeader } from "./ChatHeader";
 import { MessageList } from "./MessageList";
 import { MessageInput } from "./MessageInput";
+import { useChat } from "@/context/ChatContext";
+import { useAuth } from "@/context/AuthContext";
+import { ChatEmptyState } from "./ChatEmptyState";
+import { useState, useRef, useEffect } from "react";
+import { useTheme } from "../providers/ThemeProvider";
+import { ContactDrawer } from "../employee/contact-drawer";
 
 interface FileAttachment {
   file: File;
@@ -85,24 +83,12 @@ export default function ChatView() {
       {/* Chat Background */}
       {isDark ? (
         <>
-          <div 
-            className="absolute inset-0 z-0" 
-            style={{ 
-              backgroundImage: "url('/image/chat-bg.png')",
-              opacity: 0.18
-            }}
-          />
+          <div className="absolute inset-0 z-0" style={{ backgroundImage: "url('/image/chat-bg.png')", opacity: 0.18 }}/>
           <div className="absolute inset-0 z-0 bg-linear-to-b from-black/40 to-black/20" />
         </>
       ) : (
         <>
-          <div 
-            className="absolute inset-0 z-0" 
-            style={{ 
-              backgroundImage: "url('/image/chat-bg.png')",
-              opacity: 0.3
-            }}
-          />
+          <div className="absolute inset-0 z-0" style={{ backgroundImage: "url('/image/chat-bg.png')", opacity: 0.3 }}/>
           <div className="absolute inset-0 z-0 bg-linear-to-b from-white/50 to-white/20" />
         </>
       )}
@@ -135,9 +121,7 @@ export default function ChatView() {
         {/* Context Menu */}
         {contextMenu && (
           <div className="fixed bg-(--bg-card) shadow-lg p-2 z-100 rounded-lg" style={{ top: contextMenu.y, left: contextMenu.x }}>
-            <button className="block w-full text-left px-3 py-2 text-sm hover:bg-(--bg-hover) rounded text-(--text-primary)" onClick={handleCloseChat}>
-              Close chat
-            </button>
+            <button className="block w-full text-left px-3 py-2 text-sm hover:bg-(--bg-hover) rounded text-(--text-primary)" onClick={handleCloseChat}>Close chat</button>
           </div>
         )}
         

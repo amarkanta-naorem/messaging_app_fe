@@ -1,15 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { get } from "@/services/api-client";
+import { ContactItem } from "./ContactItem";
+import type { ApiEnvelope } from "@/types/api";
 import { useAuth } from "@/context/AuthContext";
 import { useChat } from "@/context/ChatContext";
 import { Conversation } from "@/lib/conversations";
-import { get } from "@/services/api-client";
-import type { ApiEnvelope } from "@/types/api";
-
-// Sub-components
 import { ConversationItem } from "./ConversationItem";
-import { ContactItem } from "./ContactItem";
 
 interface Contact {
   id: number;
@@ -37,9 +35,9 @@ interface AllConversationProps {
 }
 
 export default function AllConversation({ data, showNewMessage, onClose, searchQuery = "" }: AllConversationProps) {
-  const { activeConversation, selectConversation } = useChat();
   const { token } = useAuth();
   const [contacts, setContacts] = useState<Contact[]>([]);
+  const { activeConversation, selectConversation } = useChat();
   const [loadingContacts, setLoadingContacts] = useState(false);
   const [contactsError, setContactsError] = useState<string | null>(null);
   

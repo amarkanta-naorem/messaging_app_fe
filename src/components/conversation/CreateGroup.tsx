@@ -1,11 +1,10 @@
 "use client";
 
-import { useAuth } from "@/context/AuthContext";
-import { useChat } from "@/context/ChatContext";
-
-import { CreateGroupForm } from "./CreateGroupForm";
 import { post } from "@/services/api-client";
 import type { ApiEnvelope } from "@/types/api";
+import { useAuth } from "@/context/AuthContext";
+import { useChat } from "@/context/ChatContext";
+import { CreateGroupForm } from "./CreateGroupForm";
 
 interface CreateGroupProps {
   onClose: (newGroup?: any) => void;
@@ -32,10 +31,7 @@ export default function CreateGroup({ onClose }: CreateGroupProps) {
 
     try {
       // Step 1: Create the group through the proxy API route
-      const createResponse = await post<ApiEnvelope<CreateGroupResponse>>(
-        "/groups",
-        { name, description }
-      );
+      const createResponse = await post<ApiEnvelope<CreateGroupResponse>>("/groups", { name, description });
       
       if (!createResponse.success || !createResponse.data) {
         console.error(createResponse.message || "Failed to create group");
@@ -47,10 +43,7 @@ export default function CreateGroup({ onClose }: CreateGroupProps) {
       // Step 2: Add the creator as a member (required to send messages)
       if (user?.id) {
         console.log("Adding user as member, userId:", user.id, "groupId:", newGroup.id);
-        await post<ApiEnvelope<{ added: number[]; skipped_already_member: number[]; skipped_invalid_user: number[] }>>(
-          `/groups/${newGroup.id}/members`,
-          { userIds: [user.id] }
-        );
+        await post<ApiEnvelope<{ added: number[]; skipped_already_member: number[]; skipped_invalid_user: number[] }>>(`/groups/${newGroup.id}/members`, { userIds: [user.id] });
       }
 
       // Step 3: Refresh conversations to include the new group
