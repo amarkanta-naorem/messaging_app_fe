@@ -7,7 +7,7 @@ import type { Conversation, Message as ChatMessage } from "@/types";
 import { createContext, useContext, useCallback, ReactNode, useEffect, useRef } from "react";
 import { MessageContent, sendMessage as sendMessageApi, sendFileMessage, Message } from "@/lib/messages";
 import { connectSocket, disconnectSocket, IncomingMessage, SocketError, MessagePayload, getSocket } from "@/lib/socket";
-import { fetchConversations, fetchMessagesForConversation, setActiveConversation, addMessageOptimistic, updateMessageInState, replaceOptimisticMessage, addIncomingMessage, updateConversationLastMessage, setChatSocketError, selectConversations, selectActiveConversationId, selectActiveConversation, selectMessagesForConversation, selectLoadingConversations, selectLoadingMessages, selectSendingMessage, selectSocketError } from "@/store/store";
+import { fetchConversations, fetchMessagesForConversation, setActiveConversation, switchConversation, addMessageOptimistic, updateMessageInState, replaceOptimisticMessage, addIncomingMessage, updateConversationLastMessage, setChatSocketError, selectConversations, selectActiveConversationId, selectActiveConversation, selectMessagesForConversation, selectLoadingConversations, selectLoadingMessages, selectSendingMessage, selectSocketError } from "@/store/store";
 
 interface ChatContextType {
   conversations: Conversation[];
@@ -192,59 +192,59 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     const currentConv = activeConversationRef.current;
     const serverMessageId = message.serverMessageId ?? message.id;
     const normalizedContent = normalizeMessageContent(message.content);
+    const isOwnMessage = message.senderId === user?.id;
 
-    void (async () => {
-      const isOwnMessage = message.senderId === user?.id;
-      const resolvedConversationId = await resolveConversationId(message);
-
-      if (resolvedConversationId === null && !isOwnMessage) {
-        return;
+    // For own messages, try to resolve conversation immediately
+    if (isOwnMessage) {
+      if (message.groupId && currentConv && (currentConv as any).isGroup && currentConv.id === message.groupId) {
+        (dispatch as any)(updateMessageInState({
+          conversationId: currentConv.id,
+          clientMessageId: message.clientMessageId!,
+          updates: { id: serverMessageId ?? message.id, status: message.status }
+        }));
       }
+      return;
+    }
 
-      if (resolvedConversationId === null && isOwnMessage) {
-        if (message.groupId && currentConv && (currentConv as any).isGroup && currentConv.id === message.groupId) {
-          (dispatch as any)(updateMessageInState({
-            conversationId: currentConv.id,
-            clientMessageId: message.clientMessageId!,
-            updates: { id: serverMessageId ?? message.id, status: message.status }
-          }));
-          return;
-        }
-        return;
-      }
+    // For incoming messages, resolve conversation ID
+    const resolvedConversationId = message.conversationId || 
+      (message.groupId ? message.groupId : null) ||
+      (message.senderId ? null : null); // Will be resolved below
 
+    // If we can't determine conversation ID, skip
+    if (!resolvedConversationId && !message.senderId) {
+      return;
+    }
+
+    // If we have a conversation ID, process the message
+    if (resolvedConversationId) {
       const normalizedMessage = {
         ...message,
-        conversationId: resolvedConversationId ?? undefined,
+        conversationId: resolvedConversationId,
         content: normalizedContent,
       };
 
-      if (currentConv && resolvedConversationId === currentConv.id) {
-        let replaced = false;
-        
-        const existingIndex = messages.findIndex((msg) => 
-          message.clientMessageId && msg.clientMessageId === message.clientMessageId
-        );
-        
-        if (existingIndex !== -1) {
-          replaced = true;
-          (dispatch as any)(updateMessageInState({
-            conversationId: currentConv.id,
-            clientMessageId: message.clientMessageId,
-            updates: { 
-              ...normalizedMessage, 
-              id: serverMessageId ?? message.id, 
-              status: message.status,
-              createdAt: normalizedMessage.createdAt ?? new Date().toISOString()
-            }
-          }));
-        }
+      // Update last message for this conversation
+      (dispatch as any)(updateConversationLastMessage({
+        conversationId: resolvedConversationId,
+        lastMessage: {
+          id: serverMessageId ?? message.id ?? Date.now(),
+          content: normalizedContent,
+          senderId: message.senderId,
+          status: message.status,
+          createdAt: String(message.createdAt) ?? new Date().toISOString(),
+        },
+      }));
 
-        if (!replaced && serverMessageId && messages.some((msg) => msg.id === serverMessageId)) {
-          return;
-        }
-        
-        if (!replaced && !isOwnMessage) {
+      // If this is the active conversation, add the message
+      if (currentConv && resolvedConversationId === currentConv.id) {
+        // Check if message already exists (optimistic update)
+        const exists = messages.some((msg) => 
+          (serverMessageId && msg.id === serverMessageId) ||
+          (message.clientMessageId && msg.clientMessageId === message.clientMessageId)
+        );
+
+        if (!exists) {
           (dispatch as any)(addIncomingMessage({ 
             conversationId: currentConv.id,
             message: { 
@@ -255,22 +255,54 @@ export function ChatProvider({ children }: { children: ReactNode }) {
           }));
         }
       }
+    } else if (message.senderId) {
+      // Fallback: try to resolve by sender ID (for direct messages)
+      void (async () => {
+        try {
+          const data = await getConversations();
+          const match = data.find((conv) => conv.participant.id === message.senderId);
+          if (match) {
+            (dispatch as any)({ type: "chat/setConversations", payload: data });
+            
+            // Update last message
+            (dispatch as any)(updateConversationLastMessage({
+              conversationId: match.id,
+              lastMessage: {
+                id: serverMessageId ?? message.id ?? Date.now(),
+                content: normalizedContent,
+                senderId: message.senderId,
+                status: message.status,
+                createdAt: String(message.createdAt) ?? new Date().toISOString(),
+              },
+            }));
 
-      if (!isOwnMessage) {
-        (dispatch as any)(updateConversationLastMessage({
-          conversationId: resolvedConversationId!,
-          lastMessage: {
-            id: serverMessageId ?? message.id ?? Date.now(),
-            content: normalizedContent,
-            senderId: message.senderId,
-            status: message.status,
-            createdAt: String(message.createdAt) ?? new Date().toISOString(),
-          },
-          unreadCount: currentConv?.id === resolvedConversationId ? 0 : undefined,
-        }));
-      }
-    })();
-  }, [normalizeMessageContent, resolveConversationId, user?.id, messages, dispatch]);
+            // If this is the active conversation, add the message
+            if (currentConv && match.id === currentConv.id) {
+              const exists = messages.some((msg) => 
+                (serverMessageId && msg.id === serverMessageId) ||
+                (message.clientMessageId && msg.clientMessageId === message.clientMessageId)
+              );
+
+              if (!exists) {
+                (dispatch as any)(addIncomingMessage({ 
+                  conversationId: match.id,
+                  message: { 
+                    ...message,
+                    conversationId: match.id,
+                    content: normalizedContent,
+                    id: serverMessageId ?? message.id ?? Date.now(),
+                    createdAt: message.createdAt ?? new Date().toISOString()
+                  }
+                }));
+              }
+            }
+          }
+        } catch (err) {
+          console.error("Failed to resolve conversation by sender:", err);
+        }
+      })();
+    }
+  }, [normalizeMessageContent, user?.id, messages, dispatch]);
 
   const handleMessageError = useCallback((error: SocketError) => {
     if (error.clientMessageId && activeConversationId) {
@@ -316,12 +348,12 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
   const selectConversation = useCallback(async (conversation: Conversation | null) => {
     if (conversation === null) {
-      dispatch(setActiveConversation(null));
+      dispatch(switchConversation(null));
       return;
     }
 
-    // Store the full conversation object to preserve participant data
-    dispatch(setActiveConversation(conversation));
+    // Use switchConversation to properly clear previous messages and set new active conversation
+    dispatch(switchConversation(conversation));
     
     const isGroup = (conversation as any).isGroup || conversation.type === 'group';
     (dispatch as any)(fetchMessagesForConversation({ conversationId: conversation.id, isGroup }));

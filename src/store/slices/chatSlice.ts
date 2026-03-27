@@ -321,6 +321,23 @@ const chatSlice = createSlice({
      */
     clearActiveConversation: (state) => {
       state.activeConversationId = null;
+      state.activeConversation = null;
+    },
+    
+    /**
+     * Switch conversation - clear previous messages and set new active conversation
+     */
+    switchConversation: (state, action: PayloadAction<Conversation | null>) => {
+      // Clear messages for the previous conversation to prevent stale data
+      if (state.activeConversationId !== null) {
+        delete state.messages[state.activeConversationId];
+        delete state.lastMessagesFetchTime[state.activeConversationId];
+      }
+      
+      // Set new active conversation
+      state.activeConversation = action.payload;
+      state.activeConversationId = action.payload?.id || null;
+      state.messagesError = null;
     },
   },
   extraReducers: (builder) => {
@@ -431,6 +448,7 @@ export const selectSocketError = (state: { chat: ChatState }) => state.chat.sock
 export const {
   setActiveConversationId,
   setActiveConversation,
+  switchConversation,
   addMessageOptimistic,
   updateMessageInState,
   replaceOptimisticMessage,

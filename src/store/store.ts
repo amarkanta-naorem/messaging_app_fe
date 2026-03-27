@@ -34,6 +34,7 @@ export {
   sendMessage,
   setActiveConversationId,
   setActiveConversation,
+  switchConversation,
   addMessageOptimistic,
   updateMessageInState,
   replaceOptimisticMessage,
