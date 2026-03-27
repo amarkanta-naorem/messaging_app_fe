@@ -46,6 +46,14 @@ const invitePersistConfig = {
   whitelist: ["isVerified", "code"],
 };
 
+// Persist config for theme state - persists theme preference
+const themePersistConfig = {
+  key: "theme",
+  storage,
+  // Only persist the theme preference, not system preference or resolved theme
+  whitelist: ["theme"],
+};
+
 // ── Root Reducer ────────────────────────────────────────────────────────
 
 const rootReducer = combineReducers({
@@ -59,6 +67,7 @@ const rootReducer = combineReducers({
 
 const persistedAuthReducer = persistReducer(authPersistConfig, authReducer);
 const persistedInviteReducer = persistReducer(invitePersistConfig, inviteReducer);
+const persistedThemeReducer = persistReducer(themePersistConfig, themeReducer);
 
 // Note: We don't persist chat state to avoid stale data issues
 // This is intentional - chat data should always be fresh
@@ -69,7 +78,7 @@ export const store = configureStore({
   reducer: {
     auth: persistedAuthReducer,
     chat: chatReducer, // Not persisted - fresh on each load
-    theme: themeReducer, // Persisted via localStorage directly
+    theme: persistedThemeReducer, // Persisted via redux-persist
     invite: persistedInviteReducer, // Persisted for invite verification
   },
   middleware: (getDefaultMiddleware) =>

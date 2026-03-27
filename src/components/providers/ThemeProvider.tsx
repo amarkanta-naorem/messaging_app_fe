@@ -1,6 +1,6 @@
 /**
  * Theme Provider
- * Handles theme initialization, SSR/CSR hydration, and persistence
+ * Handles theme initialization, SSR/CSR hydration, persistence, and system preference monitoring
  * Prevents flash of incorrect theme on page load
  */
 
@@ -8,7 +8,15 @@
 
 import { useEffect, ReactNode } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { initializeTheme, selectIsThemeInitialized, toggleTheme, type Theme } from "@/store/slices/themeSlice";
+import { 
+  initializeTheme, 
+  setSystemPreference,
+  selectIsThemeInitialized, 
+  selectTheme,
+  selectResolvedTheme,
+  selectThemeIsDark,
+  type Theme 
+} from "@/store/slices/themeSlice";
 
 interface ThemeProviderProps {
   children: ReactNode;
@@ -16,7 +24,7 @@ interface ThemeProviderProps {
 
 /**
  * Theme Initializer Component
- * Handles theme initialization after hydration
+ * Handles theme initialization after hydration and system preference monitoring
  */
 function ThemeInitializer() {
   const dispatch = useAppDispatch();
@@ -25,6 +33,21 @@ function ThemeInitializer() {
   useEffect(() => {
     // Initialize theme from localStorage or system preference
     dispatch(initializeTheme());
+
+    // Listen for system theme changes
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    
+    const handleChange = (e: MediaQueryListEvent) => {
+      dispatch(setSystemPreference(e.matches ? "dark" : "light"));
+    };
+
+    // Add event listener for system theme changes
+    mediaQuery.addEventListener("change", handleChange);
+
+    // Cleanup
+    return () => {
+      mediaQuery.removeEventListener("change", handleChange);
+    };
   }, [dispatch]);
 
   return null;
@@ -40,20 +63,42 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
   const themeScript = `
     (function() {
       try {
-        var theme = localStorage.getItem('app-theme');
-        if (theme === 'dark') {
-          document.documentElement.classList.add('dark');
-          document.documentElement.setAttribute('data-theme', 'dark');
-        } else if (theme === 'light') {
-          document.documentElement.classList.remove('dark');
-          document.documentElement.setAttribute('data-theme', 'light');
-        } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-          document.documentElement.classList.add('dark');
-          document.documentElement.setAttribute('data-theme', 'dark');
+        var theme = localStorage.getItem('theme');
+        if (theme) {
+          // Parse the persisted theme state
+          var parsed = JSON.parse(theme);
+          var themeValue = parsed.theme || 'system';
+          var resolvedTheme = themeValue;
+          
+          // Resolve system preference if needed
+          if (themeValue === 'system') {
+            resolvedTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+          }
+          
+          // Apply to document
+          document.documentElement.setAttribute('data-theme', resolvedTheme);
+          if (resolvedTheme === 'dark') {
+            document.documentElement.classList.add('dark');
+          } else {
+            document.documentElement.classList.remove('dark');
+          }
         } else {
-          document.documentElement.setAttribute('data-theme', 'light');
+          // No stored preference, use system preference
+          var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          var systemTheme = prefersDark ? 'dark' : 'light';
+          document.documentElement.setAttribute('data-theme', systemTheme);
+          if (prefersDark) {
+            document.documentElement.classList.add('dark');
+          }
         }
-      } catch (e) {}
+      } catch (e) {
+        // Fallback to system preference on error
+        var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+        if (prefersDark) {
+          document.documentElement.classList.add('dark');
+        }
+      }
     })();
   `;
 
@@ -73,11 +118,13 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
 /**
  * Hook to access theme functionality
  * Provides theme state and toggle methods
+ * This is the primary API for components to interact with the theme system
  */
 export function useTheme() {
   const dispatch = useAppDispatch();
-  const theme = useAppSelector((state) => state.theme.theme);
-  const isDark = theme === "dark";
+  const theme = useAppSelector(selectTheme);
+  const resolvedTheme = useAppSelector(selectResolvedTheme);
+  const isDark = useAppSelector(selectThemeIsDark);
   const isInitialized = useAppSelector(selectIsThemeInitialized);
 
   const setTheme = (newTheme: Theme) => {
@@ -85,15 +132,16 @@ export function useTheme() {
   };
 
   const toggle = () => {
-    dispatch(toggleTheme());
+    dispatch({ type: "theme/toggleTheme" });
   };
 
   return {
-    theme,
-    isDark,
-    isInitialized,
-    setTheme,
-    toggle,
+    theme,           // The selected theme ('light', 'dark', or 'system')
+    resolvedTheme,   // The actual theme after resolving system preference
+    isDark,          // Boolean indicating if dark mode is active
+    isInitialized,   // Boolean indicating if theme has been initialized
+    setTheme,        // Function to set a specific theme
+    toggle,          // Function to toggle between light and dark
   };
 }
 

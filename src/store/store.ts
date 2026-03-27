@@ -63,10 +63,13 @@ export {
   setTheme,
   toggleTheme,
   initializeTheme,
+  setSystemPreference,
   // Selectors
   selectTheme,
+  selectResolvedTheme,
   selectThemeIsDark,
   selectIsThemeInitialized,
+  selectSystemPreference,
   type Theme,
 } from "./slices/themeSlice";
 export { default as themeReducer } from "./slices/themeSlice";

@@ -109,9 +109,9 @@ export default function Sidebar() {
                 <span className="text-(--text-primary) text-[16px] font-medium">{isDark ? 'Light Mode' : 'Dark Mode'}</span>
                 <button 
                   onClick={toggle}
-                  className={`w-12 h-6 rounded-full transition-colors relative cursor-pointer ${isDark ? 'bg-(--bg-tertiary)' : 'bg-gray-300'}`}
+                  className={`w-12 h-6 rounded-full transition-colors relative cursor-pointer ${isDark ? 'bg-(--bg-tertiary)' : 'bg-(--border-secondary)'}`}
                 >
-                  <span className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${isDark ? 'left-7' : 'left-1'}`}></span>
+                  <span className={`absolute top-1 w-4 h-4 bg-(--bg-card) rounded-full transition-transform ${isDark ? 'left-7' : 'left-1'}`}></span>
                 </button>
               </div>
               <p className="text-(--text-muted) text-[13px]">{isDark ? 'Switch to light mode for a brighter interface.' : 'Switch to dark mode for a better experience in low light.'}</p>

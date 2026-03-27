@@ -1,26 +1,61 @@
-/**
- * Theme Slice - Redux Toolkit
- * Manages global theme state (light/dark mode)
- * Supports SSR/CSR with proper hydration and persistence
- */
-
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
-export type Theme = "light" | "dark";
+export type Theme = "light" | "dark" | "system";
 
 export interface ThemeState {
   theme: Theme;
+  resolvedTheme: "light" | "dark"; // The actual theme after resolving system preference
   isInitialized: boolean;
+  systemPreference: "light" | "dark";
 }
 
 // ── Initial State ────────────────────────────────────────────────────────
 
 const initialState: ThemeState = {
-  theme: "light",
+  theme: "system",
+  resolvedTheme: "light",
   isInitialized: false,
+  systemPreference: "light",
 };
+
+// ── Helper Functions ─────────────────────────────────────────────────────
+
+/**
+ * Apply theme to document root for CSS variables and Tailwind
+ */
+function applyThemeToDOM(theme: "light" | "dark"): void {
+  if (typeof window === "undefined") return;
+
+  // Apply theme to document root for CSS variables
+  document.documentElement.setAttribute("data-theme", theme);
+
+  // Toggle dark class for Tailwind
+  if (theme === "dark") {
+    document.documentElement.classList.add("dark");
+  } else {
+    document.documentElement.classList.remove("dark");
+  }
+}
+
+/**
+ * Get system theme preference
+ */
+function getSystemPreference(): "light" | "dark" {
+  if (typeof window === "undefined") return "light";
+  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+
+/**
+ * Resolve theme based on selection and system preference
+ */
+function resolveTheme(theme: Theme, systemPreference: "light" | "dark"): "light" | "dark" {
+  if (theme === "system") {
+    return systemPreference;
+  }
+  return theme;
+}
 
 // ── Slice ────────────────────────────────────────────────────────────────
 
@@ -33,77 +68,70 @@ const themeSlice = createSlice({
      */
     setTheme: (state, action: PayloadAction<Theme>) => {
       state.theme = action.payload;
+      state.resolvedTheme = resolveTheme(action.payload, state.systemPreference);
       state.isInitialized = true;
-      
-      // Persist to localStorage (client-side only)
-      if (typeof window !== "undefined") {
-        localStorage.setItem("app-theme", action.payload);
-        
-        // Apply theme to document root for CSS variables
-        document.documentElement.setAttribute("data-theme", action.payload);
-        
-        // Toggle dark class for Tailwind
-        if (action.payload === "dark") {
-          document.documentElement.classList.add("dark");
-        } else {
-          document.documentElement.classList.remove("dark");
-        }
-      }
+
+      // Apply theme to DOM immediately
+      applyThemeToDOM(state.resolvedTheme);
     },
-    
+
     /**
      * Toggle between light and dark theme
+     * If current theme is system, toggles to opposite of system preference
      */
     toggleTheme: (state) => {
-      const newTheme = state.theme === "light" ? "dark" : "light";
-      state.theme = newTheme;
-      state.isInitialized = true;
-      
-      // Persist to localStorage (client-side only)
-      if (typeof window !== "undefined") {
-        localStorage.setItem("app-theme", newTheme);
-        
-        // Apply theme to document root
-        document.documentElement.setAttribute("data-theme", newTheme);
-        
-        // Toggle dark class for Tailwind
-        if (newTheme === "dark") {
-          document.documentElement.classList.add("dark");
-        } else {
-          document.documentElement.classList.remove("dark");
-        }
+      if (state.theme === "system") {
+        // If system, toggle to opposite of current system preference
+        state.theme = state.systemPreference === "light" ? "dark" : "light";
+      } else {
+        // Otherwise toggle between light and dark
+        state.theme = state.theme === "light" ? "dark" : "light";
       }
+      
+      state.resolvedTheme = resolveTheme(state.theme, state.systemPreference);
+      state.isInitialized = true;
+
+      // Apply theme to DOM immediately
+      applyThemeToDOM(state.resolvedTheme);
     },
-    
+
     /**
      * Initialize theme from storage or system preference
      * Called after hydration to avoid mismatch
      */
     initializeTheme: (state) => {
       if (typeof window === "undefined") return;
-      
-      // Check localStorage first
-      const stored = localStorage.getItem("app-theme") as Theme | null;
-      
-      if (stored && (stored === "light" || stored === "dark")) {
-        state.theme = stored;
-        state.isInitialized = true;
-        
-        // Apply to document
-        document.documentElement.setAttribute("data-theme", stored);
-        if (stored === "dark") {
-          document.documentElement.classList.add("dark");
-        }
+
+      // Get system preference
+      const systemPreference = getSystemPreference();
+      state.systemPreference = systemPreference;
+
+      // If theme is system, resolve it
+      if (state.theme === "system") {
+        state.resolvedTheme = systemPreference;
       } else {
-        // Fallback to system preference
-        const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-        state.theme = prefersDark ? "dark" : "light";
-        state.isInitialized = true;
+        state.resolvedTheme = resolveTheme(state.theme, systemPreference);
+      }
+
+      state.isInitialized = true;
+
+      // Apply to document
+      applyThemeToDOM(state.resolvedTheme);
+    },
+
+    /**
+     * Update system preference (called when OS theme changes)
+     */
+    setSystemPreference: (state, action: PayloadAction<"light" | "dark">) => {
+      state.systemPreference = action.payload;
+      
+      // If theme is system, update resolved theme
+      if (state.theme === "system") {
+        state.resolvedTheme = action.payload;
         
-        // Apply to document
-        document.documentElement.setAttribute("data-theme", state.theme);
-        if (state.theme === "dark") {
-          document.documentElement.classList.add("dark");
+        // Apply to DOM if initialized
+        if (state.isInitialized) {
+          applyThemeToDOM(state.resolvedTheme);
         }
       }
     },
@@ -113,10 +141,12 @@ const themeSlice = createSlice({
 // ── Selectors ────────────────────────────────────────────────────────────
 
 export const selectTheme = (state: { theme: ThemeState }) => state.theme.theme;
-export const selectThemeIsDark = (state: { theme: ThemeState }) => state.theme.theme === "dark";
+export const selectResolvedTheme = (state: { theme: ThemeState }) => state.theme.resolvedTheme;
+export const selectThemeIsDark = (state: { theme: ThemeState }) => state.theme.resolvedTheme === "dark";
 export const selectIsThemeInitialized = (state: { theme: ThemeState }) => state.theme.isInitialized;
+export const selectSystemPreference = (state: { theme: ThemeState }) => state.theme.systemPreference;
 
 // ── Exports ──────────────────────────────────────────────────────────────
 
-export const { setTheme, toggleTheme, initializeTheme } = themeSlice.actions;
+export const { setTheme, toggleTheme, initializeTheme, setSystemPreference } = themeSlice.actions;
 export default themeSlice.reducer;

@@ -332,13 +332,13 @@ export default function ProfileView({ user: initialUser, onClose }: ProfileViewP
                     }
                   }}
                 >
-                  <Image className="text-white w-6 h-6 mb-1" />
-                  <span className="text-white text-xs font-medium text-center px-1">Change Photo</span>
+                  <Image className="text-(--text-inverse) w-6 h-6 mb-1" />
+                  <span className="text-(--text-inverse) text-xs font-medium text-center px-1">Change Photo</span>
                 </div>
               </div>
             ) : (
               <div className="relative">
-                <div className="w-24 h-24 rounded-full bg-[#dfe3e5] dark:bg-[#3d4a51] flex items-center justify-center text-gray-600 dark:text-gray-300 cursor-pointer hover:bg-[#cdd4d6] dark:hover:bg-[#4a5568] transition-colors" onClick={handleAvatarClick}>
+                <div className="w-24 h-24 rounded-full bg-(--bg-tertiary) flex items-center justify-center text-(--text-secondary) cursor-pointer hover:bg-(--bg-hover) transition-colors" onClick={handleAvatarClick}>
                   <span className="font-semibold text-4xl">{initialUser.name?.charAt(0).toUpperCase()}</span>
                 </div>
                 <div
@@ -353,8 +353,8 @@ export default function ProfileView({ user: initialUser, onClose }: ProfileViewP
                     }
                   }}
                 >
-                  <Image className="text-white w-6 h-6 mb-1" />
-                  <span className="text-white text-xs font-medium text-center px-1">Add Photo</span>
+                  <Image className="text-(--text-inverse) w-6 h-6 mb-1" />
+                  <span className="text-(--text-inverse) text-xs font-medium text-center px-1">Add Photo</span>
                 </div>
               </div>
             )}
@@ -374,7 +374,7 @@ export default function ProfileView({ user: initialUser, onClose }: ProfileViewP
               <button 
                 onClick={handleSave}
                 disabled={isSaving}
-                className="text-sm text-white bg-[#25d366] hover:bg-[#1da851] px-3 py-1 rounded-lg font-medium transition-colors disabled:opacity-50 flex items-center gap-1"
+                className="text-sm text-(--text-inverse) bg-(--accent-primary) hover:bg-(--accent-hover) px-3 py-1 rounded-lg font-medium transition-colors disabled:opacity-50 flex items-center gap-1"
               >
                 {isSaving ? (
                   <>
@@ -487,7 +487,7 @@ export default function ProfileView({ user: initialUser, onClose }: ProfileViewP
               {initialUser.phone && (
                 <button
                   onClick={handleCopyPhone}
-                  className="p-2 text-(--text-muted) hover:text-[#25d366] hover:bg-[#25d366]/10 dark:hover:bg-[#25d366]/20 rounded-lg transition-all duration-200 cursor-pointer"
+                  className="p-2 text-(--text-muted) hover:text-(--accent-primary) hover:bg-(--accent-muted) rounded-lg transition-all duration-200 cursor-pointer"
                   aria-label={copied ? "Phone number copied" : "Copy phone number"}
                   title={copied ? "Copied!" : "Copy phone number"}
                 >
@@ -561,7 +561,7 @@ export default function ProfileView({ user: initialUser, onClose }: ProfileViewP
                 {organization.logo ? (
                   <img src={organization.logo} alt={organization.name} className="w-10 h-10 rounded-full object-cover" />
                 ) : (
-                  <div className="w-10 h-10 rounded-full bg-[#dfe3e5] dark:bg-[#3d4a51] flex items-center justify-center text-gray-600 dark:text-gray-300">
+                  <div className="w-10 h-10 rounded-full bg-(--bg-tertiary) flex items-center justify-center text-(--text-secondary)">
                     <span className="font-semibold">{organization.name.charAt(0).toUpperCase()}</span>
                   </div>
                 )}

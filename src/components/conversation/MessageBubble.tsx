@@ -205,19 +205,19 @@ const FilePreviewModal = memo(function FilePreviewModal({ isOpen, onClose, fileD
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/95 flex flex-col" onClick={onClose}>
+    <div className="fixed inset-0 z-50 bg-(--overlay-bg) flex flex-col" onClick={onClose}>
       {/* Header */}
-      <div className="flex items-center justify-between p-4 bg-black/40">
+      <div className="flex items-center justify-between p-4 bg-(--overlay-light)">
         <div className="flex-1 min-w-0 pr-4">
-          <h3 className="text-white text-base font-medium truncate">{fileData.name || "File"}</h3>
-          {sizeStr && (<p className="text-white/70 text-sm">{sizeStr}</p>)}
+          <h3 className="text-(--text-inverse) text-base font-medium truncate">{fileData.name || "File"}</h3>
+          {sizeStr && (<p className="text-(--text-inverse)/70 text-sm">{sizeStr}</p>)}
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={handleDownload} className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors" title="Download">
-            <Download size={20} className="text-white" />
+          <button onClick={handleDownload} className="p-2 rounded-full bg-(--bg-hover) hover:bg-(--bg-active) transition-colors" title="Download">
+            <Download size={20} className="text-(--text-inverse)" />
           </button>
-          <button onClick={onClose} className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors" title="Close">
-            <X size={20} className="text-white" />
+          <button onClick={onClose} className="p-2 rounded-full bg-(--bg-hover) hover:bg-(--bg-active) transition-colors" title="Close">
+            <X size={20} className="text-(--text-inverse)" />
           </button>
         </div>
       </div>
@@ -228,7 +228,7 @@ const FilePreviewModal = memo(function FilePreviewModal({ isOpen, onClose, fileD
           <div className="relative max-w-full max-h-full" onClick={(e) => e.stopPropagation()}>
             {imageLoading && (
               <div className="absolute inset-0 flex items-center justify-center">
-                <Loader2 size={40} className="text-white animate-spin" />
+                <Loader2 size={40} className="text-(--text-inverse) animate-spin" />
               </div>
             )}
             {!imageError ? (
@@ -245,7 +245,7 @@ const FilePreviewModal = memo(function FilePreviewModal({ isOpen, onClose, fileD
                 }}
               />
             ) : (
-              <div className="flex flex-col items-center justify-center text-white/70">
+              <div className="flex flex-col items-center justify-center text-(--text-inverse)/70">
                 <X size={48} />
                 <p className="mt-2">Failed to load image</p>
               </div>
@@ -258,17 +258,17 @@ const FilePreviewModal = memo(function FilePreviewModal({ isOpen, onClose, fileD
         )}
 
         {category === "audio" && (
-          <div className="w-full max-w-md p-6 bg-white/10 rounded-lg" onClick={(e) => e.stopPropagation()}>
+          <div className="w-full max-w-md p-6 bg-(--bg-hover) rounded-lg" onClick={(e) => e.stopPropagation()}>
             <audio src={fileData.url} controls className="w-full">Your browser does not support audio playback.</audio>
           </div>
         )}
 
         {["pdf", "document", "spreadsheet", "presentation", "archive", "other"].includes(category) && (
-          <div className="flex flex-col items-center justify-center p-8 bg-white/10 rounded-xl" onClick={(e) => e.stopPropagation()}>
-            <div className="w-24 h-24 rounded-full bg-white/10 flex items-center justify-center mb-4">{getFileIcon(fileData.mimeType, 48)}</div>
-            <p className="text-white text-lg font-medium text-center mb-2">{fileData.name || "Document"}</p>
-            {sizeStr && <p className="text-white/70 text-sm mb-4">{sizeStr}</p>}
-            <button onClick={handleDownload} className="flex items-center gap-2 px-6 py-3 bg-[#00a884] hover:bg-[#008f6d] rounded-full text-white font-medium transition-colors">
+          <div className="flex flex-col items-center justify-center p-8 bg-(--bg-hover) rounded-xl" onClick={(e) => e.stopPropagation()}>
+            <div className="w-24 h-24 rounded-full bg-(--bg-active) flex items-center justify-center mb-4">{getFileIcon(fileData.mimeType, 48)}</div>
+            <p className="text-(--text-inverse) text-lg font-medium text-center mb-2">{fileData.name || "Document"}</p>
+            {sizeStr && <p className="text-(--text-inverse)/70 text-sm mb-4">{sizeStr}</p>}
+            <button onClick={handleDownload} className="flex items-center gap-2 px-6 py-3 bg-(--accent-primary) hover:bg-(--accent-hover) rounded-full text-(--text-inverse) font-medium transition-colors">
               <Download size={18} />
               Download File
             </button>
@@ -278,8 +278,8 @@ const FilePreviewModal = memo(function FilePreviewModal({ isOpen, onClose, fileD
 
       {/* Caption */}
       {caption && (
-        <div className="p-4 bg-black/40" onClick={(e) => e.stopPropagation()}>
-          <p className="text-white/90 text-base">{caption}</p>
+        <div className="p-4 bg-(--overlay-light)" onClick={(e) => e.stopPropagation()}>
+          <p className="text-(--text-inverse)/90 text-base">{caption}</p>
         </div>
       )}
     </div>
@@ -297,8 +297,8 @@ const ImageMsg = memo(function ImageMsg({ url, caption}: ImageMsgProps) {
     <>
       <div className="relative cursor-pointer rounded-[17px] overflow-hidden group inline-block" onClick={() => setIsExpanded(true)}>
         {isLoading && (
-          <div className="absolute inset-0 bg-[#e4e6e9] dark:bg-[#3d4a51] flex items-center justify-center">
-            <Loader2 size={24} className="animate-spin text-[#8696a1]" />
+          <div className="absolute inset-0 bg-(--bg-tertiary) flex items-center justify-center">
+            <Loader2 size={24} className="animate-spin text-(--text-muted)" />
           </div>
         )}
 
@@ -315,15 +315,15 @@ const ImageMsg = memo(function ImageMsg({ url, caption}: ImageMsgProps) {
         />
 
         {hasError && (
-          <div className="absolute inset-0 bg-[#e4e6e9] dark:bg-[#3d4a51] flex flex-col items-center justify-center p-4">
-            <X size={32} className="text-[#8696a1]" />
+          <div className="absolute inset-0 bg-(--bg-tertiary) flex flex-col items-center justify-center p-4">
+            <X size={32} className="text-(--text-muted)" />
             <p className="text-[#8696a1] text-sm mt-1">Failed to load</p>
           </div>
         )}
 
-        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
-          <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-black/50 rounded-full p-2">
-            <Maximize2 size={20} className="text-white" />
+        <div className="absolute inset-0 bg-transparent group-hover:bg-(--overlay-light) transition-colors flex items-center justify-center">
+          <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-(--overlay-bg) rounded-full p-2">
+            <Maximize2 size={20} className="text-(--text-inverse)" />
           </div>
         </div>
       </div>
@@ -365,7 +365,7 @@ const VideoMsg = memo(function VideoMsg({ url, caption }: VideoMsgProps) {
             </div>
           </div>
 
-          <div className="absolute bottom-2 right-2 bg-black/70 px-2 py-0.5 rounded text-white text-xs">VIDEO</div>
+          <div className="absolute bottom-2 right-2 bg-(--overlay-bg) px-2 py-0.5 rounded text-(--text-inverse) text-xs">VIDEO</div>
         </div>
 
         {caption && (
@@ -485,8 +485,8 @@ const FileMsg = memo(function FileMsg({ fileData, caption, isOwn }: FileMsgProps
             </div>
           )}
 
-          <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-black/50 rounded-full p-1.5">
-            <Maximize2 size={14} className="text-white" />
+          <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-(--overlay-bg) rounded-full p-1.5">
+            <Maximize2 size={14} className="text-(--text-inverse)" />
           </div>
         </div>
 
@@ -521,7 +521,7 @@ const FileMsg = memo(function FileMsg({ fileData, caption, isOwn }: FileMsgProps
           <div className="flex items-center gap-1.5">
             <p className="text-[13px] text-[#111921] font-medium truncate block">{fileName}</p>
             {extension && (
-              <span className="shrink-0 px-1.5 py-0.5 bg-black/5 dark:bg-white/10 rounded text-[10px] font-medium text-[#667781]">{extension}</span>
+              <span className="shrink-0 px-1.5 py-0.5 bg-(--bg-hover) rounded text-[10px] font-medium text-(--text-muted)">{extension}</span>
             )}
           </div>
           {sizeStr && (<p className="text-xs text-[#667781] block mt-0.5">{sizeStr}</p>)}

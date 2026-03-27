@@ -32,9 +32,9 @@ function getFileType(mimeType: string): FileAttachment["type"] {
 
 // Status options for the dropdown
 const STATUS_OPTIONS = [
-  { value: "In Progress", label: "In Progress", color: "blue", bgColor: "bg-blue-50 dark:bg-blue-900/20", borderColor: "border-blue-200 dark:border-blue-800", textColor: "text-blue-600 dark:text-blue-400" },
-  { value: "On Hold", label: "On Hold", color: "amber", bgColor: "bg-amber-50 dark:bg-amber-900/20", borderColor: "border-amber-200 dark:border-amber-800", textColor: "text-amber-600 dark:text-amber-400" },
-  { value: "Completed", label: "Completed", color: "emerald", bgColor: "bg-emerald-50 dark:bg-emerald-900/20", borderColor: "border-emerald-200 dark:border-emerald-800", textColor: "text-emerald-600 dark:text-emerald-400" },
+  { value: "In Progress", label: "In Progress", color: "blue", bgColor: "bg-(--color-info)/10", borderColor: "border-(--color-info)/30", textColor: "text-(--color-info)" },
+  { value: "On Hold", label: "On Hold", color: "amber", bgColor: "bg-(--color-warning)/10", borderColor: "border-(--color-warning)/30", textColor: "text-(--color-warning)" },
+  { value: "Completed", label: "Completed", color: "emerald", bgColor: "bg-(--color-success)/10", borderColor: "border-(--color-success)/30", textColor: "text-(--color-success)" },
 ];
 
 interface StatusDropdownProps {
@@ -88,9 +88,9 @@ function StatusDropdown({ value, onChange, index = 0}: StatusDropdownProps) {
   };
 
   const statusColors: Record<string, string> = {
-    "In Progress": "bg-blue-500",
-    "On Hold": "bg-amber-500",
-    Completed: "bg-emerald-500",
+    "In Progress": "bg-(--color-info)",
+    "On Hold": "bg-(--color-warning)",
+    Completed: "bg-(--color-success)",
   };
 
   return (
@@ -103,7 +103,7 @@ function StatusDropdown({ value, onChange, index = 0}: StatusDropdownProps) {
           ${currentOption.borderColor} ${currentOption.bgColor} ${currentOption.textColor} 
           flex items-center gap-2 hover:opacity-90 transition-all duration-200 min-w-27`}
       >
-        <span className={`w-2 h-2 rounded-full ${statusColors[value] || "bg-gray-500"} shrink-0`} />
+        <span className={`w-2 h-2 rounded-full ${statusColors[value] || "bg-(--text-muted)"} shrink-0`} />
         <span className="truncate">{currentOption.label}</span>
         
         <svg
@@ -119,8 +119,8 @@ function StatusDropdown({ value, onChange, index = 0}: StatusDropdownProps) {
       {isOpen && (
         <div
           className={`
-            absolute z-100 w-full min-w-35 bg-white dark:bg-gray-800 
-            rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 
+            absolute z-100 w-full min-w-35 bg-(--bg-card) 
+            rounded-xl shadow-xl border border-(--border-primary) 
             overflow-hidden animate-in fade-in duration-200
             ${shouldOpenUpward ? "bottom-full mb-1 slide-in-from-bottom-2" : "top-full mt-1 slide-in-from-top-2"}
           `}
@@ -130,7 +130,7 @@ function StatusDropdown({ value, onChange, index = 0}: StatusDropdownProps) {
           }}
         >
           {/* Custom input field */}
-          <div className="p-2 border-b border-gray-100 dark:border-gray-700">
+          <div className="p-2 border-b border-(--border-primary)">
             <input
               ref={inputRef}
               type="text"
@@ -147,10 +147,10 @@ function StatusDropdown({ value, onChange, index = 0}: StatusDropdownProps) {
                   setInputValue("");
                 }
               }}
-              className="w-full h-8 px-3 text-xs bg-gray-50 dark:bg-gray-700 
-                border border-gray-200 dark:border-gray-600 rounded-lg 
+              className="w-full h-8 px-3 text-xs bg-(--bg-input) 
+                border border-(--border-secondary) rounded-lg 
                 text-(--text-primary) placeholder:text-(--text-muted) 
-                outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400/30"
+                outline-none focus:border-(--accent-primary) focus:ring-1 focus:ring-(--accent-glow)"
               autoFocus
             />
           </div>
@@ -164,23 +164,23 @@ function StatusDropdown({ value, onChange, index = 0}: StatusDropdownProps) {
                   type="button"
                   onClick={() => handleSelect(option.value)}
                   className={`w-full px-3 py-2 text-left text-xs flex items-center gap-2 
-                    hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors
+                    hover:bg-(--bg-hover) transition-colors
                     ${value === option.value 
-                      ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400" 
+                      ? "bg-(--accent-muted) text-(--accent-primary)" 
                       : "text-(--text-primary)"
                     }`}
                 >
                   <span className={`w-2 h-2 rounded-full ${statusColors[option.value]}`} />
                   <span>{option.label}</span>
                   {value === option.value && (
-                    <svg className="w-3 h-3 ml-auto text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
+                    <svg className="w-3 h-3 ml-auto text-(--color-success)" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                     </svg>
                   )}
                 </button>
               ))
             ) : (
-              <div className="px-3 py-3 text-xs text-center text-gray-400">
+              <div className="px-3 py-3 text-xs text-center text-(--text-muted)">
                 Press Enter to add "{inputValue}"
               </div>
             )}
@@ -498,7 +498,7 @@ export function MessageInput({ onSend, onFileUpload, placeholder = "Type a messa
               {tasks.map((task, index) => (
                 <div 
                   key={task.id} 
-                  className="group/task relative flex items-center gap-2 p-2 rounded-xl bg-gray-50/50 dark:bg-gray-800/30 hover:bg-gray-100/70 dark:hover:bg-gray-800/50 transition-all duration-200"
+                  className="group/task relative flex items-center gap-2 p-2 rounded-xl bg-(--bg-secondary) hover:bg-(--bg-hover) transition-all duration-200"
                 >
                   {/* Status indicator dot */}
                   <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${
@@ -513,7 +513,7 @@ export function MessageInput({ onSend, onFileUpload, placeholder = "Type a messa
                     value={task.title}
                     onChange={(e) => updateTaskTitle(task.id!, e.target.value)}
                     placeholder="Task title"
-                    className="flex-1 h-8 px-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-(--text-primary) placeholder:text-(--text-muted) outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 transition-all duration-200"
+                    className="flex-1 h-8 px-2 text-sm rounded-lg border border-(--border-secondary) bg-(--bg-input) text-(--text-primary) placeholder:text-(--text-muted) outline-none focus:border-(--accent-primary) focus:ring-2 focus:ring-(--accent-glow) transition-all duration-200"
                   />
                   
                   {/* Enhanced Status Dropdown */}
@@ -527,7 +527,7 @@ export function MessageInput({ onSend, onFileUpload, placeholder = "Type a messa
                     type="button"
                     onClick={() => removeTask(task.id!)}
                     disabled={tasks.length === 1}
-                    className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-200"
+                    className="p-1.5 rounded-lg text-(--text-muted) hover:text-(--color-error) hover:bg-(--bg-hover) disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-200"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -560,7 +560,7 @@ export function MessageInput({ onSend, onFileUpload, placeholder = "Type a messa
                     setTasks([{ id: "1", title: "", status: "In Progress" }]);
                     setTaskTitle("");
                   }}
-                  className="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-all duration-200"
+                  className="px-4 py-2 text-sm font-medium text-(--text-secondary) hover:text-(--text-primary) hover:bg-(--bg-hover) rounded-xl transition-all duration-200"
                 >
                   Cancel
                 </button>
