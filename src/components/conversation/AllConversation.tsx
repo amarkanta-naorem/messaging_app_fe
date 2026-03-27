@@ -24,6 +24,13 @@ interface Group {
   description: string | null;
   logo: string | null;
   type: 'group';
+  lastMessage: {
+    id: number;
+    content: {
+      type: string;
+      text: string
+    }
+  }
   createdAt: string;
 }
 
@@ -144,11 +151,11 @@ export default function AllConversation({ data, showNewMessage, onClose, searchQ
               key={`group-${group.id}`}
               id={group.id}
               name={group.name}
+              lastMessage={group.lastMessage}
               avatar={group.logo}
               isGroup={true}
               isActive={activeConversation?.id === group.id}
               createdAt={group.createdAt}
-              description={group.description || "Group"}
               onClick={() => handleGroupClick(group)}
             />
           );

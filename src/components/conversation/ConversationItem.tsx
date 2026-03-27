@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui";
 import { FormatTime } from "@/utils/FormatTime";
+import { File, Image as ImageIcon, Video, Music, FileText, FileSpreadsheet, Presentation } from "lucide-react";
 
 interface Participant {
   id: number;
@@ -8,8 +9,29 @@ interface Participant {
   phone?: string;
 }
 
+interface TextContent {
+  type: string;
+  text: string;
+}
+
+interface TaskContent {
+  type: string;
+  task_title: string;
+}
+
+interface FileContent {
+  type: string;
+  caption: string | null;
+  file: {
+    name: string;
+    size: number;
+    mimeType: string;
+    url: string;
+  };
+}
+
 interface LastMessage {
-  content: { text?: string };
+  content: TextContent | TaskContent | FileContent;
   createdAt?: string | number;
 }
 
@@ -25,6 +47,64 @@ interface ConversationItemProps {
   onClick: () => void;
   createdAt?: string;
   description?: string;
+}
+
+function isFileContent(content: TextContent | TaskContent | FileContent): content is FileContent {
+  return content.type === 'file';
+}
+
+function isTaskContent(content: TextContent | TaskContent | FileContent): content is TaskContent {
+  return content.type === 'task';
+}
+
+function isTextContent(content: TextContent | TaskContent | FileContent): content is TextContent {
+  return content.type === 'text';
+}
+
+function getFileDisplayText(fileContent: FileContent): string {
+  if (fileContent.caption && fileContent.caption.trim()) {
+    return fileContent.caption;
+  }
+  
+  // Generate text based on MIME type
+  const mimeType = fileContent.file.mimeType;
+  if (mimeType.startsWith('image/')) {
+    return 'Photo';
+  } else if (mimeType.startsWith('video/')) {
+    return 'Video';
+  } else if (mimeType.startsWith('audio/')) {
+    return 'Audio';
+  } else if (mimeType === 'application/pdf') {
+    return 'PDF Document';
+  } else if (mimeType.includes('document') || mimeType.includes('word')) {
+    return 'Document';
+  } else if (mimeType.includes('spreadsheet') || mimeType.includes('excel')) {
+    return 'Spreadsheet';
+  } else if (mimeType.includes('presentation') || mimeType.includes('powerpoint')) {
+    return 'Presentation';
+  } else {
+    return 'File';
+  }
+}
+
+function getFileIcon(mimeType: string) {
+  if (mimeType.startsWith('image/')) {
+    return <ImageIcon className="w-4 h-4 text-(--text-tertiary) mr-1 shrink-0" />;
+  } else if (mimeType.startsWith('video/')) {
+    return <Video className="w-4 h-4 text-(--text-tertiary) mr-1 shrink-0" />;
+  } else if (mimeType.startsWith('audio/')) {
+    return <Music className="w-4 h-4 text-(--text-tertiary) mr-1 shrink-0" />;
+  } else if (mimeType === 'application/pdf') {
+    return <FileText className="w-4 h-4 text-(--text-tertiary) mr-1 shrink-0" />;
+  } else if (mimeType.includes('document') || mimeType.includes('word')) {
+    return <FileText className="w-4 h-4 text-(--text-tertiary) mr-1 shrink-0" />;
+  } else if (mimeType.includes('spreadsheet') || mimeType.includes('excel')) {
+    return <FileSpreadsheet className="w-4 h-4 text-(--text-tertiary) mr-1 shrink-0" />;
+  } else if (mimeType.includes('presentation') || mimeType.includes('powerpoint')) {
+    return <Presentation className="w-4 h-4 text-(--text-tertiary) mr-1 shrink-0" />;
+  } else {
+    return <File className="w-4 h-4 text-(--text-tertiary) mr-1 shrink-0" />;
+  }
 }
 
 export function ConversationItem({ participant, name, avatar, lastMessage, unreadCount = 0, isGroup = false, isActive = false, onClick, createdAt, description }: ConversationItemProps) {
@@ -57,10 +137,32 @@ export function ConversationItem({ participant, name, avatar, lastMessage, unrea
         </div>
         <div className="flex justify-between items-center">
           {isGroup ? (
-            <span className="text-(--text-tertiary) text-[14px] truncate flex-1 mr-2">{description || "Group"}</span>
+            <span className="text-(--text-tertiary) text-[14px] truncate flex-1 mr-2 flex items-center">
+              {lastMessage?.content && isTaskContent(lastMessage.content)
+                ? lastMessage.content.task_title 
+                : lastMessage?.content && isFileContent(lastMessage.content)
+                ? <>
+                    {getFileIcon(lastMessage.content.file.mimeType)}
+                    {getFileDisplayText(lastMessage.content)}
+                  </>
+                : lastMessage?.content && isTextContent(lastMessage.content)
+                ? lastMessage.content.text 
+                : "No messages"
+              }
+            </span>
           ) : (
-            <span className="text-(--text-tertiary) text-[14px] truncate flex-1 mr-2">
-              {typeof lastMessage?.content?.text === 'string' ? lastMessage?.content?.text : "No messages"}
+            <span className="text-(--text-tertiary) text-[14px] truncate flex-1 mr-2 flex items-center">
+              {lastMessage?.content && isTaskContent(lastMessage.content)
+                ? lastMessage.content.task_title 
+                : lastMessage?.content && isFileContent(lastMessage.content)
+                ? <>
+                    {getFileIcon(lastMessage.content.file.mimeType)}
+                    {getFileDisplayText(lastMessage.content)}
+                  </>
+                : lastMessage?.content && isTextContent(lastMessage.content)
+                ? lastMessage.content.text 
+                : "No messages"
+              }
             </span>
           )}
           {unreadCount > 0 && (
