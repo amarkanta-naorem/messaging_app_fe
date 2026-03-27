@@ -348,8 +348,39 @@ const chatSlice = createSlice({
       })
       .addCase(fetchMessagesForConversation.fulfilled, (state, action) => {
         state.loadingMessages = false;
-        state.messages[action.payload.conversationId] = action.payload.messages;
-        state.lastMessagesFetchTime[action.payload.conversationId] = action.payload.timestamp;
+        const { conversationId, messages: newMessages, timestamp } = action.payload;
+        
+        // Get existing messages for this conversation
+        const existingMessages = state.messages[conversationId] || [];
+        
+        // Preserve optimistic messages (messages with clientMessageId that haven't been confirmed)
+        const optimisticMessages = existingMessages.filter(
+          (msg) => msg.clientMessageId && !newMessages.some((newMsg: Message) => 
+            newMsg.clientMessageId === msg.clientMessageId || newMsg.id === msg.id
+          )
+        );
+        
+        // Merge: new messages from API + preserved optimistic messages
+        const mergedMessages = [...newMessages, ...optimisticMessages];
+        
+        // Remove duplicates based on id or clientMessageId
+        const uniqueMessages = mergedMessages.reduce<Message[]>((acc, msg) => {
+          const exists = acc.some(
+            (m) => (msg.id && m.id === msg.id) || (msg.clientMessageId && m.clientMessageId === msg.clientMessageId)
+          );
+          if (!exists) {
+            acc.push(msg);
+          }
+          return acc;
+        }, []);
+        
+        // Sort by createdAt to maintain chronological order
+        uniqueMessages.sort((a: Message, b: Message) => 
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+        );
+        
+        state.messages[conversationId] = uniqueMessages;
+        state.lastMessagesFetchTime[conversationId] = timestamp;
       })
       .addCase(fetchMessagesForConversation.rejected, (state, action) => {
         state.loadingMessages = false;

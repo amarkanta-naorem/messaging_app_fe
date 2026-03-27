@@ -9,7 +9,7 @@ import type { ApiEnvelope } from "@/types/api";
 
 export async function getMessages(conversationId: number): Promise<Message[]> {
   const res = await get<ApiEnvelope<{ messages: Message[] }>>(
-    `/conversations/${conversationId}/messages`
+    `/conversations/${conversationId}/messages/proxy`
   );
   return res.data?.messages ?? [];
 }

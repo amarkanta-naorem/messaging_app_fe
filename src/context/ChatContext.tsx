@@ -114,6 +114,20 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
   const normalizeMessageContent = useCallback((content: Message["content"] | IncomingMessage["content"]) => {
     if (typeof content === "string") {
+      // Try to parse JSON string for complex content types (like task messages)
+      try {
+        const parsed = JSON.parse(content);
+        if (parsed && typeof parsed === 'object' && parsed.type) {
+          // Return parsed content with proper structure
+          return {
+            ...parsed,
+            type: parsed.type ?? "text",
+            text: parsed.text ?? "",
+          };
+        }
+      } catch {
+        // If parsing fails, treat as plain text
+      }
       return { type: "text" as const, text: content };
     }
 
