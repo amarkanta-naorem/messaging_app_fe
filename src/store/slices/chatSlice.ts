@@ -97,9 +97,21 @@ export const fetchMessagesForConversation = createAsyncThunk(
       const data = await fetchMessages(conversationId, isGroup);
       const msgArray = Array.isArray(data) ? data : [];
       
+      // Transform messages - parse content if it's a string
+      const transformedMessages = msgArray.map((msg: any) => {
+        if (typeof msg.content === 'string') {
+          try {
+            return { ...msg, content: JSON.parse(msg.content) };
+          } catch {
+            return msg;
+          }
+        }
+        return msg;
+      });
+      
       return { 
         conversationId, 
-        messages: msgArray, 
+        messages: transformedMessages, 
         timestamp: Date.now() 
       };
     } catch (error: any) {

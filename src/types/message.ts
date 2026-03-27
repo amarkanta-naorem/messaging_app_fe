@@ -1,7 +1,3 @@
-/**
- * Message-related type definitions.
- */
-
 export interface MessageFile {
   name: string;
   size: number;
@@ -10,12 +6,19 @@ export interface MessageFile {
 }
 
 export interface MessageContent {
-  type: "text" | "image" | "video" | "audio" | "document" | "file";
+  type: "text" | "image" | "video" | "audio" | "document" | "file" | "task";
   text?: string;
   value?: string;
   url?: string;
   caption?: string;
   file?: MessageFile;
+  task_title?: string;
+  task_list?: {
+    sortOrder: number;
+    title: string;
+    isCompleted: boolean;
+    status: string;
+  }[];
 }
 
 export interface Message {

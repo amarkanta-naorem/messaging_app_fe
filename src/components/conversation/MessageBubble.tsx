@@ -1,7 +1,7 @@
-import { memo, useMemo, useState, useCallback, useEffect } from "react";
 import Image from "next/image";
 import { FormatTime } from "@/utils/FormatTime";
-import { File, Image as ImageIcon, Video, Music, FileText, Download, Play, Pause, X, Maximize2, Loader2, FileSpreadsheet, FileArchive, Presentation } from "lucide-react";
+import { memo, useMemo, useState, useCallback, useEffect } from "react";
+import { File, Image as ImageIcon, Video, Music, FileText, Download, Play, Pause, X, Maximize2, Loader2, FileSpreadsheet, FileArchive, Presentation, CheckCircle2, Circle } from "lucide-react";
 
 interface MessageFile {
   name?: string;
@@ -77,6 +77,52 @@ interface FileMsgProps {
 interface TextMsgProps {
   text?: string;
 }
+
+interface TaskItem {
+  sortOrder: number;
+  title: string;
+  isCompleted: boolean;
+  status: string;
+}
+
+interface TaskListMsgProps {
+  taskList: TaskItem[];
+  taskTitle?: string;
+  isOwn: boolean;
+}
+
+const TaskListMsg = memo(function TaskListMsg({ taskList, taskTitle, isOwn }: TaskListMsgProps) {
+  if (!taskList || taskList.length === 0) return null;
+
+  return (
+    <div className={`min-w-50 rounded-lg p-2`}>
+      {taskTitle && (
+        <div className="text-sm font-medium text-[#111921] dark:text-[#e9ecef] mb-2 pb-2 border-b border-[#667781]">
+          {taskTitle}
+        </div>
+      )}
+      {taskList.map((task) => (
+        <div key={task.sortOrder} className="flex items-start gap-2 py-1.5 border-b last:border-b-0 border-[#667781]">
+          {task.isCompleted ? (
+            <CheckCircle2 size={18} className="text-[#00a884] shrink-0 mt-0.5" />
+          ) : (
+            <Circle size={18} className="text-[#667781] shrink-0 mt-0.5" />
+          )}
+          <div className="flex-1 min-w-0">
+            <p className={`text-[14px] ${task.isCompleted ? "text-[#667781] line-through" : "text-[#111921] dark:text-[#e9ecef]"}`}>
+              {task.title}
+            </p>
+            {task.status && (
+              <span className={`text-[11px] text-[#00a884]`}>
+                {task.status}
+              </span>
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+});
 
 function formatFileSize(bytes?: number): string {
   if (!bytes || bytes === 0) return "";
@@ -512,7 +558,12 @@ export const MessageBubble = memo(function MessageBubble({ message, isOwn, showA
   const content = useMemo(() => {
     if (!message.content) return {};
     if (typeof message.content === "string") {
-      return { type: "text", text: message.content };
+      try {
+        const parsed = JSON.parse(message.content);
+        return parsed;
+      } catch {
+        return { type: "text", text: message.content };
+      }
     }
     return message.content;
   }, [message.content]);
@@ -557,6 +608,14 @@ export const MessageBubble = memo(function MessageBubble({ message, isOwn, showA
     if (contentType === "audio" && url) {
       return <AudioMsg url={url} isOwn={isOwn} />;
     }
+
+    if (contentType === "task") {
+      const taskList = (content as { task_list?: TaskItem[] })?.task_list;
+      const taskTitle = (content as { task_title?: string })?.task_title;
+      if (taskList && taskList.length > 0) {
+        return <TaskListMsg taskList={taskList} taskTitle={taskTitle} isOwn={isOwn} />;
+      }
+    }
     
     if (contentType === "file" || contentType === "document") {
       const fileInfo = fileData || metadataFileData;
@@ -580,7 +639,7 @@ export const MessageBubble = memo(function MessageBubble({ message, isOwn, showA
     }
 
     return <TextMsg text={text || caption || ""} />;
-  }, [contentType, url, caption, fileData, metadataFileData, text, isOwn]);
+  }, [contentType, url, caption, fileData, metadataFileData, text, isOwn, content]);
 
   const bubbleClass = useMemo(() => {
     const base = "min-w-[7rem] max-w-[25rem] relative shadow-sm";
@@ -604,7 +663,7 @@ export const MessageBubble = memo(function MessageBubble({ message, isOwn, showA
 
   return (
     <div className={`flex ${isOwn ? "justify-end" : "justify-start"} mb-1 last:mb-0`} role="message">
-      <div className={`flex items-end ${isOwn ? "pr-2" : "pl-2"} max-w-[85%] md:max-w-[75%]`}>
+      <div className={`flex items-end ${isOwn ? "pr-2" : "pl-0"} max-w-[85%] md:max-w-[75%]`}>
         {showAvatar && !isOwn && (
           <div className="w-9 h-9 rounded-full bg-[#e9ecef] dark:bg-[#3d4a51] shrink-0 mr-1.5 mb-0.5 overflow-hidden">
             {message.senderAvatar ? (

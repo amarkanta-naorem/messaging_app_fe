@@ -1,36 +1,13 @@
-/**
- * Chat Context
- * Uses Redux for state management with proper lifecycle handling
- */
-
 "use client";
 
-import { createContext, useContext, useCallback, ReactNode, useEffect, useRef, useState } from "react";
 import { useAuth } from "./AuthContext";
 import { getConversations } from "@/lib/conversations";
-import { MessageContent, sendMessage as sendMessageApi, sendFileMessage, MessageContent as MsgContent, Message } from "@/lib/messages";
-import { connectSocket, disconnectSocket, IncomingMessage, SocketError, MessagePayload, getSocket } from "@/lib/socket";
 import { useAppDispatch, useAppSelector } from "@/store/store";
-import {
-  fetchConversations,
-  fetchMessagesForConversation,
-  setActiveConversation,
-  addMessageOptimistic,
-  updateMessageInState,
-  replaceOptimisticMessage,
-  addIncomingMessage,
-  updateConversationLastMessage,
-  setChatSocketError,
-  selectConversations,
-  selectActiveConversationId,
-  selectActiveConversation,
-  selectMessagesForConversation,
-  selectLoadingConversations,
-  selectLoadingMessages,
-  selectSendingMessage,
-  selectSocketError,
-} from "@/store/store";
 import type { Conversation, Message as ChatMessage } from "@/types";
+import { createContext, useContext, useCallback, ReactNode, useEffect, useRef } from "react";
+import { MessageContent, sendMessage as sendMessageApi, sendFileMessage, Message } from "@/lib/messages";
+import { connectSocket, disconnectSocket, IncomingMessage, SocketError, MessagePayload, getSocket } from "@/lib/socket";
+import { fetchConversations, fetchMessagesForConversation, setActiveConversation, addMessageOptimistic, updateMessageInState, replaceOptimisticMessage, addIncomingMessage, updateConversationLastMessage, setChatSocketError, selectConversations, selectActiveConversationId, selectActiveConversation, selectMessagesForConversation, selectLoadingConversations, selectLoadingMessages, selectSendingMessage, selectSocketError } from "@/store/store";
 
 interface ChatContextType {
   conversations: Conversation[];
@@ -42,7 +19,7 @@ interface ChatContextType {
   sendingMessage: boolean;
   socketError: string | null;
   selectConversation: (conversation: Conversation | null) => void;
-  sendMessage: (content: string | { type: string; text?: string; url?: string; caption?: string }) => void;
+  sendMessage: (content: string | { type: string; text?: string; url?: string; caption?: string; task_list?: any[] }) => void;
   sendFile: (file: File, caption?: string) => Promise<void>;
   refreshConversations: () => void;
 }
@@ -98,21 +75,18 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         });
         
         socket.on("message:new", (message: IncomingMessage) => {
-          console.log("Received message:new event:", message);
           if (handleNewMessageRef.current) {
             handleNewMessageRef.current(message);
           }
         });
 
         socket.on("message:error", (error: SocketError) => {
-          console.log("Received message:error event:", error);
           if (handleMessageErrorRef.current) {
             handleMessageErrorRef.current(error);
           }
         });
 
         socket.on("error", (error: SocketError) => {
-          console.log("Received error event:", error);
           if (handleSocketErrorRef.current) {
             handleSocketErrorRef.current(error);
           }
@@ -210,7 +184,6 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       const resolvedConversationId = await resolveConversationId(message);
 
       if (resolvedConversationId === null && !isOwnMessage) {
-        console.log("Could not resolve conversation for message:", message);
         return;
       }
 
@@ -341,7 +314,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   }, [dispatch]);
 
   const sendMessage = useCallback(
-    (content: string | { type: string; text?: string; url?: string; caption?: string }) => {
+    (content: string | { type: string; text?: string; url?: string; caption?: string; task_list?: any[] }) => {
       if (!activeConversation || !user) return;
 
       const clientMessageId = crypto.randomUUID();
@@ -350,13 +323,6 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
       const conversation = activeConversation as any;
       const isGroup = conversation.isGroup || conversation.type === 'group';
-
-      console.log("Conversation info:", {
-        id: conversation.id,
-        isGroup,
-        participantId: conversation.participant?.id,
-        participant: conversation.participant
-      });
 
       const optimisticMessage: Message = {
         id: Date.now(),
@@ -386,9 +352,6 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         payload.receiverId = conversation.participant.id;
       }
 
-      console.log("Sending message via WebSocket:", payload);
-      console.log("Socket connected:", getSocket()?.connected);
-
       const restPayload: any = {
         content: payload.content,
         clientMessageId: payload.clientMessageId,
@@ -401,7 +364,6 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       
       sendMessageApi(restPayload)
         .then((apiResponse) => {
-          console.log("REST API response:", apiResponse);
           (dispatch as any)(replaceOptimisticMessage({
             conversationId: activeConversation.id,
             clientMessageId,

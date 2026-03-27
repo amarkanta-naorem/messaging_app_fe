@@ -40,7 +40,7 @@ export default function ChatView() {
     inputRef.current?.focus();
   }, [activeConversation?.id]);
 
-  const handleSend = async (text: string, attachments?: FileAttachment[]) => {
+  const handleSend = async (text: string, attachments?: FileAttachment[], contentType?: string, taskList?: any[], taskTitle?: string) => {
     if (activeConversation) {
       setIsSending(true);
       try {
@@ -49,6 +49,14 @@ export default function ChatView() {
           for (const attachment of attachments) {
             await sendFile(attachment.file, text || undefined);
           }
+        } else if (contentType === "task" && taskList && taskList.length > 0) {
+          // Send task message
+          const content = {
+            type: "task",
+            task_title: taskTitle || undefined,
+            task_list: taskList,
+          };
+          sendMessage(content);
         } else if (text.trim()) {
           // Send text-only message
           sendMessage(text);
