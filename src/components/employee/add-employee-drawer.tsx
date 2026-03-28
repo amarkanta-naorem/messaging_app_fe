@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { X, Search, Check, Loader2, User } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import { post, get } from "@/services/api-client";
+import { requestWithToast, get } from "@/services/api-client";
 import type { ApiEnvelope } from "@/types/api";
 import Image from "next/image";
 
@@ -179,12 +179,18 @@ export const AddEmployeeDrawer = ({
         body.groupIds = Array.from(selectedGroupIds);
       }
 
-      const response = await post<ApiEnvelope<EmployeeResponse>>(`/organizations/${organisationId}/employees`, body);
+      const response = await requestWithToast<ApiEnvelope<EmployeeResponse>>(`/organizations/${organisationId}/employees`, {
+        method: "POST",
+        body: JSON.stringify(body),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
 
-      if (response.success) {
+      if (response && response.success) {
         onEmployeeAdded();
         onClose();
-      } else {
+      } else if (response) {
         setError(response.message || "Failed to create employee");
       }
     } catch (err) {

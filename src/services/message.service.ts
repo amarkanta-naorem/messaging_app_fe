@@ -3,7 +3,7 @@
  * SRP: Handles all message-related API calls through BFF.
  */
 
-import { get, post } from "./api-client";
+import { get, requestWithToast } from "./api-client";
 import type { Message, SendMessagePayload, SendMessageResponse, SendFileMessagePayload } from "@/types";
 import type { ApiEnvelope } from "@/types/api";
 
@@ -22,7 +22,16 @@ export async function getGroupMessages(groupId: number): Promise<Message[]> {
 }
 
 export async function sendMessage(payload: SendMessagePayload): Promise<SendMessageResponse> {
-  const res = await post<ApiEnvelope<SendMessageResponse>>("/messages", payload);
+  const res = await requestWithToast<ApiEnvelope<SendMessageResponse>>("/messages", {
+    method: "POST",
+    body: JSON.stringify(payload),
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+  if (!res) {
+    throw new Error("Failed to send message");
+  }
   return res.data;
 }
 
@@ -77,7 +86,7 @@ export async function sendFileMessage(payload: SendFileMessagePayload): Promise<
   const token = typeof window !== "undefined" ? localStorage.getItem("auth_token") : null;
   
   // Use the Next.js API proxy route with FormData
-  const response = await fetch("/api/messages", {
+  const response = await requestWithToast<Response>("/messages", {
     method: "POST",
     headers: {
       ...(token ? { Authorization: `Bearer ${token}` } : {})
@@ -85,9 +94,8 @@ export async function sendFileMessage(payload: SendFileMessagePayload): Promise<
     body: formData
   });
   
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({ message: "Failed to upload file" }));
-    throw new Error(errorData.message || "Failed to upload file");
+  if (!response) {
+    throw new Error("Failed to upload file");
   }
   
   const data = await response.json();

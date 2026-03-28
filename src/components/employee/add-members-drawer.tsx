@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { X, Search, Check, User, Loader2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import { get, post } from "@/services/api-client";
+import { get, requestWithToast } from "@/services/api-client";
 import type { ApiEnvelope } from "@/types/api";
 import Image from "next/image";
 
@@ -60,15 +60,21 @@ export const AddMembersDrawer = ({ isOpen, onClose, groupId, onMembersAdded }: A
     if (selectedIds.size === 0) return;
     setSubmitting(true);
     try {
-      const response = await post<ApiEnvelope<{ added: number[]; skipped_already_member: number[]; skipped_invalid_user: number[] }>>(
+      const response = await requestWithToast<ApiEnvelope<{ added: number[]; skipped_already_member: number[]; skipped_invalid_user: number[] }>>(
         `/groups/${groupId}/members`,
-        { userIds: Array.from(selectedIds) }
+        {
+          method: "POST",
+          body: JSON.stringify({ userIds: Array.from(selectedIds) }),
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
       );
       
-      if (response.success) {
+      if (response && response.success) {
         onMembersAdded();
         onClose();
-      } else {
+      } else if (response) {
         setError(response.message || "Failed to add members");
       }
     } catch (error) {

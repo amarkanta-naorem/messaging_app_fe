@@ -9,6 +9,8 @@ import { ChatEmptyState } from "./ChatEmptyState";
 import { useState, useRef, useEffect } from "react";
 import { useTheme } from "../providers/ThemeProvider";
 import { ContactDrawer } from "../employee/contact-drawer";
+import { useAppDispatch } from "@/store/store";
+import { setGlobalError } from "@/store/slices/errorSlice";
 
 interface FileAttachment {
   file: File;
@@ -25,6 +27,7 @@ export default function ChatView() {
   const inputRef = useRef<HTMLInputElement>(null);
   const { isDark } = useTheme();
   const [isSending, setIsSending] = useState(false);
+  const dispatch = useAppDispatch();
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -61,8 +64,13 @@ export default function ChatView() {
           // Send text-only message
           sendMessage(text);
         }
-      } catch (error) {
-        console.error("Failed to send message:", error);
+      } catch (error: any) {
+        // Display user-friendly error instead of console error
+        const errorMessage = error?.message || "Failed to send message";
+        dispatch(setGlobalError({
+          message: errorMessage,
+          type: 'error'
+        }));
       } finally {
         setIsSending(false);
       }

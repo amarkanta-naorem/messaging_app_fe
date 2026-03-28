@@ -35,7 +35,6 @@ function buildHeaders(token?: string | null): Record<string, string> {
 
 /**
  * Generic fetch wrapper that targets our BFF API routes.
- * Throws AppError on non-OK responses.
  * Includes timeout to prevent hanging requests.
  */
 async function _request<T>(
@@ -78,6 +77,37 @@ async function _request<T>(
       throw new AppError("Request timed out", 408);
     }
     throw error;
+  }
+}
+
+/**
+ * Enhanced request wrapper that handles errors by dispatching to ErrorToast.
+ * This function should be used when you want errors to be displayed in the UI
+ * instead of being thrown as exceptions.
+ */
+export async function requestWithToast<T>(
+  path: string,
+  options: RequestInit = {}
+): Promise<T | null> {
+  try {
+    return await _request<T>(path, options);
+  } catch (error: any) {
+    // Import the store dynamically to avoid circular dependencies
+    const { store } = await import("@/store/index");
+    const { setGlobalError } = await import("@/store/slices/errorSlice");
+    
+    if (error instanceof AppError) {
+      store.dispatch(setGlobalError({
+        message: error.message,
+        type: 'error'
+      }));
+    } else {
+      store.dispatch(setGlobalError({
+        message: error?.message || "An unexpected error occurred",
+        type: 'error'
+      }));
+    }
+    return null;
   }
 }
 

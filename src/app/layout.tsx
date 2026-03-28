@@ -5,6 +5,7 @@ import { AuthProvider } from "@/context/AuthContext";
 import { ChatProvider } from "@/context/ChatContext";
 import { ReduxProvider } from "@/store/store";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
+import { ErrorToast } from "@/components/common/ErrorToast";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -38,7 +39,10 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <ReduxProvider>
           <ThemeProvider>
             <AuthProvider>
-              <ChatProvider>{children}</ChatProvider>
+              <ChatProvider>
+                {children}
+                <ErrorToast />
+              </ChatProvider>
             </AuthProvider>
           </ThemeProvider>
         </ReduxProvider>

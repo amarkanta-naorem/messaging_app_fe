@@ -90,3 +90,14 @@ export {
   selectInviteError,
 } from "./slices/inviteSlice";
 export { default as inviteReducer } from "./slices/inviteSlice";
+
+// Error slice exports
+export {
+  setGlobalError,
+  clearGlobalError,
+  dismissError,
+  // Selectors
+  selectGlobalError,
+  selectIsErrorVisible,
+} from "./slices/errorSlice";
+export { default as errorReducer } from "./slices/errorSlice";

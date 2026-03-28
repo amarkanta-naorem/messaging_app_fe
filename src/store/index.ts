@@ -4,21 +4,13 @@
  */
 
 import { configureStore, combineReducers } from "@reduxjs/toolkit";
-import { 
-  persistStore, 
-  persistReducer,
-  FLUSH,
-  REHYDRATE,
-  PAUSE,
-  PERSIST,
-  PURGE,
-  REGISTER,
-} from "redux-persist";
+import { persistStore, persistReducer, FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER } from "redux-persist";
 import storage from "redux-persist/lib/storage";
 import authReducer from "./slices/authSlice";
 import chatReducer from "./slices/chatSlice";
 import themeReducer from "./slices/themeSlice";
 import inviteReducer from "./slices/inviteSlice";
+import errorReducer from "./slices/errorSlice";
 import { createMiddleware } from "./middleware";
 
 // ── Persist Configuration ────────────────────────────────────────────────
@@ -80,6 +72,7 @@ export const store = configureStore({
     chat: chatReducer, // Not persisted - fresh on each load
     theme: persistedThemeReducer, // Persisted via redux-persist
     invite: persistedInviteReducer, // Persisted for invite verification
+    error: errorReducer, // Global error state
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
