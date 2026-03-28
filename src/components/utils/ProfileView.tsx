@@ -2,7 +2,7 @@
 
 import { useAuth } from "@/context/AuthContext";
 import { useState, useRef, ChangeEvent } from "react";
-import { Pencil, Image, Check, X, Loader2, Copy } from "lucide-react";
+import { Pencil, Image, Check, X, Loader2, Copy, LogOut } from "lucide-react";
 import { updateProfile as updateProfileService, getAuthToken } from "@/services";
 
 interface ProfileViewProps {
@@ -58,7 +58,7 @@ function preserveOrganisationData(updatedUser: any, currentUser: any): any {
 }
 
 export default function ProfileView({ user: initialUser, onClose }: ProfileViewProps) {
-  const { login, user: currentUser } = useAuth();
+  const { login, user: currentUser, logout } = useAuth();
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -332,8 +332,8 @@ export default function ProfileView({ user: initialUser, onClose }: ProfileViewP
                     }
                   }}
                 >
-                  <Image className="text-(--text-inverse) w-6 h-6 mb-1" />
-                  <span className="text-(--text-inverse) text-xs font-medium text-center px-1">Change Photo</span>
+                  <Image className="text-gray-200 w-6 h-6 mb-1" />
+                  <span className="text-gray-200 text-xs font-medium text-center px-1">Change Photo</span>
                 </div>
               </div>
             ) : (
@@ -353,8 +353,8 @@ export default function ProfileView({ user: initialUser, onClose }: ProfileViewP
                     }
                   }}
                 >
-                  <Image className="text-(--text-inverse) w-6 h-6 mb-1" />
-                  <span className="text-(--text-inverse) text-xs font-medium text-center px-1">Add Photo</span>
+                  <Image className="text-gray-200 w-6 h-6 mb-1" />
+                  <span className="text-gray-200 text-xs font-medium text-center px-1">Add Photo</span>
                 </div>
               </div>
             )}
@@ -575,6 +575,12 @@ export default function ProfileView({ user: initialUser, onClose }: ProfileViewP
               )}
             </div>
           )}
+        </div>
+        
+        {/* Logout Button - At lowest bottom */}
+        <div className="px-4 py-3 mt-4 rounded-lg bg-(--bg-hover) cursor-pointer text-(--color-error) text-[15px] flex items-center gap-3 transition-colors font-medium" onClick={logout}>
+          <LogOut size={20} />
+          Log out
         </div>
       </div>
     </div>

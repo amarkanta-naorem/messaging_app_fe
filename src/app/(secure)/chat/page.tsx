@@ -102,9 +102,11 @@ export default function ChatPage() {
             <MessageCircleMore size={22} />
           </button>
           <div className="flex flex-col items-center space-y-5">
-            <Link href="/dashboard" title="Redirect to Dashboard Page" className="text-(--text-secondary) hover:text-(--text-primary) p-2 rounded-full hover:bg-(--bg-hover) transition-colors">
-              <Image src="/icons/dashboard.svg" alt="" width={22} height={22} />
-            </Link>
+            {(user.organisation_employees?.role === 'admin' || user.organisation_employees?.role === 'owner') && (
+              <Link href="/dashboard" title="Redirect to Dashboard Page" className="text-(--text-secondary) hover:text-(--text-primary) p-2 rounded-full hover:bg-(--bg-hover) transition-colors">
+                <Image src="/icons/dashboard.svg" alt="" width={22} height={22} />
+              </Link>
+            )}
             <button type="button" title="Setting" onClick={() => { setShowSettings(true); setShowProfile(false); }} className="text-(--text-secondary) hover:text-(--text-primary) p-2 rounded-full hover:bg-(--bg-hover) transition-colors cursor-pointer">
               <Settings size={22} />
             </button>
@@ -137,19 +139,21 @@ export default function ChatPage() {
                 <button onClick={() => setShowNewMessage(!showNewMessage)} title="New Chat" className="hover:bg-(--bg-hover) p-2 rounded-full transition-colors text-(--text-secondary)">
                   <MessageCirclePlus size={22} />
                 </button>
-                <div className="relative">
-                  <button
-                    title="Menu"
-                    className={`hover:bg-(--bg-hover) p-2 rounded-full transition-colors cursor-pointer text-(--text-secondary) ${showMenu ? "bg-(--bg-hover)" : ""}`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowMenu(!showMenu);
-                    }}
-                  >
-                    <EllipsisVertical size={22} />
-                  </button>
-                  {showMenu &&  <ChatMenuModal showMenu={showMenu} setShowMenu={setShowMenu} setShowNewMessage={setShowNewMessage} setShowCreateGroup={setShowCreateGroup}/>}
-                </div>
+                {(user?.organisation_employees?.role === "admin" || user?.organisation_employees?.role === "owner") && (
+                  <div className="relative">
+                    <button
+                      title="Menu"
+                      className={`hover:bg-(--bg-hover) p-2 rounded-full transition-colors cursor-pointer text-(--text-secondary) ${showMenu ? "bg-(--bg-hover)" : ""}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowMenu(!showMenu);
+                      }}
+                    >
+                      <EllipsisVertical size={22} />
+                    </button>
+                    {showMenu &&  <ChatMenuModal showMenu={showMenu} setShowMenu={setShowMenu} setShowNewMessage={setShowNewMessage} setShowCreateGroup={setShowCreateGroup}/>}
+                  </div>
+                )}
               </div>
             </div>
             <div className={`px-3 pb-2 border-b border-(--border-primary) bg-(--bg-card) ${showSettings || showProfile ? 'hidden' : ''}`}>

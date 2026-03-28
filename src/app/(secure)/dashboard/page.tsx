@@ -2,12 +2,29 @@
 
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { Database, ArrowUpRight, Bell, MoreHorizontal, Sparkles, MessageCircleMore } from "lucide-react";
 
 export default function DashboardPage() {
   const { user } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (user) {
+      const role = user.organisation_employees?.role;
+      if (role !== "admin" && role !== "owner") {
+        router.push("/chat");
+      }
+    }
+  }, [user, router]);
 
   if (!user) {
+    return null;
+  }
+
+  const role = user.organisation_employees?.role;
+  if (role !== "admin" && role !== "owner") {
     return null;
   }
 
