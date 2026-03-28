@@ -14,6 +14,7 @@ import {
   setUser as saveUserToStorage, 
   removeUser 
 } from "@/lib/auth";
+import { getProfile } from "@/services/auth.service";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -31,6 +32,7 @@ export interface AuthState {
 /**
  * Initialize auth state from storage
  * This runs on app start to restore session
+ * Fetches complete user profile to ensure organisation_employees data is included
  */
 export const initializeAuth = createAsyncThunk(
   "auth/initialize",
@@ -40,12 +42,27 @@ export const initializeAuth = createAsyncThunk(
       const storedUser = getUser();
       
       if (storedToken && storedUser) {
-        return {
-          user: storedUser,
-          token: storedToken,
-          userId: storedUser.id,
-          lastAuthTime: Date.now(),
-        };
+        // Fetch complete user profile to ensure organisation_employees data is included
+        try {
+          const profileResponse = await getProfile();
+          const completeUser = profileResponse.user;
+          saveUserToStorage(completeUser);
+          
+          return {
+            user: completeUser,
+            token: storedToken,
+            userId: completeUser.id,
+            lastAuthTime: Date.now(),
+          };
+        } catch (error) {
+          // If profile fetch fails, fall back to the stored user data
+          return {
+            user: storedUser,
+            token: storedToken,
+            userId: storedUser.id,
+            lastAuthTime: Date.now(),
+          };
+        }
       }
       
       return null;
@@ -57,6 +74,7 @@ export const initializeAuth = createAsyncThunk(
 
 /**
  * Login action - stores user and token
+ * Fetches complete user profile to ensure organisation_employees data is included
  */
 export const loginUser = createAsyncThunk(
   "auth/login",
@@ -64,12 +82,27 @@ export const loginUser = createAsyncThunk(
     saveToken(token);
     saveUserToStorage(user);
     
-    return {
-      user,
-      token,
-      userId: user.id,
-      lastAuthTime: Date.now(),
-    };
+    // Fetch complete user profile to ensure organisation_employees data is included
+    try {
+      const profileResponse = await getProfile();
+      const completeUser = profileResponse.user;
+      saveUserToStorage(completeUser);
+      
+      return {
+        user: completeUser,
+        token,
+        userId: completeUser.id,
+        lastAuthTime: Date.now(),
+      };
+    } catch (error) {
+      // If profile fetch fails, fall back to the original user data
+      return {
+        user,
+        token,
+        userId: user.id,
+        lastAuthTime: Date.now(),
+      };
+    }
   }
 );
 
