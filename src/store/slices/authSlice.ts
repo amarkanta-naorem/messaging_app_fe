@@ -6,14 +6,7 @@
 
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import type { User } from "@/types";
-import { 
-  getToken, 
-  setToken as saveToken, 
-  removeToken, 
-  getUser, 
-  setUser as saveUserToStorage, 
-  removeUser 
-} from "@/lib/auth";
+import { getToken, setToken as saveToken, removeToken, getUser, setUser as saveUserToStorage, removeUser } from "@/lib/auth";
 import { getProfile } from "@/services/auth.service";
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -56,6 +49,7 @@ export const initializeAuth = createAsyncThunk(
           };
         } catch (error) {
           // If profile fetch fails, fall back to the stored user data
+          // The stored user data should already have organisation_employees from login
           return {
             user: storedUser,
             token: storedToken,
@@ -74,35 +68,20 @@ export const initializeAuth = createAsyncThunk(
 
 /**
  * Login action - stores user and token
- * Fetches complete user profile to ensure organisation_employees data is included
+ * Uses the user data from OTP verification response directly
  */
 export const loginUser = createAsyncThunk(
   "auth/login",
-  async ({ user, token }: { user: User; token: string }, { dispatch }) => {
+  async ({ user, token }: { user: User; token: string }) => {
     saveToken(token);
     saveUserToStorage(user);
     
-    // Fetch complete user profile to ensure organisation_employees data is included
-    try {
-      const profileResponse = await getProfile();
-      const completeUser = profileResponse.user;
-      saveUserToStorage(completeUser);
-      
-      return {
-        user: completeUser,
-        token,
-        userId: completeUser.id,
-        lastAuthTime: Date.now(),
-      };
-    } catch (error) {
-      // If profile fetch fails, fall back to the original user data
-      return {
-        user,
-        token,
-        userId: user.id,
-        lastAuthTime: Date.now(),
-      };
-    }
+    return {
+      user,
+      token,
+      userId: user.id,
+      lastAuthTime: Date.now(),
+    };
   }
 );
 
