@@ -74,7 +74,7 @@ export default function EmployeePage() {
         </button>
       </div>
 
-      <div className="bg-(--bg-card) theme-bg-card rounded-xl border border-(--border-primary) shadow-sm overflow-hidden">
+      <div className="bg-(--bg-card) max-h-[80vh] overflow-y-scroll custom-scrollbar theme-bg-card rounded-xl border border-(--border-primary) shadow-sm overflow-hidden">
         <div className="p-4 border-b border-(--border-primary) bg-(--bg-secondary)">
           <div className="relative max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-(--text-muted)" size={20} />
