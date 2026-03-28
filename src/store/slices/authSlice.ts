@@ -38,7 +38,15 @@ export const initializeAuth = createAsyncThunk(
         // Fetch complete user profile to ensure organisation_employees data is included
         try {
           const profileResponse = await getProfile();
-          const completeUser = profileResponse.user;
+          const profileUser = profileResponse.user;
+          
+          // Preserve organisation_employees from stored user if profile doesn't include it
+          // This ensures the nested data is not lost on page reload
+          const completeUser = {
+            ...profileUser,
+            organisation_employees: profileUser.organisation_employees ?? storedUser.organisation_employees,
+          };
+          
           saveUserToStorage(completeUser);
           
           return {
