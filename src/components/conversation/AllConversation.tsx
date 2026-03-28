@@ -49,7 +49,7 @@ export default function AllConversation({ data, showNewMessage, onClose, searchQ
   const [contactsError, setContactsError] = useState<string | null>(null);
   
   useEffect(() => {
-    if (showNewMessage && token) {
+    if ((showNewMessage || searchQuery.trim()) && token) {
       const fetchContacts = async () => {
         setLoadingContacts(true);
         setContactsError(null);
@@ -70,11 +70,11 @@ export default function AllConversation({ data, showNewMessage, onClose, searchQ
         }
       };
       fetchContacts();
-    } else {
+    } else if (!showNewMessage && !searchQuery.trim()) {
       setContacts([]);
       setContactsError(null);
     }
-  }, [showNewMessage, token]);
+  }, [showNewMessage, token, searchQuery]);
 
   // Filter conversations based on search query
   const filteredData = data.filter((item) => {
@@ -86,6 +86,23 @@ export default function AllConversation({ data, showNewMessage, onClose, searchQ
     }
     const conv = item as Conversation;
     return conv.participant.name.toLowerCase().includes(query) || conv.participant.phone?.toLowerCase().includes(query);
+  });
+
+  // Get contact IDs that already have conversations
+  const conversationContactIds = new Set(
+    data
+      .filter((item): item is Conversation => 'participant' in item)
+      .map((conv) => conv.participant.id)
+  );
+
+  // Filter contacts based on search query and exclude those already in conversations
+  const filteredContacts = contacts.filter((contact) => {
+    // Exclude contacts that already have a conversation
+    if (conversationContactIds.has(contact.id)) return false;
+    
+    if (!searchQuery.trim()) return true;
+    const query = searchQuery.toLowerCase();
+    return contact.name.toLowerCase().includes(query) || contact.phone?.toLowerCase().includes(query) || (contact.bio?.toLowerCase().includes(query) ?? false);
   });
 
   const handleContactClick = (contact: Contact) => {
@@ -119,31 +136,35 @@ export default function AllConversation({ data, showNewMessage, onClose, searchQ
     selectConversation(conv);
   };
 
+  const hasSearchQuery = searchQuery.trim().length > 0;
+
   return (
     <div className="relative h-full bg-(--bg-card)">
-      {/* Contact list for new message */}
-      <div className={`absolute inset-0 bg-(--bg-card) transition-transform duration-300 ease-in-out flex flex-col ${showNewMessage ? "translate-x-0" : "-translate-x-full"}`}>
-        <div className="flex-1 overflow-y-auto">
-          <div className="pb-2">
-            {loadingContacts && (
-              <div className="p-4 text-center text-(--text-muted)">Loading contacts...</div>
-            )}
-            {contactsError && (
-              <div className="p-4 text-center text-red-500">{contactsError}</div>
-            )}
-            {contacts.map((contact) => (
-              <ContactItem
-                key={contact.id}
-                contact={contact}
-                onClick={() => handleContactClick(contact)}
-              />
-            ))}
+      {/* Contact list for new message - show when in new message mode or when searching */}
+      {(showNewMessage || hasSearchQuery) && (
+        <div className={`${hasSearchQuery ? 'relative' : 'absolute inset-0'} bg-(--bg-card) transition-transform duration-300 ease-in-out flex flex-col translate-x-0`}>
+          <div className="flex-1 overflow-y-auto">
+            <div className="pb-2">
+              {loadingContacts && (
+                <div className="p-4 text-center text-(--text-muted)">Loading contacts...</div>
+              )}
+              {contactsError && (
+                <div className="p-4 text-center text-red-500">{contactsError}</div>
+              )}
+              {filteredContacts.map((contact) => (
+                <ContactItem
+                  key={contact.id}
+                  contact={contact}
+                  onClick={() => handleContactClick(contact)}
+                />
+              ))}
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
-      {/* Conversation list */}
-      {filteredData.map((item) => {
+      {/* Conversation list - show when not in new message mode or when searching */}
+      {(!showNewMessage || hasSearchQuery) && filteredData.map((item) => {
         if (item.type === 'group') {
           const group = item as Group;
           return (

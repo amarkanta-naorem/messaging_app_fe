@@ -1,5 +1,6 @@
 import { useAuth } from "@/context/AuthContext";
 import { LayoutDashboard, LogOut, Users } from "lucide-react";
+import Link from "next/link";
 import router from "next/router";
 
 interface ChatMenuModalProps {
@@ -21,10 +22,10 @@ export default function ChatMenuModal ({ showMenu, setShowMenu, setShowNewMessag
             <Users size={20} className="text-(--text-muted)" />
             New group
           </div>
-          <div className="px-4 py-3 hover:bg-(--bg-hover) cursor-pointer text-(--text-primary) text-[15px] flex items-center gap-3 transition-colors font-medium" onClick={() => router.push("/dashboard")}>
+          <Link href="/dashboard" className="px-4 py-3 hover:bg-(--bg-hover) cursor-pointer text-(--text-primary) text-[15px] flex items-center gap-3 transition-colors font-medium" onClick={() => router.push("/dashboard")}>
             <LayoutDashboard size={20} className="text-(--text-muted)" />
             Dashboard
-          </div>
+          </Link>
           <div className="my-1 border-t border-(--border-primary)"></div>
           <div className="px-4 py-3 hover:bg-(--bg-hover) cursor-pointer text-(--color-error) text-[15px] flex items-center gap-3 transition-colors font-medium" onClick={logout}>
             <LogOut size={20} />
