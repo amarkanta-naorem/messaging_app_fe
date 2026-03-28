@@ -441,7 +441,7 @@ export const AddEmployeeDrawer = ({
               Cancel
             </button>
             <button
-              disabled={submitting || !token || !organisationId}
+              // disabled={submitting || !token || !organisationId}
               onClick={handleSubmit}
               className="flex-1 bg-[var(--accent-primary)] text-white py-2.5 rounded-lg font-medium text-sm hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
             >
