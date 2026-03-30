@@ -1,6 +1,9 @@
+import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui";
 import { FormatTime } from "@/utils/FormatTime";
 import { File, Image as ImageIcon, Video, Music, FileText, FileSpreadsheet, Presentation } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { connectSocket, getSocket } from "@/lib/socket";
 
 interface Participant {
   id: number;
@@ -107,7 +110,46 @@ function getFileIcon(mimeType: string) {
   }
 }
 
-export function ConversationItem({ participant, name, avatar, lastMessage, unreadCount = 0, isGroup = false, isActive = false, onClick, createdAt, description }: ConversationItemProps) {
+export function ConversationItem({ id, participant, name, avatar, lastMessage: initialLastMessage, unreadCount = 0, isGroup = false, isActive = false, onClick, createdAt, description }: ConversationItemProps) {
+  const { token } = useAuth();
+  const [lastMessage, setLastMessage] = useState<LastMessage | null | undefined>(initialLastMessage);
+
+  // Sync lastMessage state when prop changes
+  useEffect(() => {
+    setLastMessage(initialLastMessage);
+  }, [initialLastMessage]);
+
+  // Socket.IO integration for real-time lastMessage updates
+  useEffect(() => {
+    if (!token) return;
+
+    const setupSocket = async () => {
+      try {
+        const socket = await connectSocket(token);
+        
+        const handleLastMessage = (data: { conversationId: number; lastMessage: LastMessage }) => {
+          if (data.conversationId === id) {
+            setLastMessage(data.lastMessage);
+          }
+        };
+
+        socket.on('lastMessage', handleLastMessage);
+
+        return () => {
+          socket.off('lastMessage', handleLastMessage);
+        };
+      } catch (error) {
+        console.error('Failed to setup socket for lastMessage:', error);
+      }
+    };
+
+    const cleanup = setupSocket();
+
+    return () => {
+      cleanup.then(cleanupFn => cleanupFn?.());
+    };
+  }, [token, id]);
+
   const displayName = isGroup ? name : participant?.name;
   const displayAvatar = isGroup ? avatar : participant?.avatar;
 

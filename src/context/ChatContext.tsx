@@ -415,6 +415,19 @@ export function ChatProvider({ children }: { children: ReactNode }) {
             clientMessageId,
             serverMessage: { ...optimisticMessage, id: apiResponse.id, status: apiResponse.status as Message["status"] }
           }));
+          
+          // Update lastMessage in conversation for sender's real-time UI update
+          const normalizedContent = normalizeMessageContent(messageContent as any);
+          (dispatch as any)(updateConversationLastMessage({
+            conversationId: activeConversation.id,
+            lastMessage: {
+              id: apiResponse.id,
+              content: normalizedContent,
+              senderId: user.id,
+              status: apiResponse.status as Message["status"],
+              createdAt: String(optimisticMessage.createdAt),
+            },
+          }));
         })
         .catch((error) => {
           console.error("REST API failed:", error.message);
@@ -508,6 +521,19 @@ export function ChatProvider({ children }: { children: ReactNode }) {
             status: apiResponse.status as Message["status"],
             content: apiResponse.content as unknown as MessageContent,
           }
+        }));
+        
+        // Update lastMessage in conversation for sender's real-time UI update
+        const normalizedContent = normalizeMessageContent(apiResponse.content as any);
+        (dispatch as any)(updateConversationLastMessage({
+          conversationId: activeConversation.id,
+          lastMessage: {
+            id: apiResponse.id,
+            content: normalizedContent,
+            senderId: user.id,
+            status: apiResponse.status as Message["status"],
+            createdAt: String(optimisticMessage.createdAt),
+          },
         }));
       } catch (error: any) {
         console.error("Failed to send file:", error.message);
