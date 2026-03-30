@@ -133,10 +133,24 @@ export function ConversationItem({ id, participant, name, avatar, lastMessage: i
           }
         };
 
+        const handleNewMessage = (message: any) => {
+          // Handle both direct message events and lastMessage events
+          if (message.conversationId === id || message.groupId === id) {
+            setLastMessage({
+              content: message.content,
+              createdAt: message.createdAt
+            });
+          }
+        };
+
         socket.on('lastMessage', handleLastMessage);
+        socket.on('message:new', handleNewMessage);
+        socket.on('newMessage', handleNewMessage);
 
         return () => {
           socket.off('lastMessage', handleLastMessage);
+          socket.off('message:new', handleNewMessage);
+          socket.off('newMessage', handleNewMessage);
         };
       } catch (error) {
         console.error('Failed to setup socket for lastMessage:', error);

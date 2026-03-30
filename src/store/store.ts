@@ -44,6 +44,7 @@ export {
   clearAllChatState,
   clearConversationMessages,
   clearActiveConversation,
+  addConversation,
   // Selectors
   selectChat,
   selectConversations,

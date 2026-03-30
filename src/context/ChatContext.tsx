@@ -6,8 +6,8 @@ import { useAppDispatch, useAppSelector } from "@/store/store";
 import type { Conversation, Message as ChatMessage } from "@/types";
 import { createContext, useContext, useCallback, ReactNode, useEffect, useRef } from "react";
 import { MessageContent, sendMessage as sendMessageApi, sendFileMessage, Message } from "@/lib/messages";
-import { connectSocket, disconnectSocket, IncomingMessage, SocketError, MessagePayload, getSocket } from "@/lib/socket";
-import { fetchConversations, fetchMessagesForConversation, setActiveConversation, switchConversation, addMessageOptimistic, updateMessageInState, replaceOptimisticMessage, addIncomingMessage, updateConversationLastMessage, setChatSocketError, selectConversations, selectActiveConversationId, selectActiveConversation, selectMessagesForConversation, selectLoadingConversations, selectLoadingMessages, selectSendingMessage, selectSocketError } from "@/store/store";
+import { connectSocket, disconnectSocket, IncomingMessage, SocketError, MessagePayload, getSocket, onNewConversation, offNewConversation, NewConversationEvent } from "@/lib/socket";
+import { fetchConversations, fetchMessagesForConversation, setActiveConversation, switchConversation, addMessageOptimistic, updateMessageInState, replaceOptimisticMessage, addIncomingMessage, updateConversationLastMessage, setChatSocketError, addConversation, selectConversations, selectActiveConversationId, selectActiveConversation, selectMessagesForConversation, selectLoadingConversations, selectLoadingMessages, selectSendingMessage, selectSocketError } from "@/store/store";
 
 interface ChatContextType {
   conversations: Conversation[];
@@ -48,6 +48,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const handleNewMessageRef = useRef<((message: IncomingMessage) => void) | null>(null);
   const handleMessageErrorRef = useRef<((error: SocketError) => void) | null>(null);
   const handleSocketErrorRef = useRef<((error: SocketError) => void) | null>(null);
+  const handleNewConversationRef = useRef<((event: NewConversationEvent) => void) | null>(null);
 
   useEffect(() => {
     activeConversationRef.current = activeConversation;
@@ -57,40 +58,74 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     if (!token) return;
 
     let mounted = true;
+    let socketCleanup: (() => void) | null = null;
 
     const setupSocket = async () => {
       try {
         const socket = await connectSocket(token);
 
-        socket.on("connect_error", (error: Error) => {
+        const handleConnectError = (error: Error) => {
           if (mounted) {
             dispatch(setChatSocketError(`Connection error: ${error.message}`));
           }
-        });
+        };
 
-        socket.on("connect", () => {
+        const handleConnect = () => {
           if (mounted) {
             dispatch(setChatSocketError(null));
           }
-        });
-        
-        socket.on("message:new", (message: IncomingMessage) => {
-          if (handleNewMessageRef.current) {
+        };
+
+        const handleMessageNew = (message: IncomingMessage) => {
+          if (mounted && handleNewMessageRef.current) {
             handleNewMessageRef.current(message);
           }
-        });
+        };
 
-        socket.on("message:error", (error: SocketError) => {
-          if (handleMessageErrorRef.current) {
+        const handleMessageNewDirect = (message: IncomingMessage) => {
+          if (mounted && handleNewMessageRef.current) {
+            handleNewMessageRef.current(message);
+          }
+        };
+
+        const handleMessageError = (error: SocketError) => {
+          if (mounted && handleMessageErrorRef.current) {
             handleMessageErrorRef.current(error);
           }
-        });
+        };
 
-        socket.on("error", (error: SocketError) => {
-          if (handleSocketErrorRef.current) {
+        const handleSocketError = (error: SocketError) => {
+          if (mounted && handleSocketErrorRef.current) {
             handleSocketErrorRef.current(error);
           }
-        });
+        };
+
+        const handleNewConversation = (event: NewConversationEvent) => {
+          if (mounted && handleNewConversationRef.current) {
+            handleNewConversationRef.current(event);
+          }
+        };
+
+        // Register all event listeners
+        socket.on("connect_error", handleConnectError);
+        socket.on("connect", handleConnect);
+        socket.on("message:new", handleMessageNew);
+        socket.on("newMessage", handleMessageNewDirect);
+        socket.on("message:error", handleMessageError);
+        socket.on("error", handleSocketError);
+        socket.on("conversation:new", handleNewConversation);
+
+        // Store cleanup function
+        socketCleanup = () => {
+          socket.off("connect_error", handleConnectError);
+          socket.off("connect", handleConnect);
+          socket.off("message:new", handleMessageNew);
+          socket.off("newMessage", handleMessageNewDirect);
+          socket.off("message:error", handleMessageError);
+          socket.off("error", handleSocketError);
+          socket.off("conversation:new", handleNewConversation);
+        };
+
       } catch (err) {
         if (mounted) {
           dispatch(setChatSocketError("Failed to connect to chat server"));
@@ -102,11 +137,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
     return () => {
       mounted = false;
-      const socket = getSocket();
-      if (socket) {
-        socket.off("message:new");
-        socket.off("message:error");
-        socket.off("error");
+      if (socketCleanup) {
+        socketCleanup();
       }
       disconnectSocket();
     };
@@ -203,106 +235,77 @@ export function ChatProvider({ children }: { children: ReactNode }) {
           updates: { id: serverMessageId ?? message.id, status: message.status }
         }));
       }
+      // For direct messages - resolve conversation and update
+      else if (message.receiverId && currentConv && !(currentConv as any).isGroup && currentConv.participant?.id === message.receiverId) {
+        (dispatch as any)(updateMessageInState({
+          conversationId: currentConv.id,
+          clientMessageId: message.clientMessageId!,
+          updates: { id: serverMessageId ?? message.id, status: message.status }
+        }));
+      }
       return;
     }
 
     // For incoming messages, resolve conversation ID
-    const resolvedConversationId = message.conversationId || 
-      (message.groupId ? message.groupId : null) ||
-      (message.senderId ? null : null); // Will be resolved below
+    let resolvedConversationId: number | null = null;
 
-    // If we can't determine conversation ID, skip
-    if (!resolvedConversationId && !message.senderId) {
+    if (message.conversationId) {
+      resolvedConversationId = message.conversationId;
+    } else if (message.groupId) {
+      resolvedConversationId = message.groupId;
+    } else if (message.senderId) {
+      // For direct messages, we need to find the conversation by sender ID
+      const existingConv = conversations.find((conv) => 
+        conv.participant.id === message.senderId && !conv.isGroup
+      );
+      if (existingConv) {
+        resolvedConversationId = existingConv.id;
+      }
+    }
+
+    // If we still can't determine conversation ID, skip
+    if (!resolvedConversationId) {
       return;
     }
 
-    // If we have a conversation ID, process the message
-    if (resolvedConversationId) {
-      const normalizedMessage = {
-        ...message,
-        conversationId: resolvedConversationId,
+    const normalizedMessage = {
+      ...message,
+      conversationId: resolvedConversationId,
+      content: normalizedContent,
+    };
+
+    // Update last message for this conversation
+    (dispatch as any)(updateConversationLastMessage({
+      conversationId: resolvedConversationId,
+      lastMessage: {
+        id: serverMessageId ?? message.id ?? Date.now(),
         content: normalizedContent,
-      };
+        senderId: message.senderId,
+        status: message.status,
+        createdAt: String(message.createdAt) ?? new Date().toISOString(),
+      },
+    }));
 
-      // Update last message for this conversation
-      (dispatch as any)(updateConversationLastMessage({
-        conversationId: resolvedConversationId,
-        lastMessage: {
-          id: serverMessageId ?? message.id ?? Date.now(),
-          content: normalizedContent,
-          senderId: message.senderId,
-          status: message.status,
-          createdAt: String(message.createdAt) ?? new Date().toISOString(),
-        },
-      }));
+    // If this is the active conversation, add the message
+    if (currentConv && resolvedConversationId === currentConv.id) {
+      // Check if message already exists (optimistic update)
+      const exists = messages.some((msg) => 
+        (serverMessageId && msg.id === serverMessageId) ||
+        (message.clientMessageId && msg.clientMessageId === message.clientMessageId)
+      );
 
-      // If this is the active conversation, add the message
-      if (currentConv && resolvedConversationId === currentConv.id) {
-        // Check if message already exists (optimistic update)
-        const exists = messages.some((msg) => 
-          (serverMessageId && msg.id === serverMessageId) ||
-          (message.clientMessageId && msg.clientMessageId === message.clientMessageId)
-        );
-
-        if (!exists) {
-          (dispatch as any)(addIncomingMessage({ 
-            conversationId: currentConv.id,
-            message: { 
-              ...normalizedMessage, 
-              id: serverMessageId ?? message.id ?? Date.now(),
-              createdAt: normalizedMessage.createdAt ?? new Date().toISOString()
-            }
-          }));
-        }
-      }
-    } else if (message.senderId) {
-      // Fallback: try to resolve by sender ID (for direct messages)
-      void (async () => {
-        try {
-          const data = await getConversations();
-          const match = data.find((conv) => conv.participant.id === message.senderId);
-          if (match) {
-            (dispatch as any)({ type: "chat/setConversations", payload: data });
-            
-            // Update last message
-            (dispatch as any)(updateConversationLastMessage({
-              conversationId: match.id,
-              lastMessage: {
-                id: serverMessageId ?? message.id ?? Date.now(),
-                content: normalizedContent,
-                senderId: message.senderId,
-                status: message.status,
-                createdAt: String(message.createdAt) ?? new Date().toISOString(),
-              },
-            }));
-
-            // If this is the active conversation, add the message
-            if (currentConv && match.id === currentConv.id) {
-              const exists = messages.some((msg) => 
-                (serverMessageId && msg.id === serverMessageId) ||
-                (message.clientMessageId && msg.clientMessageId === message.clientMessageId)
-              );
-
-              if (!exists) {
-                (dispatch as any)(addIncomingMessage({ 
-                  conversationId: match.id,
-                  message: { 
-                    ...message,
-                    conversationId: match.id,
-                    content: normalizedContent,
-                    id: serverMessageId ?? message.id ?? Date.now(),
-                    createdAt: message.createdAt ?? new Date().toISOString()
-                  }
-                }));
-              }
-            }
+      if (!exists) {
+        (dispatch as any)(addIncomingMessage({ 
+          conversationId: currentConv.id,
+          message: { 
+            ...normalizedMessage, 
+            id: serverMessageId ?? message.id ?? Date.now(),
+            createdAt: normalizedMessage.createdAt ?? new Date().toISOString()
           }
-        } catch (err) {
-          console.error("Failed to resolve conversation by sender:", err);
-        }
-      })();
+        }));
+      }
     }
-  }, [normalizeMessageContent, user?.id, messages, dispatch]);
+  }, [normalizeMessageContent, user?.id, messages, dispatch, conversations]);
 
   const handleMessageError = useCallback((error: SocketError) => {
     if (error.clientMessageId && activeConversationId) {
@@ -324,6 +327,49 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     }
   }, [dispatch]);
 
+  const handleNewConversation = useCallback((event: NewConversationEvent) => {
+    const { conversation, message } = event;
+    
+    // Add the new conversation to the state
+    if (conversation) {
+      (dispatch as any)(addConversation(conversation));
+      
+      // If there's an initial message, add it to the conversation
+      if (message) {
+        const normalizedContent = normalizeMessageContent(message.content);
+        const serverMessageId = message.serverMessageId ?? message.id;
+        
+        // Add the message to the conversation
+        (dispatch as any)(addIncomingMessage({
+          conversationId: conversation.id,
+          message: {
+            ...message,
+            id: serverMessageId ?? message.id ?? Date.now(),
+            content: normalizedContent,
+            createdAt: message.createdAt ?? new Date().toISOString(),
+          }
+        }));
+        
+        // Update the last message in the conversation
+        (dispatch as any)(updateConversationLastMessage({
+          conversationId: conversation.id,
+          lastMessage: {
+            id: serverMessageId ?? message.id ?? Date.now(),
+            content: normalizedContent,
+            senderId: message.senderId,
+            status: message.status,
+            createdAt: String(message.createdAt) ?? new Date().toISOString(),
+          },
+        }));
+        
+        // If this is the active conversation, ensure it's properly set
+        if (activeConversationRef.current?.id === conversation.id) {
+          (dispatch as any)(setActiveConversation(conversation));
+        }
+      }
+    }
+  }, [dispatch, normalizeMessageContent]);
+
   useEffect(() => {
     handleNewMessageRef.current = handleNewMessage;
   }, [handleNewMessage]);
@@ -335,6 +381,10 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     handleSocketErrorRef.current = handleSocketError;
   }, [handleSocketError]);
+
+  useEffect(() => {
+    handleNewConversationRef.current = handleNewConversation;
+  }, [handleNewConversation]);
 
   // Only fetch conversations once when user is available
   // This effect runs only on initial mount to prevent duplicate fetching

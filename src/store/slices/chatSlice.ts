@@ -325,6 +325,19 @@ const chatSlice = createSlice({
     },
     
     /**
+     * Add a new conversation from WebSocket (real-time sync)
+     */
+    addConversation: (state, action: PayloadAction<Conversation>) => {
+      const newConversation = action.payload;
+      // Check if conversation already exists
+      const exists = state.conversations.some((conv) => conv.id === newConversation.id);
+      if (!exists) {
+        // Add to the beginning of the list (most recent first)
+        state.conversations.unshift(newConversation);
+      }
+    },
+    
+    /**
      * Switch conversation - clear previous messages and set new active conversation
      */
     switchConversation: (state, action: PayloadAction<Conversation | null>) => {
@@ -458,6 +471,7 @@ export const {
   clearAllChatState,
   clearConversationMessages,
   clearActiveConversation,
+  addConversation,
 } = chatSlice.actions;
 
 export default chatSlice.reducer;

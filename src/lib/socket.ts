@@ -170,3 +170,37 @@ export function onError(callback: (error: SocketError) => void): void {
 export function offError(callback: (error: SocketError) => void): void {
   socket?.off("error", callback);
 }
+
+export interface NewConversationEvent {
+  conversation: {
+    id: number;
+    participant: {
+      id: number;
+      name: string;
+      phone: string;
+      avatar: string | null;
+    };
+    isGroup?: boolean;
+    type?: string;
+    name?: string;
+    lastMessage: {
+      id: number;
+      content: any;
+      senderId: number;
+      status: string;
+      createdAt: string;
+    } | null;
+    unreadCount: number;
+    createdAt?: string;
+    updatedAt?: string;
+  };
+  message?: IncomingMessage;
+}
+
+export function onNewConversation(callback: (event: NewConversationEvent) => void): void {
+  socket?.on("conversation:new", callback);
+}
+
+export function offNewConversation(callback: (event: NewConversationEvent) => void): void {
+  socket?.off("conversation:new", callback);
+}
