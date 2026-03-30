@@ -47,17 +47,17 @@ export const AudioMsg = memo(function AudioMsg({ url, isOwn }: AudioMsgProps) {
   });
 
   return (
-    <div className={`flex items-center gap-3 py-3 px-2 rounded cursor-pointer active:scale-[0.98] transition-transform ${isOwn ? "bg-[#d9fdd3] hover:bg-[#cff5c5]" : "bg-[#f0f2f5] hover:bg-[#e4e6e9]"}`} onClick={toggle} role="button" aria-label={playing ? "Pause audio" : "Play audio"}>
-      <button className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-colors ${isOwn ? "bg-[#00a884] hover:bg-[#008f6d]" : "bg-[#54656f] hover:bg-[#3d4a51]"}`}>
+    <div className={`flex items-center gap-2 md:gap-3 py-2.5 md:py-3 px-1.5 md:px-2 rounded cursor-pointer active:scale-[0.98] transition-transform ${isOwn ? "bg-[#d9fdd3] hover:bg-[#cff5c5]" : "bg-[#f0f2f5] hover:bg-[#e4e6e9]"}`} onClick={toggle} role="button" aria-label={playing ? "Pause audio" : "Play audio"}>
+      <button className={`w-9 h-9 md:w-10 md:h-10 rounded-full flex items-center justify-center shrink-0 transition-colors ${isOwn ? "bg-[#00a884] hover:bg-[#008f6d]" : "bg-[#54656f] hover:bg-[#3d4a51]"}`}>
         {playing ? (
-          <Pause size={18} className="text-white" fill="white" />
+          <Pause size={16} className="text-white" fill="white" />
         ) : (
-          <Play size={18} className="text-white ml-0.5" fill="white" />
+          <Play size={16} className="text-white ml-0.5" fill="white" />
         )}
       </button>
 
       {/* Waveform */}
-      <div className="flex-1 h-10 flex items-center gap-0.5">
+      <div className="flex-1 h-8 md:h-10 flex items-center gap-0.5">
         {bars.map((bar, i) => (
           <div
             key={i}
@@ -75,7 +75,7 @@ export const AudioMsg = memo(function AudioMsg({ url, isOwn }: AudioMsgProps) {
         ))}
       </div>
 
-      <span className="text-xs text-[#667781] shrink-0 tabular-nums">{fmt(current || 0)} / {fmt(duration || 0)}</span>
+      <span className="text-[10px] md:text-xs text-[#667781] shrink-0 tabular-nums">{fmt(current || 0)} / {fmt(duration || 0)}</span>
     </div>
   );
 });

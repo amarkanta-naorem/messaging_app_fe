@@ -112,32 +112,32 @@ export function ConversationItem({ participant, name, avatar, lastMessage, unrea
   const displayAvatar = isGroup ? avatar : participant?.avatar;
 
   return (
-    <div onClick={onClick} className={`flex items-center px-3 cursor-pointer hover:bg-(--bg-hover) group`} title={displayName}>
-      <div className="py-3 pr-3">
-        <div className="w-12.25 h-12.25 rounded-full bg-(--bg-tertiary) overflow-hidden">
+    <div onClick={onClick} className={`flex items-center px-3 cursor-pointer hover:bg-(--bg-hover) group ${isActive ? 'bg-(--bg-active)' : ''}`} title={displayName}>
+      <div className="py-2.5 md:py-3 pr-2.5 md:pr-3">
+        <div className="w-11 h-11 md:w-12.25 md:h-12.25 rounded-full bg-(--bg-tertiary) overflow-hidden">
           {displayAvatar ? (
             <img src={displayAvatar} alt={displayName} className="w-full h-full object-cover"/>
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-(--text-secondary) font-semibold text-xl bg-(--bg-tertiary)">{displayName?.charAt(0)?.toUpperCase() || "?"}</div>
+            <div className="w-full h-full flex items-center justify-center text-(--text-secondary) font-semibold text-lg md:text-xl bg-(--bg-tertiary)">{displayName?.charAt(0)?.toUpperCase() || "?"}</div>
           )}
         </div>
       </div>
-      <div className="flex-1 min-w-0 py-3 border-b border-(--border-primary) group-hover:border-transparent">
-        <div className="flex justify-between items-center mb-1">
-          <span className="text-(--text-primary) text-[17px] font-normal truncate">{displayName} </span>
+      <div className="flex-1 min-w-0 py-2.5 md:py-3 border-b border-(--border-primary) group-hover:border-transparent">
+        <div className="flex justify-between items-center mb-0.5 md:mb-1">
+          <span className="text-(--text-primary) text-[15px] md:text-[17px] font-normal truncate">{displayName} </span>
           {isGroup ? (
             createdAt && (
-              <span className="text-[12px] text-(--text-tertiary)">{FormatTime(createdAt.toString())}</span>
+              <span className="text-[11px] md:text-[12px] text-(--text-tertiary)">{FormatTime(createdAt.toString())}</span>
             )
           ) : (
             lastMessage?.createdAt && (
-              <span className={`text-[12px] ${unreadCount > 0 ? "text-[#25d366] font-medium" : "text-(--text-tertiary)"}`}>{FormatTime(lastMessage.createdAt.toString())}</span>
+              <span className={`text-[11px] md:text-[12px] ${unreadCount > 0 ? "text-[#25d366] font-medium" : "text-(--text-tertiary)"}`}>{FormatTime(lastMessage.createdAt.toString())}</span>
             )
           )}
         </div>
         <div className="flex justify-between items-center">
           {isGroup ? (
-            <span className="text-(--text-tertiary) text-[14px] truncate flex-1 mr-2 flex items-center">
+            <span className="text-(--text-tertiary) text-[13px] md:text-[14px] truncate flex-1 mr-2 flex items-center">
               {lastMessage?.content && isTaskContent(lastMessage.content)
                 ? lastMessage.content.task_title 
                 : lastMessage?.content && isFileContent(lastMessage.content)
@@ -151,7 +151,7 @@ export function ConversationItem({ participant, name, avatar, lastMessage, unrea
               }
             </span>
           ) : (
-            <span className="text-(--text-tertiary) text-[14px] truncate flex-1 mr-2 flex items-center">
+            <span className="text-(--text-tertiary) text-[13px] md:text-[14px] truncate flex-1 mr-2 flex items-center">
               {lastMessage?.content && isTaskContent(lastMessage.content)
                 ? lastMessage.content.task_title 
                 : lastMessage?.content && isFileContent(lastMessage.content)

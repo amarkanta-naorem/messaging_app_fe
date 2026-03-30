@@ -87,6 +87,10 @@ export default function ChatView() {
     selectConversation(null as any);
   };
 
+  const handleBackClick = () => {
+    selectConversation(null as any);
+  };
+
   // Empty state when no conversation is selected
   if (!activeConversation) {
     return <ChatEmptyState />;
@@ -95,7 +99,7 @@ export default function ChatView() {
   const isGroup = (activeConversation as any).isGroup;
 
   return (
-    <div className="flex flex-col h-full bg-(--chat-bg) theme-chat-bg" onContextMenu={handleContextMenu}>
+    <div className="flex flex-col w-screen h-full bg-(--chat-bg) theme-chat-bg" onContextMenu={handleContextMenu}>
       {/* Chat Background */}
       {isDark ? (
         <>
@@ -118,6 +122,7 @@ export default function ChatView() {
           onProfileClick={() => setShowContactDrawer(true)}
           onSearchClick={() => {}}
           onMoreClick={() => {}}
+          onBackClick={handleBackClick}
         />
 
         {/* Messages */}

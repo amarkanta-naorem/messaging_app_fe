@@ -370,7 +370,7 @@ export function MessageInput({ onSend, onFileUpload, placeholder = "Type a messa
 
   return (
     <div className="relative">
-      <div className="relative bg-(--header-bg) theme-header-bg px-4 py-2 shrink-0">
+      <div className="relative bg-(--header-bg) theme-header-bg px-3 md:px-4 py-2 shrink-0">
         {/* Attachments Preview */}
         {attachments.length > 0 && (
           <div className="flex gap-2 mb-2 overflow-x-auto pb-2">
@@ -378,25 +378,25 @@ export function MessageInput({ onSend, onFileUpload, placeholder = "Type a messa
               <div key={index} className="relative group shrink-0">
                 {attachment.type === "image" && attachment.preview ? (
                   <div className="relative">
-                    <img src={attachment.preview} alt={attachment.file.name} className="w-20 h-20 object-cover rounded-lg"/>
+                    <img src={attachment.preview} alt={attachment.file.name} className="w-16 h-16 md:w-20 md:h-20 object-cover rounded-lg"/>
                     <button type="button" onClick={() => removeAttachment(index)} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                       <X size={14} />
                     </button>
                   </div>
                 ) : (
-                  <div className="flex items-center gap-2 bg-(--bg-input) px-3 py-2 rounded-lg">
+                  <div className="flex items-center gap-2 bg-(--bg-input) px-2 md:px-3 py-1.5 md:py-2 rounded-lg">
                     {attachment.type === "video" ? (
-                      <Video size={16} className="text-purple-500" />
+                      <Video size={14} className="text-purple-500" />
                     ) : attachment.type === "audio" ? (
-                      <Mic size={16} className="text-blue-500" />
+                      <Mic size={14} className="text-blue-500" />
                     ) : (
-                      <File size={16} className="text-gray-500" />
+                      <File size={14} className="text-gray-500" />
                     )}
-                    <span className="text-xs text-(--text-primary) max-w-24 truncate">
+                    <span className="text-[11px] md:text-xs text-(--text-primary) max-w-20 md:max-w-24 truncate">
                       {attachment.file.name}
                     </span>
                     <button type="button" onClick={() => removeAttachment(index)} className="text-red-500 hover:text-red-700">
-                      <X size={14} />
+                      <X size={12} />
                     </button>
                   </div>
                 )}
@@ -406,8 +406,8 @@ export function MessageInput({ onSend, onFileUpload, placeholder = "Type a messa
         )}
 
         {/* Input Row */}
-        <div className="flex items-center gap-2">
-          <button onClick={() => setIsOpen(!isOpen)} className="absolute left-5 cursor-pointer text-(--text-muted) hover:text-(--text-primary) p-1 rounded-full hover:bg-(--bg-hover) transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+        <div className="flex items-center gap-1.5 md:gap-2">
+          <button onClick={() => setIsOpen(!isOpen)} className="absolute left-3 md:left-5 cursor-pointer text-(--text-muted) hover:text-(--text-primary) p-1 rounded-full hover:bg-(--bg-hover) transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
             <Plus size={18} />
           </button>
           {/* Text Input */}
@@ -419,14 +419,14 @@ export function MessageInput({ onSend, onFileUpload, placeholder = "Type a messa
             onKeyDown={handleKeyDown}
             placeholder={placeholder}
             disabled={disabled || isSending}
-            className="flex-1 h-9 pl-8 pr-10 rounded-lg bg-(--bg-input) border border-gray-500 text-[14px] outline-none focus:ring-1 focus:ring-emerald-500/20 text-(--text-primary) placeholder:text-(--text-muted)"
+            className="flex-1 h-9 pl-7 md:pl-8 pr-10 rounded-lg bg-(--bg-input) border border-gray-500 text-[14px] outline-none focus:ring-1 focus:ring-emerald-500/20 text-(--text-primary) placeholder:text-(--text-muted)"
           />
           
           {/* Send Button */}
           <button 
             onClick={handleSend} 
             disabled={disabled || isSending || (!inputText.trim() && attachments.length === 0)}
-            className="absolute right-5 text-(--accent-secondary) p-1.5 hover:bg-(--bg-hover) rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="absolute right-3 md:right-5 text-(--accent-secondary) p-1.5 hover:bg-(--bg-hover) rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             title="Send message"
           >
             {isSending ? (

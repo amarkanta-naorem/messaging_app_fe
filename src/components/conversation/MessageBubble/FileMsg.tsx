@@ -21,23 +21,23 @@ export const FileMsg = memo(function FileMsg({ fileData, caption, isOwn }: FileM
     return (
       <>
         <div className="relative cursor-pointer rounded overflow-hidden group inline-block" onClick={() => setShowPreview(true)}>
-          <img src={fileUrl} alt={fileName} width={200} height={200} className="object-cover block" loading="lazy"/>
+          <img src={fileUrl} alt={fileName} width={160} height={160} className="object-cover block" loading="lazy"/>
           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/15 transition-colors" />
           
           {sizeStr && (
-            <div className="absolute bottom-2 right-2 bg-black/60 px-1.5 py-0.5 rounded text-white text-[10px] flex items-center gap-1">
-              <File size={10} />
+            <div className="absolute bottom-1.5 md:bottom-2 right-1.5 md:right-2 bg-black/60 px-1 md:px-1.5 py-0.5 rounded text-white text-[9px] md:text-[10px] flex items-center gap-1">
+              <File size={8} />
               {sizeStr}
             </div>
           )}
 
-          <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-(--overlay-bg) rounded-full p-1.5">
-            <Maximize2 size={14} className="text-(--text-inverse)" />
+          <div className="absolute top-1.5 md:top-2 right-1.5 md:right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-(--overlay-bg) rounded-full p-1 md:p-1.5">
+            <Maximize2 size={12} className="text-(--text-inverse)" />
           </div>
         </div>
 
         {caption && (
-          <p className="text-[15px] text-[#111921] dark:text-[#e9ecef] mt-1">{caption}</p>
+          <p className="text-[13px] md:text-[15px] text-[#111921] dark:text-[#e9ecef] mt-1">{caption}</p>
         )}
 
         <FilePreviewModal isOpen={showPreview} onClose={() => setShowPreview(false)} fileData={fileData} caption={caption}/>

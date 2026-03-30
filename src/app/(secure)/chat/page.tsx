@@ -25,7 +25,7 @@ export default function ChatPage() {
   const [profileLoading, setProfileLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const { user, isLoading } = useAuth();
-  const { conversations, loadingConversations, selectConversation, socketError } = useChat();
+  const { conversations, loadingConversations, selectConversation, socketError, activeConversation } = useChat();
   const { isDark, toggle } = useTheme();
   const router = useRouter();
 
@@ -87,8 +87,7 @@ export default function ChatPage() {
 
   return (
     <div className="h-screen flex flex-col bg-(--bg-secondary)">
-      {/* Header */}
-      <div className="h-8 px-4 flex items-center bg-(--bg-secondary) shrink-0">
+      <div className={`h-8 px-4 flex items-center bg-(--bg-secondary) shrink-0 ${activeConversation ? 'hidden md:flex' : 'flex'}`}>
         <h1 className={`text-(--text-secondary) text-xl font-light ${fasterOne.className}`}>
           <span className="text-red-700">Globi</span>
           <span className="text-[#25d366]">Chat</span>
@@ -96,8 +95,7 @@ export default function ChatPage() {
       </div>
       {/* Main Content */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Left Sidebar - Icons */}
-        <div className="w-10 shrink-0 bg-(--bg-secondary) py-4 flex flex-col items-center justify-between">
+        <div className="hidden md:flex w-10 shrink-0 bg-(--bg-secondary) py-4 flex-col items-center justify-between">
           <button type="button" title="All Conversation" onClick={() => setShowSettings(false)} className="hover:bg-(--bg-hover) p-2 rounded-full transition-colors text-(--text-secondary) cursor-pointer">
             <MessageCircleMore size={22} />
           </button>
@@ -130,8 +128,8 @@ export default function ChatPage() {
         </div>
         {/* Right Side - Sidebar & Chat */}
         <div className="flex-1 flex overflow-hidden">
-          {/* Sidebar */}
-          <div className="w-100 shrink-0 bg-(--bg-card) border border-(--border-primary) rounded-tl-2xl flex flex-col overflow-y-scroll custom-scrollbar">
+          {/* Sidebar - Full width on mobile, fixed width on desktop */}
+          <div className={`${activeConversation ? 'hidden md:flex' : 'flex'} w-full md:w-100 shrink-0 bg-(--bg-card) border md:border-(--border-primary) md:rounded-tl-2xl flex-col overflow-y-scroll custom-scrollbar`}>
             {/* Search Bar */}
             <div className={`flex items-center justify-between px-3 py-1.5 bg-(--bg-card) ${showSettings || showProfile ? 'hidden' : ''}`}>
               <h1 className="font-semibold text-xl text-(--text-secondary)">Chats</h1>
@@ -151,7 +149,7 @@ export default function ChatPage() {
                     >
                       <EllipsisVertical size={22} />
                     </button>
-                    {showMenu &&  <ChatMenuModal showMenu={showMenu} setShowMenu={setShowMenu} setShowNewMessage={setShowNewMessage} setShowCreateGroup={setShowCreateGroup}/>}
+                    {showMenu &&  <ChatMenuModal showMenu={showMenu} setShowMenu={setShowMenu} setShowNewMessage={setShowNewMessage} setShowCreateGroup={setShowCreateGroup} setShowProfile={setShowProfile} />}
                   </div>
                 )}
               </div>
@@ -193,8 +191,8 @@ export default function ChatPage() {
             )}
           </div>
 
-          {/* Chat Area */}
-          <div className="flex-1 flex flex-col h-full bg-(--chat-bg) border-t border-(--border-primary) relative overflow-hidden">
+          {/* Chat Area - Full width on mobile, flex-1 on desktop */}
+          <div className={`${activeConversation ? 'flex' : 'hidden md:flex'} flex-col h-full bg-(--chat-bg) border-t border-(--border-primary) relative overflow-hidden`}>
             {showCreateGroup ? (
               <CreateGroup onClose={handleCloseCreateGroup} />
             ) : (

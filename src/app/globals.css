@@ -839,3 +839,363 @@ body {
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* ============================================
+   MOBILE CHAT INTERFACE STYLES
+   ============================================ */
+
+/* Mobile-first responsive chat layout */
+@media (max-width: 768px) {
+  /* Ensure full height on mobile */
+  html, body {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  /* Mobile chat container */
+  .chat-container-mobile {
+    height: 100vh;
+    height: 100dvh; /* Dynamic viewport height for mobile */
+  }
+
+  /* Smooth slide transitions for mobile */
+  .slide-in-right {
+    animation: slideInRight 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .slide-out-right {
+    animation: slideOutRight 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* WhatsApp-like message animations */
+  .message-appear {
+    animation: messageAppear 0.2s ease-out;
+  }
+
+  /* Mobile-optimized touch targets */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Mobile sidebar overlay */
+  .mobile-sidebar-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 40;
+    animation: fadeIn 0.2s ease;
+  }
+
+  /* Mobile chat header */
+  .mobile-chat-header {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+  }
+
+  /* Mobile message input */
+  .mobile-message-input {
+    position: sticky;
+    bottom: 0;
+    z-index: 30;
+  }
+}
+
+/* Slide animations */
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideOutRight {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+/* Message appear animation */
+@keyframes messageAppear {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Typing indicator animation */
+@keyframes typingBounce {
+  0%, 60%, 100% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(-4px);
+  }
+}
+
+.typing-indicator-dot {
+  animation: typingBounce 1.4s infinite ease-in-out;
+}
+
+.typing-indicator-dot:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.typing-indicator-dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typing-indicator-dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+/* WhatsApp-like scrollbar for mobile */
+@media (max-width: 768px) {
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(120, 120, 120, 0.2);
+    border-radius: 10px;
+  }
+}
+
+/* Mobile-optimized conversation list */
+@media (max-width: 768px) {
+  .conversation-item-mobile {
+    padding: 0.625rem 0.75rem;
+  }
+
+  .conversation-avatar-mobile {
+    width: 2.75rem;
+    height: 2.75rem;
+  }
+}
+
+/* Mobile message bubbles */
+@media (max-width: 768px) {
+  .message-bubble-mobile {
+    max-width: 85%;
+    padding: 0.375rem 0.5rem;
+  }
+
+  .message-bubble-mobile img {
+    max-width: 100%;
+    border-radius: 0.5rem;
+  }
+}
+
+/* Mobile attachment preview */
+@media (max-width: 768px) {
+  .attachment-preview-mobile {
+    width: 4rem;
+    height: 4rem;
+  }
+}
+
+/* Safe area padding for mobile devices */
+@supports (padding: max(0px)) {
+  .safe-area-bottom {
+    padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+  }
+
+  .safe-area-top {
+    padding-top: max(0.5rem, env(safe-area-inset-top));
+  }
+}
+
+/* Mobile keyboard handling */
+@media (max-width: 768px) {
+  .keyboard-aware-input {
+    /* Prevent zoom on focus for iOS */
+    font-size: 16px;
+  }
+}
+
+/* Ripple effect for touch feedback */
+.ripple {
+  position: relative;
+  overflow: hidden;
+}
+
+.ripple::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle, rgba(0, 0, 0, 0.1) 10%, transparent 10.01%);
+  transform: scale(10);
+  opacity: 0;
+  transition: transform 0.5s, opacity 1s;
+}
+
+.ripple:active::after {
+  transform: scale(0);
+  opacity: 0.3;
+  transition: 0s;
+}
+
+/* Mobile-optimized badge */
+@media (max-width: 768px) {
+  .badge-mobile {
+    min-width: 1.25rem;
+    height: 1.25rem;
+    font-size: 0.625rem;
+  }
+}
+
+/* Smooth page transitions */
+.page-transition-enter {
+  opacity: 0;
+  transform: translateX(20px);
+}
+
+.page-transition-enter-active {
+  opacity: 1;
+  transform: translateX(0);
+  transition: opacity 300ms, transform 300ms;
+}
+
+.page-transition-exit {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.page-transition-exit-active {
+  opacity: 0;
+  transform: translateX(-20px);
+  transition: opacity 300ms, transform 300ms;
+}
+
+/* Mobile bottom sheet */
+.bottom-sheet {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--bg-card);
+  border-top-left-radius: 1rem;
+  border-top-right-radius: 1rem;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+  z-index: 50;
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+/* Mobile action sheet */
+.action-sheet {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 0.5rem;
+  padding-bottom: calc(0.5rem + env(safe-area-inset-bottom));
+  background: var(--bg-card);
+  border-top-left-radius: 1rem;
+  border-top-right-radius: 1rem;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+  z-index: 50;
+}
+
+/* Mobile toast notifications */
+@media (max-width: 768px) {
+  .toast-mobile {
+    left: 1rem;
+    right: 1rem;
+    bottom: calc(1rem + env(safe-area-inset-bottom));
+  }
+}
+
+/* Prevent text selection on mobile for better UX */
+@media (max-width: 768px) {
+  .no-select-mobile {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+}
+
+/* Mobile-optimized loading states */
+@media (max-width: 768px) {
+  .skeleton-mobile {
+    height: 2.5rem;
+    border-radius: 0.5rem;
+  }
+}
+
+/* WhatsApp-like checkmarks for message status */
+.message-status {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 0.25rem;
+}
+
+.message-status-sent {
+  color: #8696a1;
+}
+
+.message-status-delivered {
+  color: #8696a1;
+}
+
+.message-status-read {
+  color: #53bdeb;
+}
+
+/* Mobile-optimized search */
+@media (max-width: 768px) {
+  .search-mobile {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+  }
+}
+
+/* Responsive typography */
+@media (max-width: 768px) {
+  .text-responsive-sm {
+    font-size: 0.75rem;
+    line-height: 1rem;
+  }
+
+  .text-responsive-base {
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+  }
+
+  .text-responsive-lg {
+    font-size: 1rem;
+    line-height: 1.5rem;
+  }
+}
+
+/* Mobile-optimized spacing */
+@media (max-width: 768px) {
+  .spacing-mobile-sm {
+    gap: 0.25rem;
+  }
+
+  .spacing-mobile-md {
+    gap: 0.5rem;
+  }
+
+  .spacing-mobile-lg {
+    gap: 0.75rem;
+  }
+}

@@ -91,7 +91,7 @@ export const MessageBubble = memo(function MessageBubble({ message, isOwn, showA
   }, [contentType, url, caption, fileData, metadataFileData, text, isOwn, content]);
 
   const bubbleClass = useMemo(() => {
-    const base = "min-w-[7rem] max-w-[25rem] relative shadow-sm";
+    const base = "min-w-[6rem] md:min-w-[7rem] max-w-[18rem] md:max-w-[25rem] relative shadow-sm";
     const bg = isOwn ? "bg-[#d9fdd3] dark:bg-[#005c4b]" : "bg-[#ffffff] dark:bg-[#2a2f32]";
 
     // Fixed tail styling - more subtle like in the image

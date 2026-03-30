@@ -63,22 +63,22 @@ export function MessageList({ messages, currentUserId, isGroup = false, loading 
 
   if (loading) {
     return (
-      <div className="flex-1 overflow-y-auto custom-scrollbar p-4">
-        <div className="text-center text-(--text-muted) mt-8">Loading...</div>
+      <div className="flex-1 overflow-y-auto custom-scrollbar p-3 md:p-4">
+        <div className="text-center text-(--text-muted) mt-6 md:mt-8">Loading...</div>
       </div>
     );
   }
 
   if (messages.length === 0) {
     return (
-      <div className="flex-1 overflow-y-auto custom-scrollbar p-4">
-        <div className="text-center text-(--text-muted) mt-8">No messages yet</div>
+      <div className="flex-1 overflow-y-auto custom-scrollbar p-3 md:p-4">
+        <div className="text-center text-(--text-muted) mt-6 md:mt-8">No messages yet</div>
       </div>
     );
   }
 
   return (
-    <div className="flex-1 overflow-y-auto custom-scrollbar p-3 pb-4">
+    <div className="flex-1 overflow-y-auto custom-scrollbar p-2 md:p-3 pb-3 md:pb-4">
       <div className="flex flex-col">
         {processedMessages.map((msg) => (
           <MessageBubble
