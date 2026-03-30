@@ -1,5 +1,6 @@
 import { getPageMetadata } from "@/lib/metadata";
 import LoginForm from "@/components/auth/LoginForm";
+import { Download } from "lucide-react";
 
 export const metadata = getPageMetadata("login");
 
