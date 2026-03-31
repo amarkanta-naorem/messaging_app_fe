@@ -52,3 +52,4 @@ import * as groupService from "./group.service";
 export const createGroup = groupService.createGroup;
 export const getGroup = groupService.getGroup;
 export const addGroupMembers = groupService.addGroupMembers;
+export const updateGroup = groupService.updateGroup;

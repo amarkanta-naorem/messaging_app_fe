@@ -1,11 +1,12 @@
+import { updateGroup } from "@/services";
+import { useEffect, useState, useRef } from "react";
 import { get } from "@/services/api-client";
 import type { ApiEnvelope } from "@/types/api";
-import { useEffect, useState } from "react";
-import { ContactHeader } from "./contact-header";
 import { useAuth } from "@/context/AuthContext";
-import { ContactGroupsList } from "./contact-groups-list";
-import { Calendar, Info, Mail, Users, X, UserPlus } from "lucide-react";
+import { ContactHeader } from "./contact-header";
 import { AddMembersDrawer } from "./add-members-drawer";
+import { ContactGroupsList } from "./contact-groups-list";
+import { Calendar, Info, Mail, Users, X, UserPlus, Pencil, Image, Loader2 } from "lucide-react";
 
 interface GroupMember {
   id: number;
@@ -14,7 +15,6 @@ interface GroupMember {
   role: "admin" | "member";
 }
 
-// Ideally, these types would be in a shared `types` directory
 interface ContactDetails {
   id: number;
   name: string;
@@ -26,13 +26,14 @@ interface ContactDetails {
   groups?: any[];
   group_members?: GroupMember[];
   isGroup?: boolean;
+  isAnnouncementOnly?: boolean;
+  isActive?: boolean;
 }
 
 interface Conversation {
   id: number;
-  participant: Partial<ContactDetails>; // Participant from a conversation might not have all details
+  participant: Partial<ContactDetails>;
   isGroup?: boolean;
-  // other conversation properties
 }
 
 interface ContactDrawerProps {
@@ -58,24 +59,45 @@ export const ContactDrawer = ({ isOpen, onClose, phone, conversation }: ContactD
   const [error, setError] = useState<string | null>(null);
   const [isAddMembersOpen, setIsAddMembersOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [editingField, setEditingField] = useState<string | null>(null);
+  const [fieldError, setFieldError] = useState<string | null>(null);
+  const [fieldSuccess, setFieldSuccess] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [formData, setFormData] = useState({
+    name: "",
+    description: "",
+  });
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Check if user has permission to add members (admin or owner)
-  const userRole = user?.organisation_employees?.role;
-  const canAddMembers = userRole === "admin" || userRole === "owner";
+  // Check user's role from group members (if available) or fall back to organization role
+  const groupMemberRole = contact?.group_members?.find(member => member.id === user?.id)?.role;
+  const canAddMembers = groupMemberRole === "admin";
+  const canEditGroup = groupMemberRole === "admin";
 
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") {
+        if (editingField) {
+          handleFieldCancel();
+        } else {
+          onClose();
+        }
+      }
     };
     if (isOpen) window.addEventListener("keydown", handleEsc);
     return () => window.removeEventListener("keydown", handleEsc);
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, editingField]);
 
   useEffect(() => {
     if (!isOpen) {
       setContact(null);
       setLoading(false);
       setError(null);
+      setEditingField(null);
+      setFieldError(null);
+      setFieldSuccess(null);
       return;
     }
 
@@ -96,6 +118,12 @@ export const ContactDrawer = ({ isOpen, onClose, phone, conversation }: ContactD
               isGroup: true,
               group_members: groupData.group_members,
               joinedAt: groupData.createdAt,
+              isAnnouncementOnly: groupData.isAnnouncementOnly || false,
+              isActive: groupData.isActive !== undefined ? groupData.isActive : true,
+            });
+            setFormData({
+              name: groupData.name || "",
+              description: groupData.description || "",
             });
           } else {
             setError(response.message || "Failed to fetch group details");
@@ -136,27 +164,185 @@ export const ContactDrawer = ({ isOpen, onClose, phone, conversation }: ContactD
 
       fetchContactDetails();
     } else if (conversation) {
-      // Fallback if no phone number is available but we have conversation data
       setContact(conversation.participant);
     }
   }, [isOpen, phone, conversation, token, refreshKey]);
 
+  const handleFieldEdit = (fieldName: string) => {
+    if (!canEditGroup) return;
+    setEditingField(fieldName);
+    setFieldError(null);
+    setFieldSuccess(null);
+  };
+
+  const handleFieldCancel = () => {
+    setEditingField(null);
+    setFieldError(null);
+    setFieldSuccess(null);
+    if (contact) {
+      setFormData({
+        name: contact.name || "",
+        description: contact.bio || "",
+      });
+    }
+    setLogoFile(null);
+    setLogoPreview(null);
+  };
+
+  const handleFieldSave = async (fieldName: 'name' | 'description') => {
+    if (!canEditGroup || !contact?.id) return;
+    
+    setIsSaving(true);
+    setFieldError(null);
+    setFieldSuccess(null);
+
+    try {
+      const payload: Record<string, string> = {};
+      
+      if (fieldName === 'name' && formData.name !== contact.name) {
+        payload.name = formData.name;
+      } else if (fieldName === 'description' && formData.description !== (contact.bio || "")) {
+        payload.description = formData.description;
+      }
+
+      if (Object.keys(payload).length > 0) {
+        const response = await updateGroup(contact.id as number, payload);
+        if (response) {
+          setContact(prev => prev ? {
+            ...prev,
+            name: response.name,
+            bio: response.description || `${prev.group_members?.length || 0} members`,
+          } : null);
+          setFieldSuccess("Updated successfully!");
+          setTimeout(() => setFieldSuccess(null), 2000);
+        }
+      }
+      
+      setEditingField(null);
+    } catch (err) {
+      setFieldError(err instanceof Error ? err.message : "Failed to update");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleToggle = async (field: 'isAnnouncementOnly' | 'isActive') => {
+    if (!canEditGroup || !contact?.id) return;
+    
+    setIsSaving(true);
+    setFieldError(null);
+    setFieldSuccess(null);
+
+    try {
+      const currentValue = contact[field] ?? (field === 'isActive' ? true : false);
+      const payload = { [field]: !currentValue };
+      
+      const response = await updateGroup(contact.id as number, payload);
+      if (response) {
+        setContact(prev => prev ? {
+          ...prev,
+          [field]: !currentValue,
+        } : null);
+        setFieldSuccess("Updated successfully!");
+        setTimeout(() => setFieldSuccess(null), 2000);
+      }
+    } catch (err) {
+      setFieldError(err instanceof Error ? err.message : "Failed to update");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleLogoClick = () => {
+    if (!canEditGroup) return;
+    fileInputRef.current?.click();
+  };
+
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    setFieldError(null);
+    
+    if (!file) return;
+    
+    // Validate file type
+    const allowedTypes = ["image/jpeg", "image/jpg", "image/png"];
+    if (!allowedTypes.includes(file.type)) {
+      setFieldError("Invalid file type. Please upload a JPEG, JPG, or PNG image.");
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+      return;
+    }
+    
+    // Validate file size (max 2MB)
+    const maxSize = 2 * 1024 * 1024;
+    if (file.size > maxSize) {
+      const sizeInMB = (file.size / (1024 * 1024)).toFixed(2);
+      setFieldError(`File is too large (${sizeInMB}MB). Maximum size is 2MB.`);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+      return;
+    }
+    
+    // Set the logo file and preview
+    setLogoFile(file);
+    setLogoPreview(URL.createObjectURL(file));
+    
+    // Reset input so same file can be selected again
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const handleLogoSave = async () => {
+    if (!canEditGroup || !contact?.id || !logoFile) return;
+    
+    setIsSaving(true);
+    setFieldError(null);
+    setFieldSuccess(null);
+
+    try {
+      const response = await updateGroup(contact.id as number, { logo: logoFile });
+      if (response) {
+        setContact(prev => prev ? {
+          ...prev,
+          avatar: response.logo,
+        } : null);
+        setLogoFile(null);
+        setLogoPreview(null);
+        setFieldSuccess("Logo updated successfully!");
+        setTimeout(() => setFieldSuccess(null), 2000);
+      }
+    } catch (err) {
+      setFieldError(err instanceof Error ? err.message : "Failed to update logo");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleLogoCancel = () => {
+    setLogoFile(null);
+    setLogoPreview(null);
+    setFieldError(null);
+  };
+
   return (
     <div className={`fixed inset-0 z-50 ${isOpen ? 'pointer-events-auto' : 'pointer-events-none'}`}>
-      {/* Overlay */}
       <div className={`absolute inset-0 bg-black/20 backdrop-blur-sm transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0'}`} onClick={onClose}/>
-      
-      {/* Drawer */}
       <div className={`absolute inset-y-0 right-0 w-full max-w-md bg-(--bg-card) theme-bg-card shadow-2xl transform transition-transform duration-300 ease-in-out flex flex-col ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
-        {/* Drawer Header (Close Button) */}
         <div className="flex items-center justify-between p-4 border-b border-(--border-primary)">
-          <h3 className="font-semibold text-(--text-primary)">Contact Info</h3>
+          <h3 className="font-semibold text-(--text-primary)">{contact?.isGroup ? "Group Info" : "Contact Info"}</h3>
           <button onClick={onClose} className="p-2 hover:bg-(--bg-hover) rounded-full transition-colors text-(--text-muted) cursor-pointer">
             <X size={20} />
           </button>
         </div>
 
-        {/* Drawer Content */}
         <div className="flex-1 overflow-y-auto custom-scrollbar">
           {loading ? (
             <div className="p-8 flex flex-col items-center justify-center space-y-4 animate-pulse">
@@ -175,7 +361,127 @@ export const ContactDrawer = ({ isOpen, onClose, phone, conversation }: ContactD
             </div>
           ) : contact ? (
             <>
-              <ContactHeader contact={contact as ContactDetails} />
+              {!contact.isGroup && <ContactHeader contact={contact as ContactDetails} />}
+              
+              {/* Logo Display for Groups (read-only for non-admins) */}
+              {contact.isGroup && !canEditGroup && (
+                <div className="pt-3">
+                  <div className="flex flex-col items-center">
+                    <div className="w-24 h-24 rounded-full bg-(--bg-tertiary) flex items-center justify-center text-(--text-secondary) overflow-hidden">
+                      {contact.avatar ? (
+                        <img 
+                          src={contact.avatar} 
+                          alt={contact.name || "Group"} 
+                          className="w-24 h-24 rounded-full object-cover"
+                        />
+                      ) : (
+                        <span className="font-semibold text-4xl">{contact.name?.charAt(0).toUpperCase()}</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {/* Logo Upload Section for Groups (editable for admins) */}
+              {contact.isGroup && canEditGroup && (
+                <div className="pt-3">
+                  <div className="flex flex-col items-center">
+                    <div className="relative group cursor-pointer">
+                      {logoPreview ? (
+                        <div className="relative">
+                          <img 
+                            src={logoPreview} 
+                            alt={contact.name || "Group"} 
+                            className="w-24 h-24 rounded-full object-cover hover:opacity-90 transition-opacity"
+                            onClick={handleLogoClick}
+                          />
+                          <div
+                            className="absolute inset-0 rounded-full bg-black/60 flex flex-col items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                            onClick={handleLogoClick}
+                            role="button"
+                            tabIndex={0}
+                            aria-label="Change group logo"
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                handleLogoClick();
+                              }
+                            }}
+                          >
+                            <Image className="text-gray-200 w-6 h-6 mb-1" />
+                            <span className="text-gray-200 text-xs font-medium text-center px-1">Change Logo</span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="relative">
+                          <div 
+                            className="w-24 h-24 rounded-full bg-(--bg-tertiary) flex items-center justify-center text-(--text-secondary) hover:bg-(--bg-hover) transition-colors"
+                            onClick={handleLogoClick}
+                          >
+                            {contact.avatar ? (
+                              <img 
+                                src={contact.avatar} 
+                                alt={contact.name || "Group"} 
+                                className="w-24 h-24 rounded-full object-cover"
+                              />
+                            ) : (
+                              <span className="font-semibold text-4xl">{contact.name?.charAt(0).toUpperCase()}</span>
+                            )}
+                          </div>
+                          <div
+                            className="absolute inset-0 rounded-full bg-black/60 flex flex-col items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                            onClick={handleLogoClick}
+                            role="button"
+                            tabIndex={0}
+                            aria-label="Add group logo"
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                handleLogoClick();
+                              }
+                            }}
+                          >
+                            <Image className="text-gray-200 w-6 h-6 mb-1" />
+                            <span className="text-gray-200 text-xs font-medium text-center px-1">Add Logo</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    <input ref={fileInputRef} type="file" accept="image/jpeg,image/jpg,image/png" onChange={handleLogoChange} className="hidden"/>
+                    
+                    {/* Save/Cancel buttons when logo is changed */}
+                    {logoFile && (
+                      <div className="flex items-center gap-2 mt-3">
+                        <button 
+                          onClick={handleLogoCancel}
+                          disabled={isSaving}
+                          className="text-sm text-(--text-muted) hover:text-red-600 transition-colors disabled:opacity-50"
+                        >
+                          Cancel
+                        </button>
+                        <button 
+                          onClick={handleLogoSave}
+                          disabled={isSaving}
+                          className="text-sm text-(--text-inverse) bg-(--accent-primary) hover:bg-(--accent-hover) px-3 py-1 rounded-lg font-medium transition-colors disabled:opacity-50 flex items-center gap-1"
+                        >
+                          {isSaving ? (
+                            <>
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                              Saving...
+                            </>
+                          ) : (
+                            "Save"
+                          )}
+                        </button>
+                      </div>
+                    )}
+                    {fieldError && !editingField && (
+                      <p className="text-red-500 text-xs mt-2">{fieldError}</p>
+                    )}
+                    {fieldSuccess && !editingField && (
+                      <p className="text-green-600 text-xs mt-2">{fieldSuccess}</p>
+                    )}
+                  </div>
+                </div>
+              )}
               
               <div className="p-6 space-y-6 border-b border-(--border-primary)">
                 <div className="space-y-4">
@@ -190,19 +496,147 @@ export const ContactDrawer = ({ isOpen, onClose, phone, conversation }: ContactD
                   )}
                   
                   <div className="flex items-start gap-3">
-                      <Info size={20} className="text-(--text-muted) shrink-0 mt-0.5" />
-                      <div>
-                        <p className="text-sm text-(--text-muted)">Bio</p>
-                        <p className="text-(--text-primary)">{contact.bio || "No bio available"}</p>
-                      </div>
+                    <Info size={20} className="text-(--text-muted) shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="text-sm text-(--text-muted)">Name</p>
+                      {editingField === 'name' ? (
+                        <div className="mt-1">
+                          <input
+                            type="text"
+                            name="name"
+                            value={formData.name}
+                            onChange={handleInputChange}
+                            placeholder="Group name"
+                            className="w-full text-(--text-primary) bg-transparent border border-gray-300 rounded-lg px-3 py-1 focus:border-[#25d366] focus:outline-none focus:ring-1 focus:ring-[#25d366] transition-all duration-200"
+                            autoFocus
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') handleFieldSave('name');
+                              if (e.key === 'Escape') handleFieldCancel();
+                            }}
+                          />
+                          <div className="flex items-center justify-end gap-2 mt-2">
+                            <button onClick={handleFieldCancel} disabled={isSaving} className="text-xs text-(--text-muted) hover:text-red-600 transition-colors disabled:opacity-50">Cancel</button>
+                            <button onClick={() => handleFieldSave('name')} disabled={isSaving || !formData.name.trim()} className="text-xs text-[#25d366] hover:text-[#1da851] font-medium transition-colors disabled:opacity-50">{isSaving ? 'Saving...' : 'Save'}</button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div 
+                          className={`flex items-center justify-between ${canEditGroup ? 'cursor-pointer hover:bg-(--bg-hover) dark:hover:bg-(--bg-hover)' : ''} rounded-lg -mx-2 px-2 py-1 transition-colors`}
+                          onClick={() => handleFieldEdit('name')}
+                        >
+                          <p className="text-(--text-primary) font-semibold">{contact.name}</p>
+                          {canEditGroup && (
+                            <button 
+                              onClick={(e) => { e.stopPropagation(); handleFieldEdit('name'); }} 
+                              className="p-2 text-(--text-muted) hover:text-[#25d366] hover:bg-[#25d366]/10 dark:hover:bg-[#25d366]/20 rounded-lg transition-all duration-200 cursor-pointer" 
+                              aria-label="Edit name"
+                            >
+                              <Pencil size={16} />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                      {fieldError && editingField === 'name' && (
+                        <p className="text-red-500 text-xs mt-1">{fieldError}</p>
+                      )}
+                      {fieldSuccess && editingField === 'name' && (
+                        <p className="text-green-600 text-xs mt-1">{fieldSuccess}</p>
+                      )}
                     </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <Info size={20} className="text-(--text-muted) shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="text-sm text-(--text-muted)">Bio</p>
+                      {editingField === 'description' ? (
+                        <div className="mt-1">
+                          <textarea
+                            name="description"
+                            value={formData.description}
+                            onChange={handleInputChange}
+                            placeholder="Group description"
+                            maxLength={2000}
+                            className="w-full bg-transparent text-[15px] text-(--text-primary) placeholder:text-(--text-muted) focus:outline-none resize-none border border-gray-300 dark:border-[#3d4a51] rounded px-2 py-1 focus:border-[#25d366]"
+                            rows={3}
+                            autoFocus
+                          />
+                          <div className="flex items-center justify-end gap-2 mt-2">
+                            <button onClick={handleFieldCancel} disabled={isSaving} className="text-xs text-(--text-muted) hover:text-red-600 transition-colors disabled:opacity-50">Cancel</button>
+                            <button onClick={() => handleFieldSave('description')} disabled={isSaving} className="text-xs text-[#25d366] hover:text-[#1da851] font-medium transition-colors disabled:opacity-50">{isSaving ? 'Saving...' : 'Save'}</button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div 
+                          className={`flex items-center justify-between ${canEditGroup ? 'cursor-pointer hover:bg-(--bg-hover) dark:hover:bg-(--bg-hover)' : ''} rounded-lg -mx-2 px-2 py-1 transition-colors`}
+                          onClick={() => handleFieldEdit('description')}
+                        >
+                          <p className="text-(--text-primary) text-[15px]">{contact.bio || "No description"}</p>
+                          {canEditGroup && (
+                            <button 
+                              onClick={(e) => { e.stopPropagation(); handleFieldEdit('description'); }} 
+                              className="p-2 text-(--text-muted) hover:text-[#25d366] hover:bg-[#25d366]/10 dark:hover:bg-[#25d366]/20 rounded-lg transition-all duration-200 cursor-pointer" 
+                              aria-label="Edit description"
+                            >
+                              <Pencil size={16} />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                      {fieldError && editingField === 'description' && (
+                        <p className="text-red-500 text-xs mt-1">{fieldError}</p>
+                      )}
+                      {fieldSuccess && editingField === 'description' && (
+                        <p className="text-green-600 text-xs mt-1">{fieldSuccess}</p>
+                      )}
+                    </div>
+                  </div>
 
                   {contact.joinedAt && (
                     <div className="flex items-start gap-3">
                       <Calendar size={20} className="text-(--text-muted) shrink-0 mt-0.5" />
-                      <div>
+                      <div className="flex-1">
                         <p className="text-sm text-(--text-muted)">{contact.isGroup ? 'Created At' : 'Joined'}</p>
                         <p className="text-(--text-primary)">{formatDate(contact.joinedAt)}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {contact.isGroup && canEditGroup && (
+                    <div className="space-y-3 pt-2">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-(--text-muted)">Announcement Only</p>
+                          <p className="text-xs text-(--text-muted)">Only admins can send messages</p>
+                        </div>
+                        <button
+                          onClick={() => handleToggle('isAnnouncementOnly')}
+                          disabled={isSaving}
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[#25d366] focus:ring-offset-2 disabled:opacity-50 ${
+                            contact.isAnnouncementOnly ? 'bg-[#25d366]' : 'bg-gray-200 dark:bg-gray-700'
+                          }`}
+                        >
+                          <span
+                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                              contact.isAnnouncementOnly ? 'translate-x-6' : 'translate-x-1'
+                            }`}
+                          />
+                        </button>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-(--text-muted)">Active</p>
+                          <p className="text-xs text-(--text-muted)">Group is active and visible</p>
+                        </div>
+                        <button
+                          onClick={() => handleToggle('isActive')}
+                          disabled={isSaving}
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[#25d366] focus:ring-offset-2 disabled:opacity-50 ${
+                            contact.isActive !== false ? 'bg-[#25d366]' : 'bg-gray-200 dark:bg-gray-700'
+                          }`}
+                        >
+                          <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${contact.isActive !== false ? 'translate-x-6' : 'translate-x-1'}`}/>
+                        </button>
                       </div>
                     </div>
                   )}
@@ -218,15 +652,17 @@ export const ContactDrawer = ({ isOpen, onClose, phone, conversation }: ContactD
                       <Users size={16} />
                       {contact.group_members.length} Members
                     </h3>
-                    <button 
-                      onClick={() => setIsAddMembersOpen(true)}
-                      className="text-(--accent-primary) text-sm font-medium hover:underline flex items-center gap-1 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                      disabled={!canAddMembers}
-                      title={!canAddMembers ? "Only admins and owners can add members" : "Add Members"}
-                    >
-                      <UserPlus size={16} />
-                      Add Members
-                    </button>
+                    {canAddMembers && (
+                      <button 
+                        onClick={() => setIsAddMembersOpen(true)}
+                        className="text-(--accent-primary) text-sm font-medium hover:underline flex items-center gap-1 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled={!canAddMembers}
+                        title="Add Members"
+                      >
+                        <UserPlus size={16} />
+                        Add Members
+                      </button>
+                    )}
                   </div>
                   <div className="space-y-3">
                     {contact.group_members.map((member) => (

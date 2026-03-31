@@ -12,3 +12,39 @@ export async function GET(
     request,
   });
 }
+
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ groupId: string }> }
+) {
+  try {
+    const { groupId } = await params;
+    const contentType = request.headers.get("content-type") || "";
+    
+    // Handle FormData (logo upload with file)
+    if (contentType.includes("multipart/form-data")) {
+      const formData = await request.formData();
+      return proxyRequest({
+        path: `/groups/${groupId}`,
+        method: "PATCH",
+        request,
+        body: formData,
+        isMultipart: true,
+      });
+    }
+    
+    // Handle JSON (regular group updates)
+    const body = await request.json();
+    return proxyRequest({
+      path: `/groups/${groupId}`,
+      method: "PATCH",
+      request,
+      body,
+    });
+  } catch {
+    return new Response(
+      JSON.stringify({ success: false, message: "Invalid request body" }),
+      { status: 400, headers: { "Content-Type": "application/json" } }
+    );
+  }
+}
