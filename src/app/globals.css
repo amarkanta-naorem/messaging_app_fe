@@ -367,7 +367,7 @@ body {
   outline: none;
 }
 
-.premium-input:hover {
+/* .premium-input:hover {
   border-color: var(--input-border-hover);
 }
 
@@ -385,7 +385,7 @@ body {
   opacity: 0.6;
   cursor: not-allowed;
   background-color: var(--bg-tertiary);
-}
+} */
 
 /* Input with icon */
 .premium-input-with-icon {
@@ -777,10 +777,10 @@ body {
 }
 
 /* Enhanced focus states */
-*:focus-visible {
+/* *:focus-visible {
   outline: 2px solid var(--accent-primary);
   outline-offset: 2px;
-}
+} */
 
 /* ============================================
    OTP INPUT STYLES
