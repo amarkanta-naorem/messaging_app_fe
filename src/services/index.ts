@@ -54,3 +54,39 @@ export const getGroup = groupService.getGroup;
 export const addGroupMembers = groupService.addGroupMembers;
 export const updateGroup = groupService.updateGroup;
 export const assignAdmin = groupService.assignAdmin;
+
+// Re-export branch service
+export {
+  getBranches,
+  getBranch,
+  createBranch,
+  updateBranch,
+  deleteBranch,
+} from "./branch.service";
+
+// Re-export department service
+export {
+  getDepartments,
+  getDepartment,
+  createDepartment,
+  updateDepartment,
+  deleteDepartment,
+} from "./department.service";
+
+// Re-export permission service
+export {
+  getPermissions,
+  getPermission,
+  createPermission,
+  updatePermission,
+  deletePermission,
+} from "./permission.service";
+
+// Re-export role service
+export {
+  getRoles,
+  getRole,
+  createRole,
+  updateRole,
+  deleteRole,
+} from "./role.service";

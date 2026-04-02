@@ -25,7 +25,7 @@ import type { Conversation } from "@/types";
 // ── Constants ────────────────────────────────────────────────────────────
 
 const CHAT_ROUTE = "/chat";
-const DASHBOARD_ROUTE = "/dashboard";
+const DASHBOARD_ROUTE = "/system/dashboard";
 
 /**
  * Hook to manage chat lifecycle based on route changes

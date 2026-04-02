@@ -9,3 +9,7 @@ export type { MessageContent, Message, MessagesResponse, DirectConversationRespo
 export type { OrganisationStatus, Organisation, OrganisationPagination, OrganisationListResponse, OrganisationPayload, ValidationErrorItem } from "./organisation";
 export type { Employee, Group, ContactDetails, OrgGroup, Contact, GroupMember, GroupDetails } from "./employee";
 export type { SocketMessageContent, SocketMessagePayload, IncomingMessage, DeliveryAck, SocketError } from "./socket";
+export type { BranchStatus, Branch, BranchListItem, BranchPagination, BranchListResponse, BranchPayload } from "./branch";
+export type { DepartmentStatus, Department, DepartmentListItem, DepartmentPagination, DepartmentListResponse, DepartmentPayload } from "./department";
+export type { Permission, PermissionPagination, PermissionListResponse, PermissionPayload } from "./permission";
+export type { RoleScope, RolePermission, Role, RoleListItem, RolePagination, RoleListResponse, RolePayload } from "./role";

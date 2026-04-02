@@ -158,7 +158,7 @@ export default function NewOrganisationForm() {
       await createOrganisation(payload);
       
       // On success, redirect to dashboard or show success message
-      router.push("/dashboard");
+      router.push("/system/dashboard");
     } catch (error) {
       const apiError = mapApiError(error);
       setErrors((prev) => ({ 

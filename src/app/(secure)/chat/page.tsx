@@ -101,7 +101,7 @@ export default function ChatPage() {
           </button>
           <div className="flex flex-col items-center space-y-5">
             {(user.organisation_employees?.role === 'admin' || user.organisation_employees?.role === 'owner') && (
-              <Link href="/dashboard" title="Redirect to Dashboard Page" className="text-(--text-secondary) hover:text-(--text-primary) p-2 rounded-full hover:bg-(--bg-hover) transition-colors">
+              <Link href="/system/dashboard" title="Redirect to Dashboard Page" className="text-(--text-secondary) hover:text-(--text-primary) p-2 rounded-full hover:bg-(--bg-hover) transition-colors">
                 <Image src="/icons/dashboard.svg" alt="" width={22} height={22} />
               </Link>
             )}

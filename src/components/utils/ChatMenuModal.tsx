@@ -39,7 +39,7 @@ export default function ChatMenuModal ({ showMenu, setShowMenu, setShowNewMessag
             <Users size={20} className="text-(--text-muted)" />
             New group
           </div>
-          <Link href="/dashboard" className="px-4 py-3 hover:bg-(--bg-hover) cursor-pointer text-(--text-primary) text-[15px] flex items-center gap-3 transition-colors font-medium" onClick={() => router.push("/dashboard")}>
+          <Link href="/system/dashboard" className="px-4 py-3 hover:bg-(--bg-hover) cursor-pointer text-(--text-primary) text-[15px] flex items-center gap-3 transition-colors font-medium" onClick={() => router.push("/system/dashboard")}>
             <LayoutDashboard size={20} className="text-(--text-muted)" />
             Dashboard
           </Link>

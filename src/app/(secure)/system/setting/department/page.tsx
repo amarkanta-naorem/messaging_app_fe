@@ -1,7 +1,5 @@
-export default function DepartmentPage () {
-    return (
-        <div>
-            <h1>Department Page</h1>
-        </div>
-    );
+import { DepartmentList } from "@/features/departments";
+
+export default function DepartmentPage() {
+  return <DepartmentList />;
 }

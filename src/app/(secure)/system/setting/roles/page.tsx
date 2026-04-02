@@ -1,7 +1,5 @@
-export default function RolePage () {
-    return (
-        <div>
-            <h1>Role Page</h1>
-        </div>
-    );
+import { RoleList } from "@/features/roles";
+
+export default function RolePage() {
+  return <RoleList />;
 }
