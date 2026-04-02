@@ -67,3 +67,14 @@ export async function updateGroup(groupId: number, payload: UpdateGroupPayload):
   const res = await patch<ApiEnvelope<GroupDetails>>(`/groups/${groupId}`, payload);
   return res.data;
 }
+
+export interface AssignAdminResponse {
+  targetUserId: number;
+  previousRole: "admin" | "member";
+  newRole: "admin" | "member";
+}
+
+export async function assignAdmin(groupId: number, userId: number): Promise<AssignAdminResponse> {
+  const res = await patch<ApiEnvelope<AssignAdminResponse>>(`/groups/${groupId}/members/${userId}/assign-admin`);
+  return res.data;
+}

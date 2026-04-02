@@ -1,4 +1,4 @@
-import { updateGroup } from "@/services";
+import { updateGroup, assignAdmin } from "@/services";
 import { useEffect, useState, useRef } from "react";
 import { get } from "@/services/api-client";
 import type { ApiEnvelope } from "@/types/api";
@@ -6,7 +6,9 @@ import { useAuth } from "@/context/AuthContext";
 import { ContactHeader } from "./contact-header";
 import { AddMembersDrawer } from "./add-members-drawer";
 import { ContactGroupsList } from "./contact-groups-list";
-import { Calendar, Info, Mail, Users, X, UserPlus, Pencil, Image, Loader2 } from "lucide-react";
+import { Calendar, Info, Mail, Users, X, UserPlus, Pencil, Image, Loader2, Shield, Check, ShieldUser, ChevronDown } from "lucide-react";
+import { useAppDispatch } from "@/store/store";
+import { setGlobalError } from "@/store/slices/errorSlice";
 
 interface GroupMember {
   id: number;
@@ -54,6 +56,7 @@ const formatDate = (dateString?: string) => {
 
 export const ContactDrawer = ({ isOpen, onClose, phone, conversation }: ContactDrawerProps) => {
   const { token, user } = useAuth();
+  const dispatch = useAppDispatch();
   const [contact, setContact] = useState<Partial<ContactDetails> | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -70,6 +73,8 @@ export const ContactDrawer = ({ isOpen, onClose, phone, conversation }: ContactD
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [assigningAdminId, setAssigningAdminId] = useState<number | null>(null);
+  const [openPopoverId, setOpenPopoverId] = useState<number | null>(null);
 
   // Check user's role from group members (if available) or fall back to organization role
   const groupMemberRole = contact?.group_members?.find(member => member.id === user?.id)?.role;
@@ -81,6 +86,8 @@ export const ContactDrawer = ({ isOpen, onClose, phone, conversation }: ContactD
       if (e.key === "Escape") {
         if (editingField) {
           handleFieldCancel();
+        } else if (openPopoverId !== null) {
+          setOpenPopoverId(null);
         } else {
           onClose();
         }
@@ -88,7 +95,20 @@ export const ContactDrawer = ({ isOpen, onClose, phone, conversation }: ContactD
     };
     if (isOpen) window.addEventListener("keydown", handleEsc);
     return () => window.removeEventListener("keydown", handleEsc);
-  }, [isOpen, onClose, editingField]);
+  }, [isOpen, onClose, editingField, openPopoverId]);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (openPopoverId !== null) {
+        const target = e.target as HTMLElement;
+        if (!target.closest('[data-popover]')) {
+          setOpenPopoverId(null);
+        }
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [openPopoverId]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -98,6 +118,7 @@ export const ContactDrawer = ({ isOpen, onClose, phone, conversation }: ContactD
       setEditingField(null);
       setFieldError(null);
       setFieldSuccess(null);
+      setOpenPopoverId(null);
       return;
     }
 
@@ -330,6 +351,84 @@ export const ContactDrawer = ({ isOpen, onClose, phone, conversation }: ContactD
     setLogoFile(null);
     setLogoPreview(null);
     setFieldError(null);
+  };
+
+  const handleTogglePopover = (memberId: number) => {
+    setOpenPopoverId(openPopoverId === memberId ? null : memberId);
+  };
+
+  const handleRemoveMember = async (memberId: number, memberName: string) => {
+    // TODO: Implement remove member functionality
+    dispatch(setGlobalError({
+      message: `Remove ${memberName} functionality not yet implemented`,
+      type: "info",
+    }));
+    setOpenPopoverId(null);
+  };
+
+  const handleAssignAdmin = async (memberId: number, memberName: string) => {
+    if (!contact?.id) return;
+
+    setAssigningAdminId(memberId);
+
+    try {
+      await assignAdmin(contact.id as number, memberId);
+      
+      // Update local state to reflect the new role
+      setContact(prev => {
+        if (!prev || !prev.group_members) return prev;
+        return {
+          ...prev,
+          group_members: prev.group_members.map(member =>
+            member.id === memberId
+              ? { ...member, role: "admin" as const }
+              : member
+          ),
+        };
+      });
+
+      dispatch(setGlobalError({
+        message: `${memberName} has been assigned as admin`,
+        type: "info",
+      }));
+      setOpenPopoverId(null);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to assign admin role";
+      
+      if (errorMessage.includes("Failed to fetch") || errorMessage.includes("NetworkError")) {
+        dispatch(setGlobalError({
+          message: "Network error. Please check your connection and try again.",
+          type: "error",
+        }));
+      } else if (errorMessage.includes("401") || errorMessage.includes("Unauthorized")) {
+        dispatch(setGlobalError({
+          message: "Session expired. Please log in again.",
+          type: "error",
+        }));
+      } else if (errorMessage.includes("403") || errorMessage.includes("Forbidden")) {
+        dispatch(setGlobalError({
+          message: "You don't have permission to assign admin roles.",
+          type: "error",
+        }));
+      } else if (errorMessage.includes("404") || errorMessage.includes("Not Found")) {
+        dispatch(setGlobalError({
+          message: "Group or member not found.",
+          type: "error",
+        }));
+      } else if (errorMessage.includes("400") || errorMessage.includes("Bad Request")) {
+        dispatch(setGlobalError({
+          message: "This member is already an admin.",
+          type: "warning",
+        }));
+      } else {
+        dispatch(setGlobalError({
+          message: errorMessage,
+          type: "error",
+        }));
+      }
+    } finally {
+      setAssigningAdminId(null);
+    }
   };
 
   return (
@@ -673,11 +772,65 @@ export const ContactDrawer = ({ isOpen, onClose, phone, conversation }: ContactD
                               {member.name.charAt(0).toUpperCase()}
                             </span>
                           </div>
-                          <span className="font-medium text-(--text-primary)">{member.name}</span>
+                          <div className="flex flex-col">
+                            <span className="font-medium text-(--text-primary)">{member.name}</span>
+                            {member.role === 'admin' && (
+                              <span className="text-xs text-(--text-muted) flex items-center gap-1">
+                                <Shield size={12} className="text-(--accent-primary)" />
+                                Admin
+                              </span>
+                            )}
+                          </div>
                         </div>
-                        {member.role === 'admin' && (
-                          <span className="text-xs text-(--accent-primary) font-semibold bg-(--accent-muted) px-2 py-0.5 rounded-full">Admin</span>
+                        {canAddMembers && member.id !== user?.id && (
+                          <div className="relative">
+                            <button 
+                              className="cursor-pointer p-1 hover:bg-(--bg-hover) rounded transition-colors"
+                              onClick={() => handleTogglePopover(member.id)}
+                            >
+                              <ChevronDown size={14} />
+                            </button>
+                            {openPopoverId === member.id && (
+                              <div data-popover className="absolute right-0 top-full mt-1 w-40 bg-(--bg-card) border border-(--border-primary) rounded-lg shadow-lg z-10">
+                                <button
+                                  className="w-full text-left px-4 py-2 text-sm text-(--text-primary) hover:bg-(--bg-hover) transition-colors flex items-center gap-2"
+                                  onClick={() => {
+                                    handleAssignAdmin(member.id, member.name);
+                                  }}
+                                >
+                                  <Shield size={14} />
+                                  Make Admin
+                                </button>
+                                <button
+                                  className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center gap-2"
+                                  onClick={() => {
+                                    handleRemoveMember(member.id, member.name);
+                                  }}
+                                >
+                                  <X size={14} />
+                                  Remove
+                                </button>
+                              </div>
+                            )}
+                          </div>
                         )}
+                        {/* <div className="flex items-center gap-2">
+                          {canAddMembers && member.role !== 'admin' && member.id !== user?.id && (
+                            <button
+                              onClick={() => handleAssignAdmin(member.id, member.name)}
+                              disabled={assigningAdminId === member.id}
+                              className="text-xs text-(--accent-primary) hover:text-(--accent-hover) font-medium flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-(--accent-muted) transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                              title="Assign as Admin"
+                            >
+                              {assigningAdminId === member.id ? (
+                                <Loader2 size={14} className="animate-spin" />
+                              ) : (
+                                <Shield size={14} />
+                              )}
+                              {assigningAdminId === member.id ? "Assigning..." : "Make Admin"}
+                            </button>
+                          )}
+                        </div> */}
                       </div>
                     ))}
                   </div>
@@ -696,6 +849,8 @@ export const ContactDrawer = ({ isOpen, onClose, phone, conversation }: ContactD
           onMembersAdded={() => setRefreshKey(prev => prev + 1)}
         />
       )}
+
+
     </div>
   );
 };

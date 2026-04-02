@@ -270,7 +270,7 @@ export const AddEmployeeDrawer = ({
 
             {/* Email */}
             <div>
-              <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">
+              <label className="block text-sm font-medium text-(--text-primary) mb-1">
                 Email <span className="text-red-500">*</span>
               </label>
               <input

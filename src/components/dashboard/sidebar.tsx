@@ -5,8 +5,9 @@ import SidebarItem from "./sidebar-item";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { createContext, useState } from "react";
-import { ChevronFirst, ChevronLast, LayoutDashboard, LogOut, ShieldUser, Settings, X, Moon, Sun } from "lucide-react";
+import { ChevronFirst, ChevronLast, LayoutDashboard, LogOut, ShieldUser, Settings, X, SunIcon, FolderCog } from "lucide-react";
 import { useTheme } from "@/components/providers/ThemeProvider";
+import { settingsManifest } from "@/lib/settings-manifest";
 
 export const SidebarContext = createContext({ expanded: true });
 
@@ -21,7 +22,7 @@ export default function Sidebar() {
 
   return (
     <>
-      <aside className={`sticky top-0 flex flex-col bg-(--bg-card) border-r border-(--border-primary) rounded-3xl shadow-sm transition-all duration-300 ease-in-out ${expanded ? 'w-48' : 'w-20'}`}>
+      <aside className={`sticky top-0 flex flex-col bg-(--bg-card) border-r border-(--border-primary) rounded-3xl shadow-sm transition-all duration-300 ease-in-out ${expanded ? 'w-59' : 'w-20'}`}>
         <div className={`p-4 pb-2 flex items-center h-16 ${expanded ? "justify-between" : "justify-center"}`}>
           <div className={`flex items-center gap-3 overflow-hidden transition-all duration-300 ${expanded ? "w-full opacity-100" : "w-0 opacity-0 hidden"}`}>
             <h1 className="font-bold text-xl text-(--text-primary) whitespace-nowrap truncate tracking-tight">
@@ -35,8 +36,15 @@ export default function Sidebar() {
 
         <SidebarContext.Provider value={{ expanded }}>
           <ul className="flex-1 px-3 py-4 space-y-4">
-            <SidebarItem icon={<LayoutDashboard size={20} />} text="Dashboard" href="/dashboard" active={pathname === '/dashboard'} />
-            <SidebarItem icon={<ShieldUser size={20} />} text="Employees" href="/employees" active={pathname === '/employees'} />
+            <SidebarItem icon={<LayoutDashboard size={20} />} text="Dashboard" href="/system/dashboard" active={pathname === '/system/dashboard'} />
+            <SidebarItem icon={<ShieldUser size={20} />} text="Employees" href="/system/employees" active={pathname === '/system/employees'} />
+            <SidebarItem
+              icon={<Settings size={20} />}
+              text="System Setting"
+              href="/system/setting"
+              active={pathname === '/system/setting'}
+              subItems={settingsManifest.map((s) => ({ label: s.label, href: s.href }))}
+            />
           </ul>
         </SidebarContext.Provider>
 
@@ -60,15 +68,11 @@ export default function Sidebar() {
               </div>
             </div>
 
-            <button 
-              onClick={() => setSettingsOpen(true)} 
-              className={`flex items-center gap-3 p-2 rounded-xl text-(--text-muted) hover:bg-(--bg-hover) hover:text-(--text-primary) cursor-pointer transition-all group ${expanded ? "" : "justify-center"}`}
-              title="Settings"
-            >
+            <button onClick={() => setSettingsOpen(true)} className={`flex items-center gap-3 p-2 rounded-xl text-(--text-muted) hover:bg-(--bg-hover) hover:text-(--text-primary) cursor-pointer transition-all group ${expanded ? "" : "justify-center"}`} title="Settings">
               <div className="flex items-center justify-center w-9 h-9">
-                <Settings size={20} className="group-hover:scale-110 transition-transform" />
+                <SunIcon size={20} className="group-hover:scale-110 transition-transform" />
               </div>
-              <span className={`overflow-hidden transition-all duration-300 ${expanded ? "w-24 opacity-100" : "w-0 opacity-0 hidden"} font-medium text-sm text-left`}>Settings</span>
+              <span className={`overflow-hidden transition-all duration-300 ${expanded ? "w-24 opacity-100" : "w-0 opacity-0 hidden"} font-medium text-sm text-left`}>Theme</span>
             </button>
 
             <button onClick={logout} className={`flex items-center gap-3 p-2 rounded-xl text-(--text-muted) hover:bg-red-50 hover:text-red-600 cursor-pointer transition-all group ${expanded ? "" : "justify-center"}`} title="Logout">
