@@ -5,9 +5,9 @@ import SidebarItem from "./sidebar-item";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { createContext, useState } from "react";
-import { ChevronFirst, ChevronLast, LayoutDashboard, LogOut, ShieldUser, Settings, X, SunIcon, FolderCog } from "lucide-react";
-import { useTheme } from "@/components/providers/ThemeProvider";
 import { settingsManifest } from "@/lib/settings-manifest";
+import { useTheme } from "@/components/providers/ThemeProvider";
+import { ChevronFirst, ChevronLast, LayoutDashboard, LogOut, ShieldUser, Settings, X, SunIcon } from "lucide-react";
 
 export const SidebarContext = createContext({ expanded: true });
 
@@ -25,9 +25,7 @@ export default function Sidebar() {
       <aside className={`sticky top-0 flex flex-col bg-(--bg-card) border-r border-(--border-primary) rounded-3xl shadow-sm transition-all duration-300 ease-in-out ${expanded ? 'w-59' : 'w-20'}`}>
         <div className={`p-4 pb-2 flex items-center h-16 ${expanded ? "justify-between" : "justify-center"}`}>
           <div className={`flex items-center gap-3 overflow-hidden transition-all duration-300 ${expanded ? "w-full opacity-100" : "w-0 opacity-0 hidden"}`}>
-            <h1 className="font-bold text-xl text-(--text-primary) whitespace-nowrap truncate tracking-tight">
-              {user.organisation_employees?.organisation?.name ?? "Org. Name"}
-            </h1>
+            <h1 className="font-bold text-xl text-(--text-primary) whitespace-nowrap truncate tracking-tight">{user.organisation_employees?.organisation?.name}</h1>
           </div>
           <button onClick={() => setExpanded(curr => !curr)} className="p-2 rounded-lg bg-(--bg-hover) hover:bg-(--bg-active) text-(--text-secondary) hover:text-(--text-primary) transition-colors">
             {expanded ? <ChevronFirst size={20} /> : <ChevronLast size={20} />}
@@ -85,36 +83,21 @@ export default function Sidebar() {
         </div>
       </aside>
 
-      {/* Settings Drawer */}
       <div className={`fixed inset-0 z-50 ${settingsOpen ? 'pointer-events-auto' : 'pointer-events-none'}`}>
-        {/* Overlay */}
-        <div 
-          className={`absolute inset-0 bg-black/20 backdrop-blur-sm transition-opacity duration-300 ${settingsOpen ? 'opacity-100' : 'opacity-0'}`} 
-          onClick={() => setSettingsOpen(false)}
-        />
-        
-        {/* Drawer */}
+        <div className={`absolute inset-0 bg-black/20 backdrop-blur-sm transition-opacity duration-300 ${settingsOpen ? 'opacity-100' : 'opacity-0'}`} onClick={() => setSettingsOpen(false)}/>
         <div className={`absolute inset-y-0 right-0 w-full max-w-sm bg-(--bg-card) theme-bg-card shadow-2xl transform transition-transform duration-300 ease-in-out flex flex-col ${settingsOpen ? 'translate-x-0' : 'translate-x-full'}`}>
-          {/* Drawer Header */}
           <div className="flex items-center justify-between p-4 border-b border-(--border-primary)">
-            <h3 className="font-semibold text-(--text-primary)">Settings</h3>
-            <button 
-              onClick={() => setSettingsOpen(false)} 
-              className="p-2 hover:bg-(--bg-hover) rounded-full transition-colors text-(--text-muted) cursor-pointer"
-            >
+            <h3 className="font-semibold text-(--text-primary)">Theme</h3>
+            <button onClick={() => setSettingsOpen(false)} className="p-2 hover:bg-(--bg-hover) rounded-full transition-colors text-(--text-muted) cursor-pointer">
               <X size={20} />
             </button>
           </div>
 
-          {/* Settings Content */}
           <div className="flex-1 overflow-y-auto p-4">
             <div className="bg-(--bg-secondary) rounded-lg p-4">
               <div className="flex items-center justify-between mb-4">
                 <span className="text-(--text-primary) text-[16px] font-medium">{isDark ? 'Light Mode' : 'Dark Mode'}</span>
-                <button 
-                  onClick={toggle}
-                  className={`w-12 h-6 rounded-full transition-colors relative cursor-pointer ${isDark ? 'bg-(--bg-tertiary)' : 'bg-(--border-secondary)'}`}
-                >
+                <button onClick={toggle}className={`w-12 h-6 rounded-full transition-colors relative cursor-pointer ${isDark ? 'bg-(--bg-tertiary)' : 'bg-(--border-secondary)'}`}>
                   <span className={`absolute top-1 w-4 h-4 bg-(--bg-card) rounded-full transition-transform ${isDark ? 'left-7' : 'left-1'}`}></span>
                 </button>
               </div>

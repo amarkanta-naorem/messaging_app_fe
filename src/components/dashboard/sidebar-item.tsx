@@ -2,7 +2,7 @@ import Link from "next/link";
 import { SidebarContext } from "./sidebar";
 import { ChevronDown } from "lucide-react";
 import { usePathname } from "next/navigation";
-import { ReactNode, useContext, useEffect, useRef, useState, useCallback, type KeyboardEvent } from "react";
+import { ReactNode, useContext, useEffect, useId, useRef, useState, useCallback, type KeyboardEvent } from "react";
 
 export interface SubMenuItem {
   label: string;
@@ -14,7 +14,7 @@ interface SidebarItemProps {
   text: string;
   active?: boolean;
   alert?: boolean;
-  href?: string
+  href?: string;
   subItems?: SubMenuItem[];
 }
 
@@ -43,10 +43,6 @@ export default function SidebarItem({ icon, text, active, alert, href = "#", sub
   );
 }
 
-/* ------------------------------------------------------------------ */
-/*  Dropdown variant                                                    */
-/* ------------------------------------------------------------------ */
-
 interface DropdownProps extends SidebarItemProps {
   expanded: boolean;
   pathname: string;
@@ -58,8 +54,30 @@ function SidebarItemWithDropdown({ icon, text, active, alert, subItems, expanded
   const [focusedIndex, setFocusedIndex] = useState(-1);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const dropdownRef = useRef<HTMLUListElement | null>(null);
+  const isManualCloseRef = useRef(false);
+  const prevPathRef = useRef<string | null>(null);
+  const uniqueId = useId();
+  const listboxId = `sidebar-dropdown-${uniqueId}`;
   const isSubItemActive = subItems.some((s) => pathname === s.href);
-  const isExpanded = isOpen;
+
+  useEffect(() => {
+    if (prevPathRef.current === null) {
+      prevPathRef.current = pathname;
+    }
+
+    const pathChanged = prevPathRef.current !== pathname;
+    prevPathRef.current = pathname;
+    if (pathChanged) {
+      isManualCloseRef.current = false;
+    }
+
+    if (isSubItemActive && !isManualCloseRef.current) {
+      setIsOpen(true);
+    } else if (!isSubItemActive) {
+      setIsOpen(false);
+      setFocusedIndex(-1);
+    }
+  }, [isSubItemActive, pathname]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -72,6 +90,7 @@ function SidebarItemWithDropdown({ icon, text, active, alert, subItems, expanded
         triggerRef.current &&
         !triggerRef.current.contains(target)
       ) {
+        isManualCloseRef.current = true;
         setIsOpen(false);
         setFocusedIndex(-1);
       }
@@ -90,8 +109,10 @@ function SidebarItemWithDropdown({ icon, text, active, alert, subItems, expanded
   const toggle = useCallback(() => {
     setIsOpen((prev) => {
       if (prev) {
+        isManualCloseRef.current = true;
         setFocusedIndex(-1);
       } else {
+        isManualCloseRef.current = false;
         setFocusedIndex(0);
       }
       return !prev;
@@ -99,6 +120,7 @@ function SidebarItemWithDropdown({ icon, text, active, alert, subItems, expanded
   }, []);
 
   const close = useCallback(() => {
+    isManualCloseRef.current = true;
     setIsOpen(false);
     setFocusedIndex(-1);
     triggerRef.current?.focus();
@@ -112,6 +134,7 @@ function SidebarItemWithDropdown({ icon, text, active, alert, subItems, expanded
         case "ArrowDown":
           e.preventDefault();
           if (!isOpen) {
+            isManualCloseRef.current = false;
             setIsOpen(true);
             setFocusedIndex(0);
           }
@@ -119,6 +142,7 @@ function SidebarItemWithDropdown({ icon, text, active, alert, subItems, expanded
         case "ArrowUp":
           e.preventDefault();
           if (!isOpen) {
+            isManualCloseRef.current = false;
             setIsOpen(true);
             setFocusedIndex(subItems.length - 1);
           }
@@ -174,16 +198,16 @@ function SidebarItemWithDropdown({ icon, text, active, alert, subItems, expanded
         ref={triggerRef}
         onClick={toggle}
         onKeyDown={handleTriggerKeyDown}
-        aria-expanded={isExpanded}
+        aria-expanded={isOpen}
         aria-haspopup="listbox"
-        aria-controls="settings-submenu"
+        aria-controls={listboxId}
         className={`relative flex items-center w-full py-2.5 px-3 font-medium rounded-xl cursor-pointer transition-all duration-200 group ${active || isSubItemActive ? "bg-(--bg-hover) text-(--accent-primary) shadow-sm" : "hover:bg-(--bg-hover) text-(--text-secondary)"} ${expanded ? "" : "justify-center"}`}
       >
         <div className={`transition-colors duration-200 ${active || isSubItemActive ? "text-(--accent-primary)" : "text-(--text-muted) group-hover:text-(--accent-primary)"}`}>{icon}</div>
         <span className={`overflow-hidden transition-all duration-300 ease-in-out whitespace-nowrap ${expanded ? "w-27 ml-3 opacity-100" : "w-0 opacity-0"}`}>{text}</span>
 
         {expanded && (
-          <ChevronDown size={16} className={`ml-auto shrink-0 transition-transform duration-200 text-(--text-muted) ${isExpanded ? "rotate-180" : ""}`}/>
+          <ChevronDown size={16} className={`ml-auto shrink-0 transition-transform duration-200 text-(--text-muted) ${isOpen ? "rotate-180" : ""}`}/>
         )}
 
         {alert && (
@@ -191,11 +215,10 @@ function SidebarItemWithDropdown({ icon, text, active, alert, subItems, expanded
         )}
       </button>
 
-      {/* Dropdown sub-menu */}
-      {isExpanded && expanded && (
+      {isOpen && expanded && (
         <ul
           ref={dropdownRef}
-          id="settings-submenu"
+          id={listboxId}
           role="listbox"
           aria-label={`${text} sub-menu`}
           onKeyDown={handleDropdownKeyDown}
@@ -209,17 +232,6 @@ function SidebarItemWithDropdown({ icon, text, active, alert, subItems, expanded
                   href={item.href}
                   data-dropdown-item
                   tabIndex={focusedIndex === index ? 0 : -1}
-                  onClick={() => {
-                    setIsOpen(false);
-                    setFocusedIndex(-1);
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
-                      setIsOpen(false);
-                      setFocusedIndex(-1);
-                    }
-                  }}
                   className={`block w-full py-2 px-3 text-sm rounded-lg transition-all duration-150 ${isItemActive ? "bg-(--accent-primary)/10 text-(--accent-primary) font-medium" : "text-(--text-secondary) hover:bg-(--bg-hover) hover:text-(--accent-primary)"}`}
                 >
                   {item.label}
