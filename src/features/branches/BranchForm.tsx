@@ -109,7 +109,8 @@ export function BranchForm({ initialData, onSubmit, onCancel, loading = false }:
         longitude={longitude}
         onLatitudeChange={setLatitude}
         onLongitudeChange={setLongitude}
-        errors={{ latitude: errors.latitude, longitude: errors.longitude }}
+        error={!!errors.latitude || !!errors.longitude}
+        errorMessage={errors.latitude || errors.longitude}
       />
 
       <div className="flex items-center gap-3">
