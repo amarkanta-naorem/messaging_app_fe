@@ -1,24 +1,25 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { LocationPicker } from "@/components/ui/location-picker";
-import type { Branch, BranchPayload } from "@/types/branch";
-import type { BranchStatus } from "@/types/branch";
 import type { Employee } from "@/types/employee";
+import type { BranchStatus } from "@/types/branch";
+import { Building2, Check, User } from "lucide-react";
+import type { Branch, BranchPayload } from "@/types/branch";
+import { LocationPicker } from "@/components/ui/location-picker";
 import { getOrganizationEmployees } from "@/services/employee.service";
+import { BranchFormHeader, FormSection, InputField, SearchableDropdown, LocationFields, HeadquartersToggle, FormActions } from "./components";
 
 interface BranchFormProps {
   initialData?: Branch | null;
   onSubmit: (payload: BranchPayload) => Promise<void>;
-  onCancel: () => void;
   loading?: boolean;
+  isOpen: boolean;
+  onClose: () => void;
 }
 
 const STATUS_OPTIONS: BranchStatus[] = ["active", "inactive", "closed"];
 
-export function BranchForm({ initialData, onSubmit, onCancel, loading = false }: BranchFormProps) {
+export function BranchForm({ initialData, onSubmit, loading = false, isOpen, onClose }: BranchFormProps) {
   const [name, setName] = useState("");
   const [code, setCode] = useState("");
   const [address, setAddress] = useState("");
@@ -54,9 +55,25 @@ export function BranchForm({ initialData, onSubmit, onCancel, loading = false }:
       setIsHeadquarters(initialData.isHeadquarters);
       setStatus(initialData.status);
       setManagerId(initialData.managerId ?? "");
+    } else if (isOpen) {
+      setName("");
+      setCode("");
+      setAddress("");
+      setCity("");
+      setState("");
+      setCountry("");
+      setPostalCode("");
+      setPhone("");
+      setEmail("");
+      setLatitude("");
+      setLongitude("");
+      setIsHeadquarters(false);
+      setStatus("active");
+      setManagerId("");
     }
-  }, [initialData]);
+  }, [initialData, isOpen]);
 
+  // Fetch employees for manager dropdown
   useEffect(() => {
     const fetchEmployees = async () => {
       try {
@@ -72,6 +89,13 @@ export function BranchForm({ initialData, onSubmit, onCancel, loading = false }:
     };
     fetchEmployees();
   }, []);
+
+  // Early return if form is not open
+  if (!isOpen) return null;
+
+  const handleCancel = () => {
+    onClose();
+  };
 
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -111,83 +135,116 @@ export function BranchForm({ initialData, onSubmit, onCancel, loading = false }:
     await onSubmit(payload);
   };
 
+  const managerOptions = employees.map((emp) => emp.id);
+  const statusOptions = STATUS_OPTIONS;
+
+  const getEmployeeDisplay = (id: number) => {
+    const emp = employees.find((e) => e.id === id);
+    return emp ? emp.name : "";
+  };
+
+  const getEmployeeSearch = (id: number) => {
+    const emp = employees.find((e) => e.id === id);
+    return emp ? emp.name.toLowerCase() : "";
+  };
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 p-4">
-      <Input label="Name" value={name} onChange={(e) => setName(e.target.value)} required error={!!errors.name} errorMessage={errors.name} placeholder="Main Office" />
-      <Input label="Code" value={code} onChange={(e) => setCode(e.target.value)} error={!!errors.code} errorMessage={errors.code} placeholder="HQ-001" />
-      <Input label="Address" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="123 Business Park" />
-      <div className="grid grid-cols-2 gap-4">
-        <Input label="City" value={city} onChange={(e) => setCity(e.target.value)} placeholder="New York" />
-        <Input label="State" value={state} onChange={(e) => setState(e.target.value)} placeholder="NY" />
-      </div>
-      <div className="grid grid-cols-2 gap-4">
-        <Input label="Country" value={country} onChange={(e) => setCountry(e.target.value)} placeholder="USA" />
-        <Input label="Postal Code" value={postalCode} onChange={(e) => setPostalCode(e.target.value)} placeholder="10001" />
-      </div>
-      <div className="grid grid-cols-2 gap-4">
-        <Input label="Phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+1234567890" />
-        <Input label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} error={!!errors.email} errorMessage={errors.email} placeholder="office@example.com" />
-      </div>
-      <LocationPicker
-        latitude={latitude}
-        longitude={longitude}
-        onLatitudeChange={setLatitude}
-        onLongitudeChange={setLongitude}
-        error={!!errors.latitude || !!errors.longitude}
-        errorMessage={errors.latitude || errors.longitude}
-      />
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+      <BranchFormHeader initialData={initialData} onClose={onClose} />
 
-      <div className="flex items-center gap-3">
-        <label className="flex items-center gap-2 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={isHeadquarters}
-            onChange={(e) => setIsHeadquarters(e.target.checked)}
-            className="w-4 h-4 rounded border-(--border-primary) text-(--accent-primary) focus:ring-(--accent-primary)"
+      <form onSubmit={handleSubmit} className="space-y-4 bg-(--bg-card) max-h-[84vh] overflow-y-auto custom-scrollbar rounded-xl border border-(--border-primary) shadow-sm overflow-hidden p-5">
+        <FormSection>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <InputField
+              label="Branch Name"
+              value={name}
+              onChange={setName}
+              placeholder="Main Office"
+              required
+              error={errors.name}
+              icon={<Building2 className="h-4 w-4" />}
+            />
+            <InputField
+              label="Branch Code"
+              value={code}
+              onChange={setCode}
+              placeholder="HQ-001"
+              error={errors.code}
+              icon={<Building2 className="h-4 w-4" />}
+            />
+            <SearchableDropdown<number>
+              label="Branch Manager"
+              value={managerId}
+              onChange={setManagerId}
+              options={managerOptions}
+              placeholder="Select manager"
+              loading={employeesLoading}
+              error={!!employeesError}
+              errorMessage={employeesError}
+              getDisplayValue={getEmployeeDisplay}
+              getSearchValue={getEmployeeSearch}
+              icon={<User className="h-4 w-4" />}
+            />
+          </div>
+        </FormSection>
+
+        <FormSection>
+          <LocationPicker
+            latitude={latitude}
+            longitude={longitude}
+            onLatitudeChange={setLatitude}
+            onLongitudeChange={setLongitude}
+            error={!!errors.latitude || !!errors.longitude}
+            errorMessage={errors.latitude || errors.longitude}
           />
-          <span className="text-sm text-(--text-primary)">Is Headquarters</span>
-        </label>
-      </div>
+        </FormSection>
 
-      <div>
-        <label htmlFor="branch-manager" className="block text-sm font-medium text-(--text-primary) mb-1">Manager</label>
-        <select
-          id="branch-manager"
-          value={managerId}
-          onChange={(e) => setManagerId(e.target.value ? Number(e.target.value) : "")}
-          disabled={employeesLoading}
-          className="w-full px-3 py-2 rounded-lg border border-(--border-primary) text-sm bg-(--bg-input) text-(--text-primary) focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 disabled:opacity-50"
-        >
-          <option value="">Select a manager</option>
-          {employees.map((emp) => (
-            <option key={emp.id} value={emp.id}>{emp.name}</option>
-          ))}
-        </select>
-        {employeesError && <p className="text-sm text-red-500 mt-1">{employeesError}</p>}
-      </div>
+        <LocationFields
+          address={address}
+          onAddressChange={setAddress}
+          city={city}
+          onCityChange={setCity}
+          state={state}
+          onStateChange={setState}
+          country={country}
+          onCountryChange={setCountry}
+          postalCode={postalCode}
+          onPostalCodeChange={setPostalCode}
+          phone={phone}
+          onPhoneChange={setPhone}
+          email={email}
+          onEmailChange={setEmail}
+          emailError={errors.email}
+        />
 
-      <div>
-        <label className="block text-sm font-medium text-(--text-primary) mb-1">Status</label>
-        <select
-          value={status}
-          onChange={(e) => setStatus(e.target.value as BranchStatus)}
-          className="w-full px-3 py-2 rounded-lg border border-(--border-primary) text-sm bg-(--bg-input) text-(--text-primary) focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
-        >
-          {STATUS_OPTIONS.map((s) => (
-            <option key={s} value={s}>{s}</option>
-          ))}
-        </select>
-      </div>
+        <FormSection>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <HeadquartersToggle
+              isHeadquarters={isHeadquarters}
+              onToggle={() => setIsHeadquarters(!isHeadquarters)}
+            />
+            <SearchableDropdown<BranchStatus>
+              label="Status"
+              value={status}
+              onChange={setStatus}
+              options={statusOptions}
+              getDisplayValue={(s) => {
+                const display = s.charAt(0).toUpperCase() + s.slice(1);
+                return display;
+              }}
+              getSearchValue={(s) => s.toLowerCase()}
+              icon={<Check className="h-4 w-4" />}
+            />
+          </div>
+        </FormSection>
 
-      <div className="flex items-center justify-end gap-3 pt-4 border-t border-(--border-primary)">
-        <Button variant="secondary" size="md" type="button" onClick={onCancel} disabled={loading}>
-          Cancel
-        </Button>
-        <Button variant="primary" size="md" type="submit" loading={loading}>
-          {initialData ? "Update Branch" : "Create Branch"}
-        </Button>
-      </div>
-    </form>
+        <FormActions
+          loading={loading}
+          onCancel={handleCancel}
+          isEdit={!!initialData}
+        />
+      </form>
+    </div>
   );
 }
 

@@ -1,17 +1,16 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { useAuth } from "@/context/AuthContext";
-import { getBranches, createBranch, updateBranch, deleteBranch, getBranch } from "@/services/branch.service";
-import { setGlobalError } from "@/store/slices/errorSlice";
-import { useAppDispatch } from "@/store/store";
-import type { Branch, BranchListItem, BranchPayload } from "@/types/branch";
-import { Search, Plus, Eye, SquarePen, Trash2 } from "lucide-react";
-import { Drawer } from "@/components/ui/drawer";
-import { Modal } from "@/components/ui/modal";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { Button } from "@/components/ui/button";
 import { BranchForm } from "./BranchForm";
+import { Modal } from "@/components/ui/modal";
+import { useAppDispatch } from "@/store/store";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/context/AuthContext";
+import { useState, useEffect, useCallback } from "react";
+import { setGlobalError } from "@/store/slices/errorSlice";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { Search, Plus, Eye, SquarePen, Trash2 } from "lucide-react";
+import type { Branch, BranchListItem, BranchPayload } from "@/types/branch";
+import { getBranches, createBranch, updateBranch, deleteBranch, getBranch } from "@/services/branch.service";
 
 export function BranchList() {
   const { user } = useAuth();
@@ -143,18 +142,29 @@ export function BranchList() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-(--text-primary)">Branches</h1>
-          <p className="text-(--text-secondary)">Manage your organization&apos;s branches</p>
+      {!isFormOpen && (
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-(--text-primary)">Branches</h1>
+            <p className="text-(--text-secondary)">Manage your organization's branches</p>
+          </div>
+          <Button onClick={handleCreate} variant="primary" size="md">
+            <Plus size={20} />
+            <span>Add Branch</span>
+          </Button>
         </div>
-        <Button onClick={handleCreate} variant="primary" size="md">
-          <Plus size={20} />
-          <span>Add Branch</span>
-        </Button>
-      </div>
+      )}
 
-      <div className="bg-(--bg-card) max-h-[80vh] overflow-y-auto custom-scrollbar rounded-xl border border-(--border-primary) shadow-sm overflow-hidden">
+      {isFormOpen ? (
+        <BranchForm
+          isOpen={isFormOpen}
+          initialData={editingBranch}
+          onSubmit={handleFormSubmit}
+          onClose={() => { setIsFormOpen(false); setEditingBranch(null); }}
+          loading={formLoading}
+        />
+      ) : (
+        <div className="bg-(--bg-card) max-h-[80vh] overflow-y-auto custom-scrollbar rounded-xl border border-(--border-primary) shadow-sm overflow-hidden">
         <div className="p-4 border-b border-(--border-primary) bg-(--bg-secondary)">
           <div className="relative max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-(--text-muted)" size={20} />
@@ -254,20 +264,7 @@ export function BranchList() {
           </table>
         </div>
       </div>
-
-      <Drawer
-        isOpen={isFormOpen}
-        onClose={() => { setIsFormOpen(false); setEditingBranch(null); }}
-        title={formMode === "create" ? "Add Branch" : "Edit Branch"}
-        maxWidth="max-w-lg"
-      >
-        <BranchForm
-          initialData={editingBranch}
-          onSubmit={handleFormSubmit}
-          onCancel={() => { setIsFormOpen(false); setEditingBranch(null); }}
-          loading={formLoading}
-        />
-      </Drawer>
+      )}
 
       <Modal
         isOpen={isViewOpen}
