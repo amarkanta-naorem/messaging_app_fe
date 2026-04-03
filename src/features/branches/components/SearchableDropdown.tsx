@@ -23,9 +23,11 @@ export function SearchableDropdown<T extends string | number>({ label, value, on
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const [dropdownPosition, setDropdownPosition] = useState<'top' | 'bottom'>('bottom');
   const dropdownRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const dropdownMenuRef = useRef<HTMLDivElement>(null);
 
   const filteredOptions = options.filter((option) => getSearchValue(option).toLowerCase().includes(searchQuery.toLowerCase()));
 
@@ -142,6 +144,25 @@ export function SearchableDropdown<T extends string | number>({ label, value, on
     }
   }, [isOpen]);
 
+  useEffect(() => {
+    if (isOpen && dropdownRef.current && dropdownMenuRef.current) {
+      const triggerRect = dropdownRef.current.getBoundingClientRect();
+      const menuRect = dropdownMenuRef.current.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+      
+      const spaceBelow = viewportHeight - triggerRect.bottom;
+      const spaceAbove = triggerRect.top;
+      const menuHeight = menuRect.height;
+      
+      // If there's not enough space below but there is enough space above, position on top
+      if (spaceBelow < menuHeight && spaceAbove >= menuHeight) {
+        setDropdownPosition('top');
+      } else {
+        setDropdownPosition('bottom');
+      }
+    }
+  }, [isOpen]);
+
   return (
     <FormField label={label} error={errorMessage} icon={icon}>
       <div ref={dropdownRef} className="relative">
@@ -169,7 +190,7 @@ export function SearchableDropdown<T extends string | number>({ label, value, on
         </button>
 
         {isOpen && !disabled && !loading && (
-          <div className="absolute z-60 w-full mt-2 bg-(--bg-card) border border-(--border-primary) rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 ring-1 ring-black/5">
+          <div ref={dropdownMenuRef} className={`absolute z-60 w-full bg-(--bg-card) border border-(--border-primary) rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 ring-1 ring-black/5 ${dropdownPosition === 'top' ? 'bottom-full mb-2' : 'top-full mt-2'}`}>
             <div className="p-2 border-b border-(--border-primary)/50">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-(--text-muted)" />
