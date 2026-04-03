@@ -6,12 +6,12 @@ import { useAppDispatch } from "@/store/store";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
 import { useState, useEffect, useCallback } from "react";
+import { useRouter, usePathname } from "next/navigation";
 import { setGlobalError } from "@/store/slices/errorSlice";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Search, Plus, Eye, SquarePen, Trash2 } from "lucide-react";
 import type { Branch, BranchListItem, BranchPayload } from "@/types/branch";
 import { getBranches, createBranch, updateBranch, deleteBranch, getBranch } from "@/services/branch.service";
-import { useRouter, usePathname } from "next/navigation";
 
 export function BranchList() {
   const { user } = useAuth();
@@ -103,6 +103,7 @@ export function BranchList() {
           status: newBranch.status,
           isHeadquarters: newBranch.isHeadquarters,
           createdAt: newBranch.createdAt,
+          manager: newBranch.manager
         };
         setBranches((prev) => [newBranchItem, ...prev]);
       } else if (editingBranch) {
@@ -190,8 +191,8 @@ export function BranchList() {
               <tr>
                 <th className="px-6 py-4">Name</th>
                 <th className="px-6 py-4">Code</th>
+                <th className="px-6 py-4">Manager</th>
                 <th className="px-6 py-4">Status</th>
-                <th className="px-6 py-4">HQ</th>
                 <th className="px-6 py-4 text-right">Actions</th>
               </tr>
             </thead>
@@ -218,22 +219,61 @@ export function BranchList() {
                       <p className="text-(--text-secondary)">{branch.code || "-"}</p>
                     </td>
                     <td className="px-6 py-4">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        branch.status === "active"
-                          ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400"
-                          : branch.status === "inactive"
-                          ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400"
-                          : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
-                      }`}>
-                        {branch.status}
-                      </span>
+                      <div className="flex items-center gap-3">
+                        {branch?.manager?.avatar ? (
+                          <img src={branch?.manager?.avatar} className="w-10 h-10 rounded-full" />
+                        ) : (
+                          <div className="w-10 h-10 rounded-full bg-(--bg-tertiary) flex items-center justify-center text-(--text-secondary) font-semibold text-lg md:text-xl">
+                            {branch?.manager?.name?.charAt(0)?.toUpperCase() || "?"}
+                          </div>
+                        )}
+                        <div>
+                            <p className="text-(--text-primary) font-medium">{branch.manager?.name}</p>
+                            <p className="text-(--text-muted) font-medium text-xs">+{branch?.manager?.phone}</p>
+                        </div>
+                      </div>
                     </td>
                     <td className="px-6 py-4">
-                      {branch.isHeadquarters ? (
-                        <span className="text-emerald-600 font-medium">Yes</span>
-                      ) : (
-                        <span className="text-(--text-muted)">No</span>
-                      )}
+                      <div className="flex items-center gap-2">
+                        <span className={`
+                          relative inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-bold uppercase
+                          tracking-wider transition-all duration-300 ease-out
+                          backdrop-blur-sm
+                          ${branch.status === "active"
+                            ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/20 hover:border-emerald-500/50 hover:shadow-lg hover:shadow-emerald-500/20"
+                            : branch.status === "inactive"
+                            ? "bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/30 hover:bg-amber-500/20 hover:border-amber-500/50 hover:shadow-lg hover:shadow-amber-500/20"
+                            : "bg-rose-500/10 text-rose-700 dark:text-rose-300 border border-rose-500/30 hover:bg-rose-500/20 hover:border-rose-500/50 hover:shadow-lg hover:shadow-rose-500/20"
+                          }
+                        `}>
+                          {/* Animated background gradient */}
+                          <span className={`
+                            absolute inset-0 rounded-lg opacity-0 transition-opacity duration-300
+                            ${branch.status === "active" && "bg-linear-to-r from-emerald-500/20 to-emerald-600/20 group-hover:opacity-100"}
+                            ${branch.status === "inactive" && "bg-linear-to-r from-amber-500/20 to-amber-600/20 group-hover:opacity-100"}
+                            ${branch.status === "closed" && "bg-linear-to-r from-rose-500/20 to-rose-600/20 group-hover:opacity-100"}
+                          `} />
+                          
+                          <div className="relative flex items-center gap-1.5">
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              {branch.status === "active" && (
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                              )}
+                              {branch.status === "inactive" && (
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              )}
+                              {branch.status === "closed" && (
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                              )}
+                            </svg>
+                            
+                            {/* Status text */}
+                            {branch.status === "active" && "Active"}
+                            {branch.status === "inactive" && "Inactive"}
+                            {branch.status === "closed" && "Closed"}
+                          </div>
+                        </span>
+                      </div>
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
@@ -272,11 +312,7 @@ export function BranchList() {
       </div>
       )}
 
-      <Modal
-        isOpen={isViewOpen}
-        onClose={() => { setIsViewOpen(false); setViewingBranch(null); }}
-        title="Branch Details"
-      >
+      <Modal isOpen={isViewOpen} onClose={() => { setIsViewOpen(false); setViewingBranch(null); }} title="Branch Details">
         {viewingBranch && (
           <div className="space-y-4">
             <DetailRow label="Name" value={viewingBranch.name} />

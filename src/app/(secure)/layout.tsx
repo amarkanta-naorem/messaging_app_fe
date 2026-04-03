@@ -11,6 +11,7 @@ export default function SecureLayout({ children }: { children: React.ReactNode }
   const { user, isLoading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -31,7 +32,6 @@ export default function SecureLayout({ children }: { children: React.ReactNode }
   }
 
   const isChatPage = pathname?.startsWith("/chat");
-  const searchParams = useSearchParams();
   const isBranchFormOpen = pathname?.includes("/system/setting/branches") && searchParams?.get("branchForm") === "open";
 
   if (isChatPage) {

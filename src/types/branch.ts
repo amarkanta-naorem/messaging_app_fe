@@ -5,6 +5,13 @@
 
 export type BranchStatus = "active" | "inactive" | "closed";
 
+export interface ManagerDetails {
+  name: string | null;
+  phone: string;
+  email: string | null;
+  avatar: string | null;
+}
+
 export interface Branch {
   id: number;
   organisationId: number;
@@ -24,8 +31,12 @@ export interface Branch {
   managerId: number | null;
   createdBy: number | null;
   createdAt: string;
-  updatedAt: string;
-  deletedAt: string | null;
+  manager: {
+    name: string | null;
+    phone: string;
+    email: string | null;
+    avatar: string | null;
+  } | null;
 }
 
 export interface BranchListItem {
@@ -35,6 +46,12 @@ export interface BranchListItem {
   status: BranchStatus;
   isHeadquarters: boolean;
   createdAt: string;
+  manager: {
+    name: string | null;
+    phone: string;
+    email: string | null;
+    avatar: string | null;
+  } | null;
 }
 
 export interface BranchPagination {
