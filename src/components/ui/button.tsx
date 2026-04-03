@@ -1,7 +1,3 @@
-/**
- * Reusable Button component with various variants and sizes.
- */
-
 import { ButtonHTMLAttributes, forwardRef } from "react";
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -35,7 +31,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           font-medium rounded-lg
           focus:outline-none focus:ring-2 focus:ring-offset-2
           transition-colors
-          disabled:opacity-50 disabled:cursor-not-allowed
+          disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer
           ${variantClasses[variant]}
           ${sizeClasses[size]}
           ${fullWidth ? "w-full" : ""}

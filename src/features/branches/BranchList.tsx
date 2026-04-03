@@ -11,10 +11,13 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Search, Plus, Eye, SquarePen, Trash2 } from "lucide-react";
 import type { Branch, BranchListItem, BranchPayload } from "@/types/branch";
 import { getBranches, createBranch, updateBranch, deleteBranch, getBranch } from "@/services/branch.service";
+import { useRouter, usePathname } from "next/navigation";
 
 export function BranchList() {
   const { user } = useAuth();
   const dispatch = useAppDispatch();
+  const router = useRouter();
+  const pathname = usePathname();
   const organisationId = user?.organisation_employees?.organisation?.id;
 
   const [branches, setBranches] = useState<BranchListItem[]>([]);
@@ -55,6 +58,7 @@ export function BranchList() {
     setFormMode("create");
     setEditingBranch(null);
     setIsFormOpen(true);
+    router.push(`${pathname}?branchForm=open`);
   };
 
   const handleEdit = async (item: BranchListItem) => {
@@ -65,6 +69,7 @@ export function BranchList() {
       setEditingBranch(branch);
       setFormMode("edit");
       setIsFormOpen(true);
+      router.push(`${pathname}?branchForm=open`);
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Failed to fetch branch details";
       dispatch(setGlobalError({ message, type: "error" }));
@@ -112,6 +117,7 @@ export function BranchList() {
       }
       setIsFormOpen(false);
       setEditingBranch(null);
+      router.push(pathname);
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : `Failed to ${formMode} branch`;
       dispatch(setGlobalError({ message, type: "error" }));
@@ -160,7 +166,7 @@ export function BranchList() {
           isOpen={isFormOpen}
           initialData={editingBranch}
           onSubmit={handleFormSubmit}
-          onClose={() => { setIsFormOpen(false); setEditingBranch(null); }}
+          onClose={() => { setIsFormOpen(false); setEditingBranch(null); router.push(pathname); }}
           loading={formLoading}
         />
       ) : (

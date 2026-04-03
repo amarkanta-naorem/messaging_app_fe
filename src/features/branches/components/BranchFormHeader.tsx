@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, Building2 } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 
 interface BranchFormHeaderProps {
   initialData?: unknown | null;
@@ -16,7 +16,7 @@ export function BranchFormHeader({ initialData, onClose }: BranchFormHeaderProps
       </div>
       <button type="button" onClick={onClose} className="flex items-center gap-2 px-3 py-2 rounded-lg text-[--text-secondary] hover:text-[--text-primary] hover:bg-[--bg-hover] transition-all duration-200 cursor-pointer text-sm font-medium">
         <ArrowLeft className="h-4 w-4" />
-        Back to branches
+        Back to data table
       </button>
     </div>
   );

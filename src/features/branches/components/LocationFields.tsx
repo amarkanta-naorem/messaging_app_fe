@@ -139,7 +139,7 @@ export function LocationFields({ address, onAddressChange, city, onCityChange, s
         <div className="md:col-span-1">
           <div className="relative">
             <InputField
-              label="Postal Code"
+              label="PIN Code"
               value={postalCode}
               onChange={handlePostalCodeChange}
               placeholder="10001, SW1A 1AA"
