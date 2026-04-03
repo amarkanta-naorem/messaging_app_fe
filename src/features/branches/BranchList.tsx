@@ -1,7 +1,7 @@
 "use client";
 
 import { BranchForm } from "./BranchForm";
-import { Modal } from "@/components/ui/modal";
+import { BranchDetails } from "./BranchDetails";
 import { useAppDispatch } from "@/store/store";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
@@ -29,7 +29,7 @@ export function BranchList() {
   const [editingBranch, setEditingBranch] = useState<Branch | null>(null);
 
   const [viewingBranch, setViewingBranch] = useState<Branch | null>(null);
-  const [isViewOpen, setIsViewOpen] = useState(false);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 
   const [deleteTarget, setDeleteTarget] = useState<BranchListItem | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -83,7 +83,7 @@ export function BranchList() {
     try {
       const branch = await getBranch(organisationId, item.id);
       setViewingBranch(branch);
-      setIsViewOpen(true);
+      setIsDetailsOpen(true);
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Failed to fetch branch details";
       dispatch(setGlobalError({ message, type: "error" }));
@@ -149,7 +149,7 @@ export function BranchList() {
 
   return (
     <div className="space-y-6">
-      {!isFormOpen && (
+      {!isFormOpen && !isDetailsOpen && (
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <h1 className="text-2xl font-bold text-(--text-primary)">Branches</h1>
@@ -169,6 +169,12 @@ export function BranchList() {
           onSubmit={handleFormSubmit}
           onClose={() => { setIsFormOpen(false); setEditingBranch(null); router.push(pathname); }}
           loading={formLoading}
+        />
+      ) : isDetailsOpen ? (
+        <BranchDetails
+          isOpen={isDetailsOpen}
+          branch={viewingBranch}
+          onClose={() => { setIsDetailsOpen(false); setViewingBranch(null); }}
         />
       ) : (
         <div className="bg-(--bg-card) max-h-[80vh] overflow-y-auto custom-scrollbar rounded-xl border border-(--border-primary) shadow-sm overflow-hidden">
@@ -312,27 +318,6 @@ export function BranchList() {
       </div>
       )}
 
-      <Modal isOpen={isViewOpen} onClose={() => { setIsViewOpen(false); setViewingBranch(null); }} title="Branch Details">
-        {viewingBranch && (
-          <div className="space-y-4">
-            <DetailRow label="Name" value={viewingBranch.name} />
-            <DetailRow label="Code" value={viewingBranch.code} />
-            <DetailRow label="Address" value={viewingBranch.address} />
-            <DetailRow label="City" value={viewingBranch.city} />
-            <DetailRow label="State" value={viewingBranch.state} />
-            <DetailRow label="Country" value={viewingBranch.country} />
-            <DetailRow label="Postal Code" value={viewingBranch.postalCode} />
-            <DetailRow label="Phone" value={viewingBranch.phone} />
-            <DetailRow label="Email" value={viewingBranch.email} />
-            <DetailRow label="Latitude" value={viewingBranch.latitude} />
-            <DetailRow label="Longitude" value={viewingBranch.longitude} />
-            <DetailRow label="Headquarters" value={viewingBranch.isHeadquarters ? "Yes" : "No"} />
-            <DetailRow label="Status" value={viewingBranch.status} />
-            <DetailRow label="Created" value={new Date(viewingBranch.createdAt).toLocaleString()} />
-          </div>
-        )}
-      </Modal>
-
       <ConfirmDialog
         isOpen={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
@@ -342,15 +327,6 @@ export function BranchList() {
         confirmLabel="Delete"
         loading={isDeleting}
       />
-    </div>
-  );
-}
-
-function DetailRow({ label, value }: { label: string; value: string | null }) {
-  return (
-    <div className="flex justify-between items-start gap-4">
-      <span className="text-(--text-muted) text-sm shrink-0">{label}</span>
-      <span className="text-(--text-primary) text-sm font-medium text-right">{value || "-"}</span>
     </div>
   );
 }
