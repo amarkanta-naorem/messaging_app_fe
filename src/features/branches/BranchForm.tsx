@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { LocationPicker } from "@/components/ui/location-picker";
 import type { Branch, BranchPayload } from "@/types/branch";
 import type { BranchStatus } from "@/types/branch";
+import type { Employee } from "@/types/employee";
+import { getOrganizationEmployees } from "@/services/employee.service";
 
 interface BranchFormProps {
   initialData?: Branch | null;
@@ -30,6 +32,10 @@ export function BranchForm({ initialData, onSubmit, onCancel, loading = false }:
   const [longitude, setLongitude] = useState("");
   const [isHeadquarters, setIsHeadquarters] = useState(false);
   const [status, setStatus] = useState<BranchStatus>("active");
+  const [managerId, setManagerId] = useState<number | "">("");
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [employeesLoading, setEmployeesLoading] = useState(true);
+  const [employeesError, setEmployeesError] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -47,8 +53,25 @@ export function BranchForm({ initialData, onSubmit, onCancel, loading = false }:
       setLongitude(initialData.longitude || "");
       setIsHeadquarters(initialData.isHeadquarters);
       setStatus(initialData.status);
+      setManagerId(initialData.managerId ?? "");
     }
   }, [initialData]);
+
+  useEffect(() => {
+    const fetchEmployees = async () => {
+      try {
+        setEmployeesLoading(true);
+        setEmployeesError("");
+        const data = await getOrganizationEmployees();
+        setEmployees(data);
+      } catch {
+        setEmployeesError("Failed to load employees");
+      } finally {
+        setEmployeesLoading(false);
+      }
+    };
+    fetchEmployees();
+  }, []);
 
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -84,6 +107,7 @@ export function BranchForm({ initialData, onSubmit, onCancel, loading = false }:
     if (email.trim()) payload.email = email.trim();
     payload.isHeadquarters = isHeadquarters;
     payload.status = status;
+    if (managerId) payload.managerId = managerId;
     await onSubmit(payload);
   };
 
@@ -123,6 +147,23 @@ export function BranchForm({ initialData, onSubmit, onCancel, loading = false }:
           />
           <span className="text-sm text-(--text-primary)">Is Headquarters</span>
         </label>
+      </div>
+
+      <div>
+        <label htmlFor="branch-manager" className="block text-sm font-medium text-(--text-primary) mb-1">Manager</label>
+        <select
+          id="branch-manager"
+          value={managerId}
+          onChange={(e) => setManagerId(e.target.value ? Number(e.target.value) : "")}
+          disabled={employeesLoading}
+          className="w-full px-3 py-2 rounded-lg border border-(--border-primary) text-sm bg-(--bg-input) text-(--text-primary) focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 disabled:opacity-50"
+        >
+          <option value="">Select a manager</option>
+          {employees.map((emp) => (
+            <option key={emp.id} value={emp.id}>{emp.name}</option>
+          ))}
+        </select>
+        {employeesError && <p className="text-sm text-red-500 mt-1">{employeesError}</p>}
       </div>
 
       <div>

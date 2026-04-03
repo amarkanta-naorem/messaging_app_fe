@@ -91,13 +91,28 @@ export function BranchList() {
     try {
       setFormLoading(true);
       if (formMode === "create") {
-        await createBranch(organisationId, payload);
+        const newBranch = await createBranch(organisationId, payload);
+        const newBranchItem: BranchListItem = {
+          id: newBranch.id,
+          name: newBranch.name,
+          code: newBranch.code,
+          status: newBranch.status,
+          isHeadquarters: newBranch.isHeadquarters,
+          createdAt: newBranch.createdAt,
+        };
+        setBranches((prev) => [newBranchItem, ...prev]);
       } else if (editingBranch) {
         await updateBranch(organisationId, editingBranch.id, payload);
+        setBranches((prev) =>
+          prev.map((b) =>
+            b.id === editingBranch.id
+              ? { ...b, name: payload.name, code: payload.code ?? null, status: payload.status ?? b.status, isHeadquarters: payload.isHeadquarters ?? b.isHeadquarters }
+              : b
+          )
+        );
       }
       setIsFormOpen(false);
       setEditingBranch(null);
-      fetchBranches();
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : `Failed to ${formMode} branch`;
       dispatch(setGlobalError({ message, type: "error" }));
