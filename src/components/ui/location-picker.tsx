@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useEffect, useState, useCallback } from "react";
-import { MapPin, X, Loader2, Search, Satellite } from "lucide-react";
+import { MapPin, X, Loader2, Search, Satellite, AlertCircle } from "lucide-react";
 
 interface LatLng {
   lat(): number;
@@ -283,10 +283,11 @@ export function LocationPicker({ latitude, longitude, onLatitudeChange, onLongit
     onLongitudeChange("");
   };
 
+  const hasValue = displayValue.length > 0;
+
   if (loadFailed) {
     return (
-      <div>
-        <label htmlFor="coordinates" className="block text-sm font-medium text-(--text-primary) mb-1">Coordinates <span className="text-red-500">*</span></label>
+      <div className="relative">
         <input
           id="coordinates"
           type="text"
@@ -302,50 +303,102 @@ export function LocationPicker({ latitude, longitude, onLatitudeChange, onLongit
               onLongitudeChange("");
             }
           }}
-          placeholder="24.6637,93.8725"
-          aria-describedby={error ? "coordinates-error" : undefined}
-          className={`w-full px-3 py-2 rounded-lg border text-sm bg-(--bg-input) text-(--text-primary) focus:outline-none focus:ring-2 transition-all placeholder:text-(--text-muted) ${
-            error ? "border-red-400 focus:ring-red-500/20 focus:border-red-500" : "border-(--border-primary) focus:ring-emerald-500/20 focus:border-emerald-500"}`}
+          aria-required="true"
+          aria-invalid={error || undefined}
+          aria-describedby={error ? "coordinates-error" : "coordinates-hint"}
+          className={`
+            peer w-full px-4 py-3 pt-5 pb-2 pl-10 rounded-xl border text-sm transition-all duration-200
+            bg-(--bg-input) text-(--text-primary)
+            focus:outline-none focus:ring-2 focus:ring-offset-0
+            ${error 
+              ? "border-red-400 focus:ring-red-500/20 focus:border-red-500" 
+              : "border-(--border-primary) focus:ring-emerald-500/20 focus:border-emerald-500"
+            }
+          `}
         />
-        {errorMessage && (
-          <p id="coordinates-error" className="text-red-500 text-xs mt-1">{errorMessage}</p>
+        <label
+          htmlFor="coordinates"
+          className={`
+            absolute left-10 transition-all duration-200 pointer-events-none text-(--text-muted) text-sm
+            ${hasValue 
+              ? "top-2 text-xs text-(--text-primary)" 
+              : "top-1/2 -translate-y-1/2 text-sm"
+            }
+            ${error ? (hasValue ? " text-red-400" : "") : ""}
+            peer-focus:top-2 peer-focus:text-xs peer-focus:text-emerald-500
+          `}
+        >
+          Coordinates <span className="text-red-500">*</span>
+        </label>
+        <MapPin size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-(--text-muted) pointer-events-none" />
+        {error && errorMessage && (
+          <div id="coordinates-error" className="flex items-center gap-1.5 mt-1.5" role="alert">
+            <AlertCircle className="h-3.5 w-3.5 text-red-500 shrink-0" />
+            <p className="text-red-500 text-xs">{errorMessage}</p>
+          </div>
         )}
-        <p className="text-xs text-(--text-muted) mt-1">Map unavailable &mdash; enter latitude,longitude manually.</p>
+        <p id="coordinates-hint" className="text-xs text-(--text-muted) mt-1.5">Map unavailable &mdash; enter latitude,longitude manually.</p>
       </div>
     );
   }
 
   return (
-    <div>
-      <label htmlFor="coordinates" className="block text-sm font-medium text-(--text-primary) mb-1">Coordinates <span className="text-red-500">*</span></label>
-
-      <div className="relative">
-        <MapPin size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-(--text-muted) pointer-events-none"/>
-        <input
-          id="coordinates"
-          type="text"
-          readOnly
-          value={displayValue}
-          onClick={openPicker}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              openPicker();
-            }
-          }}
-          placeholder="Click to pick location on map"
-          aria-describedby={error ? "coordinates-error" : undefined}
-          className={`w-full pl-9 pr-9 py-2 rounded-lg border text-sm bg-(--bg-input) text-(--text-primary) cursor-pointer focus:outline-none focus:ring-2 transition-all placeholder:text-(--text-muted) ${error ? "border-red-400 focus:ring-red-500/20 focus:border-red-500" : "border-(--border-primary) focus:ring-emerald-500/20 focus:border-emerald-500"}`}
-        />
-        {displayValue && (
-          <button type="button" onClick={handleClear} className="absolute right-3 top-1/2 -translate-y-1/2 text-(--text-muted) hover:text-(--text-primary) cursor-pointer" aria-label="Clear coordinates">
-            <X size={14} />
-          </button>
-        )}
-      </div>
-
-      {errorMessage && (
-        <p id="coordinates-error" className="text-red-500 text-xs mt-1">{errorMessage}</p>
+    <div className="relative">
+      <input
+        id="coordinates"
+        type="text"
+        readOnly
+        value={displayValue}
+        onClick={openPicker}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            openPicker();
+          }
+        }}
+        aria-required="true"
+        aria-invalid={error || undefined}
+        aria-describedby={error ? "coordinates-error" : undefined}
+        className={`
+          peer w-full px-4 py-3 pt-5 pb-2 pl-10 pr-10 rounded-xl border text-sm transition-all duration-200
+          bg-(--bg-input) text-(--text-primary) cursor-pointer
+          focus:outline-none focus:ring-2 focus:ring-offset-0
+          ${error 
+            ? "border-red-400 focus:ring-red-500/20 focus:border-red-500" 
+            : "border-(--border-primary) focus:ring-emerald-500/20 focus:border-emerald-500"
+          }
+        `}
+      />
+      <label
+        htmlFor="coordinates"
+        className={`
+          absolute left-10 transition-all duration-200 pointer-events-none text-(--text-muted) text-sm
+          ${hasValue 
+            ? "top-2 text-xs text-(--text-primary)" 
+            : "top-1/2 -translate-y-1/2 text-sm"
+          }
+          ${error ? (hasValue ? " text-red-400" : "") : ""}
+          peer-focus:top-2 peer-focus:text-xs peer-focus:text-emerald-500
+        `}
+      >
+        Coordinates <span className="text-red-500">*</span>
+      </label>
+      <MapPin size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-(--text-muted) pointer-events-none" />
+      {displayValue && (
+        <button 
+          type="button" 
+          onClick={handleClear} 
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-(--text-muted) hover:text-(--text-primary) cursor-pointer" 
+          aria-label="Clear coordinates"
+        >
+          <X size={14} />
+        </button>
+      )}
+      {error && errorMessage && (
+        <div id="coordinates-error" className="flex items-center gap-1.5 mt-1.5" role="alert">
+          <AlertCircle className="h-3.5 w-3.5 text-red-500 shrink-0" />
+          <p className="text-red-500 text-xs">{errorMessage}</p>
+        </div>
       )}
 
       {pickerOpen && (

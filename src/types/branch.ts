@@ -68,16 +68,16 @@ export interface BranchListResponse {
 export interface BranchPayload {
   name: string;
   code?: string;
-  address?: string;
-  city?: string;
-  state?: string;
-  country?: string;
-  postalCode?: string;
+  address: string;
+  city: string;
+  state: string;
+  country: string;
+  postalCode: string;
   phone?: string;
   email?: string;
   latitude: number;
   longitude: number;
-  isHeadquarters?: boolean;
-  status?: BranchStatus;
-  managerId?: number;
+  isHeadquarters: boolean;
+  status: BranchStatus;
+  managerId: number;
 }

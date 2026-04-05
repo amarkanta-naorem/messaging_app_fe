@@ -17,9 +17,11 @@ type SearchableDropdownProps<T extends string | number> = {
   getDisplayValue: (option: T) => string;
   getSearchValue: (option: T) => string;
   icon?: React.ReactNode;
+  /** Whether to show the search input in the dropdown. Defaults to true. */
+  searchable?: boolean;
 }
 
-export function SearchableDropdown<T extends string | number>({ label, value, onChange, options, placeholder = "Select an option", loading = false, error = false, errorMessage, disabled = false, getDisplayValue, getSearchValue, icon }: SearchableDropdownProps<any>) {
+export function SearchableDropdown<T extends string | number>({ label, value, onChange, options, placeholder = "Select an option", loading = false, error = false, errorMessage, disabled = false, getDisplayValue, getSearchValue, icon, searchable = true }: SearchableDropdownProps<any>) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
@@ -191,39 +193,41 @@ export function SearchableDropdown<T extends string | number>({ label, value, on
 
         {isOpen && !disabled && !loading && (
           <div ref={dropdownMenuRef} className={`absolute z-60 w-full bg-(--bg-card) border border-(--border-primary) rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 ring-1 ring-black/5 ${dropdownPosition === 'top' ? 'bottom-full mb-2' : 'top-full mt-2'}`}>
-            <div className="p-2 border-b border-(--border-primary)/50">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-(--text-muted)" />
-                <input
-                  ref={inputRef}
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value);
-                    setHighlightedIndex(-1);
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === "ArrowDown") {
-                      e.preventDefault();
-                      setHighlightedIndex(0);
-                    } else if (e.key === "ArrowUp") {
-                      e.preventDefault();
-                      setHighlightedIndex(filteredOptions.length - 1);
-                    } else if (e.key === "Escape") {
-                      e.preventDefault();
-                      setIsOpen(false);
-                      setSearchQuery("");
-                    } else if (e.key === "Enter" && searchQuery && filteredOptions.length > 0) {
-                      e.preventDefault();
-                      handleSelect(filteredOptions[0]);
-                    }
-                  }}
-                  placeholder="Type to search..."
-                  className="w-full pl-9 pr-3 py-2 rounded-lg border border-(--border-secondary) text-sm bg-(--bg-input) text-(--text-primary) placeholder:text-(--text-muted) focus:outline-none focus:ring-2 focus:ring-(--accent-primary)/20 focus:border-(--accent-primary) transition-all duration-150"
-                  autoFocus
-                />
+            {searchable && (
+              <div className="p-2 border-b border-(--border-primary)/50">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-(--text-muted)" />
+                  <input
+                    ref={inputRef}
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value);
+                      setHighlightedIndex(-1);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "ArrowDown") {
+                        e.preventDefault();
+                        setHighlightedIndex(0);
+                      } else if (e.key === "ArrowUp") {
+                        e.preventDefault();
+                        setHighlightedIndex(filteredOptions.length - 1);
+                      } else if (e.key === "Escape") {
+                        e.preventDefault();
+                        setIsOpen(false);
+                        setSearchQuery("");
+                      } else if (e.key === "Enter" && searchQuery && filteredOptions.length > 0) {
+                        e.preventDefault();
+                        handleSelect(filteredOptions[0]);
+                      }
+                    }}
+                    placeholder="Type to search..."
+                    className="w-full pl-9 pr-3 py-2 rounded-lg border border-(--border-secondary) text-sm bg-(--bg-input) text-(--text-primary) placeholder:text-(--text-muted) focus:outline-none focus:ring-2 focus:ring-(--accent-primary)/20 focus:border-(--accent-primary) transition-all duration-150"
+                    autoFocus
+                  />
+                </div>
               </div>
-            </div>
+            )}
             <ul ref={listRef} id={`${label.toLowerCase().replace(/\s+/g, "-")}-list`} role="listbox" className="max-h-56 overflow-y-auto py-1">
               {filteredOptions.length === 0 ? (
                 <li className="px-3 py-3 text-sm text-(--text-muted) text-center flex items-center justify-center gap-2">
