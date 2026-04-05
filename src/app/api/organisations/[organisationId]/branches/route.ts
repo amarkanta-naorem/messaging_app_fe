@@ -61,6 +61,14 @@ export async function POST(
     // Status field
     if (body.status !== undefined) payload.status = body.status;
 
+    // Manager ID - include if defined and valid
+    if (body.managerId !== undefined) {
+      const mgrId = Number(body.managerId);
+      if (!isNaN(mgrId)) {
+        payload.managerId = mgrId;
+      }
+    }
+
     return proxyRequest({
       path: `/organisations/${organisationId}/branches`,
       method: "POST",
