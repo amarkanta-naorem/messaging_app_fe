@@ -153,6 +153,20 @@ export function BranchDetails({ branch, isOpen, onClose }: BranchDetailsProps) {
             <DetailRow label="Country" value={branch.country} />
             <DetailRow label="Postal Code" value={branch.postalCode} />
           </div>
+          <div className="flex flex-col gap-4">
+            <span className="text-sm font-medium text-(--text-muted)">Branch Manager</span>
+            <div className="flex items-start gap-4">
+              <img src={branch.manager?.avatar ?? undefined} className="w-15 h-15 rounded-full" />
+              <div className="flex flex-col gap-2">
+                <p className="font-semibold text-2xl text-(--text-primary)">{branch.manager?.name}</p>
+                <div className="flex gap-2 text-(--text-muted) text-xs">
+                  <p>{branch.manager?.phone}</p>
+                  <p>|</p>
+                  <p>{branch.manager?.email}</p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

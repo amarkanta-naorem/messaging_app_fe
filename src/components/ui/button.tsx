@@ -1,7 +1,7 @@
 import { ButtonHTMLAttributes, forwardRef } from "react";
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "primary" | "secondary" | "ghost" | "danger";
+  variant?: "primary" | "secondary" | "ghost" | "danger" | "customBg";
   size?: "sm" | "md" | "lg";
   loading?: boolean;
   fullWidth?: boolean;
@@ -11,7 +11,8 @@ const variantClasses = {
   primary: "bg-[var(--accent-primary)] text-[var(--text-inverse)] hover:bg-[var(--accent-hover)] focus:ring-[var(--accent-primary)]",
   secondary: "bg-[var(--bg-hover)] text-[var(--text-primary)] hover:bg-[var(--bg-active)] focus:ring-[var(--border-secondary)]",
   ghost: "bg-transparent text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] focus:ring-[var(--border-secondary)]",
-  danger: "bg-[var(--color-error)] text-[var(--text-inverse)] hover:opacity-90 focus:ring-[var(--color-error)]",
+  danger: "bg-[#dc2626]/10 border border-[#dc2626] hover:opacity-90 focus:ring-[#dc2626]",
+  customBg: "bg-[#023e8a]/10 border border-[#023e8a] focus:ring-[#023e8a]"
 };
 
 const sizeClasses = {
