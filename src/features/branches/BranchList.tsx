@@ -155,7 +155,7 @@ export function BranchList() {
             <h1 className="text-2xl font-bold text-(--text-primary)">Branches</h1>
             <p className="text-(--text-secondary)">Manage your organization's branches</p>
           </div>
-          <Button onClick={handleCreate} variant="primary" size="md">
+          <Button onClick={handleCreate} variant="customBg" size="md">
             <Plus size={20} />
             <span>Add Branch</span>
           </Button>
