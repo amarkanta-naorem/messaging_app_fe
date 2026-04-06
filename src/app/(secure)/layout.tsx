@@ -34,6 +34,7 @@ export default function SecureLayout({ children }: { children: React.ReactNode }
   const isChatPage = pathname?.startsWith("/chat");
   const isBranchFormOpen = pathname?.includes("/system/setting/branches") && searchParams?.get("branchForm") === "open";
   const isDepartmentFormOpen = pathname?.includes("/system/setting/department") && searchParams?.get("departmentForm") === "open";
+  const isRoleFormOpen = pathname?.includes("/system/setting/roles") && searchParams?.get("roleForm") === "open";
 
 
   if (isChatPage) {
@@ -44,7 +45,7 @@ export default function SecureLayout({ children }: { children: React.ReactNode }
     <div className="relative flex gap-4 min-h-screen bg-(--bg-primary) p-4">
       <Sidebar />
       <main className="relative flex-1">{children}</main>
-      {(!isBranchFormOpen && !isDepartmentFormOpen) && (
+      {(!isBranchFormOpen && !isDepartmentFormOpen && !isRoleFormOpen) && (
         <Link href="/chat" className="absolute right-8 bottom-8 flex items-center justify-center w-10 h-10 bg-[#25D366] hover:bg-[#1da851] text-white rounded-full shadow-xl transition-all duration-300 hover:scale-110 z-50" >
           <MessageCircleMore size={26} />
         </Link>

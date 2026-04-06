@@ -21,8 +21,9 @@ export interface Role {
   scope: RoleScope;
   isSystem: boolean;
   isActive: boolean;
+  createdBy: number;
   createdAt: string;
-  updatedAt: string | null;
+  updatedAt: string;
   deletedAt: string | null;
   permissions?: RolePermission[];
 }
@@ -50,7 +51,6 @@ export interface RoleListResponse {
 
 export interface RolePayload {
   name: string;
-  slug: string;
   description?: string;
   scope?: RoleScope;
   isActive?: boolean;
