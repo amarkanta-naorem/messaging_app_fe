@@ -56,7 +56,7 @@ export default function AllConversation({ data, showNewMessage, onClose, searchQ
         setContacts([]);
         try {
           const response = await get<ApiEnvelope<Contact[]>>(`/contacts/organization`);
-          if (response.success) {
+          if (response.success && response.data) {
             setContacts(response.data);
           } else {
             throw new Error(response.message || "Failed to fetch contacts");

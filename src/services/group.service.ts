@@ -17,11 +17,17 @@ export async function createGroup(payload: CreateGroupPayload): Promise<{ id: nu
     "/groups",
     payload
   );
+  if (!res.data) {
+    throw new Error("Invalid response from server");
+  }
   return res.data;
 }
 
 export async function getGroup(groupId: number): Promise<GroupDetails> {
   const res = await get<ApiEnvelope<GroupDetails>>(`/groups/${groupId}`);
+  if (!res.data) {
+    throw new Error("Invalid response from server");
+  }
   return res.data;
 }
 
@@ -61,10 +67,16 @@ export async function updateGroup(groupId: number, payload: UpdateGroupPayload):
     }
 
     const res = await response.json();
+    if (!res.data) {
+      throw new Error("Invalid response from server");
+    }
     return res.data;
   }
 
   const res = await patch<ApiEnvelope<GroupDetails>>(`/groups/${groupId}`, payload);
+  if (!res.data) {
+    throw new Error("Invalid response from server");
+  }
   return res.data;
 }
 
@@ -76,5 +88,8 @@ export interface AssignAdminResponse {
 
 export async function assignAdmin(groupId: number, userId: number): Promise<AssignAdminResponse> {
   const res = await patch<ApiEnvelope<AssignAdminResponse>>(`/groups/${groupId}/members/${userId}/assign-admin`);
+  if (!res.data) {
+    throw new Error("Invalid response from server");
+  }
   return res.data;
 }

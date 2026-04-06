@@ -5,11 +5,13 @@
 export interface ApiEnvelope<T> {
   success: boolean;
   message: string;
-  data: T;
+  data: T | null;
 }
 
 export interface ApiErrorResponse {
   success: false;
   message: string;
-  errors?: Array<{ path: string; message: string }>;
+  data: null;
+  errors?: Array<{ field: string; message: string }>;
+  suggestion?: string;
 }

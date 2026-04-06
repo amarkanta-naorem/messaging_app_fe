@@ -29,7 +29,7 @@ export async function sendMessage(payload: SendMessagePayload): Promise<SendMess
       "Content-Type": "application/json",
     },
   });
-  if (!res) {
+  if (!res || !res.data) {
     throw new Error("Failed to send message");
   }
   return res.data;

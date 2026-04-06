@@ -44,7 +44,7 @@ export const AddMembersDrawer = ({ isOpen, onClose, groupId, onMembersAdded }: A
     setError(null);
     try {
       const response = await get<ApiEnvelope<Contact[]>>(`/groups/${groupId}/members`);
-      if (response.success) {
+      if (response.success && response.data) {
         setContacts(response.data);
       } else {
         setError(response.message || "Failed to fetch contacts");

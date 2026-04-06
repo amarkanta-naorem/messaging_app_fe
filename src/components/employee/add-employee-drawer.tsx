@@ -101,7 +101,7 @@ export const AddEmployeeDrawer = ({
       const response = await get<ApiEnvelope<OrgGroup[]>>(
         `/organizations/${organisationId}/groups`
       );
-      if (response.success) {
+      if (response.success && response.data) {
         setGroups(response.data);
       }
     } catch (err) {

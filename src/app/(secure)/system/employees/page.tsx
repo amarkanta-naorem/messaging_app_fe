@@ -26,7 +26,7 @@ export default function EmployeePage() {
     try {
       setLoading(true);
       const response = await get<ApiEnvelope<Employee[]>>(`/contacts/organization`);
-      if (response.success) {
+      if (response.success && response.data) {
         setEmployees(response.data);
       }
     } catch (error) {

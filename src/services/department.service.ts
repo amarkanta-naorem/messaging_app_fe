@@ -8,7 +8,6 @@ import type { ApiEnvelope } from "@/types/api";
 import type { Department, DepartmentListItem, DepartmentListResponse, DepartmentPayload } from "@/types/department";
 
 export async function getDepartments(
-  organisationId: number,
   page = 1,
   limit = 20,
   filters?: { branchId?: number; status?: string }
@@ -16,43 +15,71 @@ export async function getDepartments(
   const params = new URLSearchParams({ page: String(page), limit: String(limit) });
   if (filters?.branchId) params.set("branchId", String(filters.branchId));
   if (filters?.status) params.set("status", filters.status);
-  const res = await get<ApiEnvelope<{ departments: DepartmentListItem[]; pagination: { page: number; limit: number; total: number } }>>(
-    `/organisations/${organisationId}/departments?${params}`
+  const res = await get<ApiEnvelope<{ departments: any[]; pagination: { page: number; limit: number; total: number } }>>(
+    `/departments?${params}`
   );
+  if (!res.data) {
+    throw new Error("Invalid response from server");
+  }
+  const departments = res.data.departments.map((d: any) => ({
+    id: d.id,
+    name: d.name,
+    code: d.code,
+    status: d.status,
+    level: d.level,
+    createdAt: d.createdAt,
+    branchId: d.branchId ?? null,
+    branchName: d.branch?.name ?? null,
+    parentDepartmentId: d.parentDepartmentId ?? null,
+    headOfDepartmentId: d.headOfDepartmentId ?? null,
+    headOfDepartmentName: d.headOfDepartment?.name ?? null,
+    headOfDepartmentPhone: d.headOfDepartment?.phone ?? null,
+    headOfDepartmentAvatar: d.headOfDepartment?.avatar ?? null,
+  }));
   return {
-    departments: res.data.departments,
+    departments,
     pagination: res.data.pagination,
   };
 }
 
-export async function getDepartment(organisationId: number, departmentId: number): Promise<Department> {
-  const res = await get<ApiEnvelope<Department>>(`/organisations/${organisationId}/departments/${departmentId}`);
+export async function getDepartment(departmentId: number): Promise<Department> {
+  const res = await get<ApiEnvelope<Department>>(`/departments/${departmentId}`);
+  if (!res.data) {
+    throw new Error("Invalid response from server");
+  }
   return res.data;
 }
 
-export async function createDepartment(organisationId: number, payload: DepartmentPayload): Promise<Department> {
-  const res = await post<ApiEnvelope<Department>>(`/organisations/${organisationId}/departments`, payload);
+export async function createDepartment(payload: DepartmentPayload): Promise<Department> {
+  const res = await post<ApiEnvelope<Department>>(`/departments`, payload);
+  if (!res.data) {
+    throw new Error("Invalid response from server");
+  }
   return res.data;
 }
 
 export async function updateDepartment(
-  organisationId: number,
   departmentId: number,
   payload: Partial<DepartmentPayload>
 ): Promise<Department> {
   const res = await patch<ApiEnvelope<Department>>(
-    `/organisations/${organisationId}/departments/${departmentId}`,
+    `/departments/${departmentId}`,
     payload
   );
+  if (!res.data) {
+    throw new Error("Invalid response from server");
+  }
   return res.data;
 }
 
 export async function deleteDepartment(
-  organisationId: number,
   departmentId: number
 ): Promise<{ id: number; deletedAt: string }> {
   const res = await del<ApiEnvelope<{ id: number; deletedAt: string }>>(
-    `/organisations/${organisationId}/departments/${departmentId}`
+    `/departments/${departmentId}`
   );
+  if (!res.data) {
+    throw new Error("Invalid response from server");
+  }
   return res.data;
 }

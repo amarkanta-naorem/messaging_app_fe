@@ -18,6 +18,9 @@ export async function getBranches(
   const res = await get<ApiEnvelope<{ branches: BranchListItem[]; pagination: { page: number; limit: number; total: number } }>>(
     `/organisations/${organisationId}/branches?${params}`
   );
+  if (!res.data) {
+    throw new Error("Invalid response from server");
+  }
   return {
     branches: res.data.branches,
     pagination: res.data.pagination,
@@ -26,11 +29,17 @@ export async function getBranches(
 
 export async function getBranch(organisationId: number, branchId: number): Promise<Branch> {
   const res = await get<ApiEnvelope<Branch>>(`/organisations/${organisationId}/branches/${branchId}`);
+  if (!res.data) {
+    throw new Error("Invalid response from server");
+  }
   return res.data;
 }
 
 export async function createBranch(organisationId: number, payload: BranchPayload): Promise<Branch> {
   const res = await post<ApiEnvelope<Branch>>(`/organisations/${organisationId}/branches`, payload);
+  if (!res.data) {
+    throw new Error("Invalid response from server");
+  }
   return res.data;
 }
 
@@ -40,6 +49,9 @@ export async function updateBranch(
   payload: Partial<BranchPayload>
 ): Promise<Branch> {
   const res = await patch<ApiEnvelope<Branch>>(`/organisations/${organisationId}/branches/${branchId}`, payload);
+  if (!res.data) {
+    throw new Error("Invalid response from server");
+  }
   return res.data;
 }
 
@@ -47,5 +59,8 @@ export async function deleteBranch(organisationId: number, branchId: number): Pr
   const res = await del<ApiEnvelope<{ id: number; deletedAt: string }>>(
     `/organisations/${organisationId}/branches/${branchId}`
   );
+  if (!res.data) {
+    throw new Error("Invalid response from server");
+  }
   return res.data;
 }

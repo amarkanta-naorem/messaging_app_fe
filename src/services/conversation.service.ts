@@ -9,6 +9,9 @@ import type { ApiEnvelope } from "@/types/api";
 
 export async function getConversations(): Promise<Conversation[]> {
   const res = await get<ApiEnvelope<Conversation[]>>("/conversations");
+  if (!res.data) {
+    throw new Error("Invalid response from server");
+  }
   return res.data;
 }
 
@@ -17,5 +20,8 @@ export async function createDirectConversation(targetUserId: number): Promise<{ 
     "/conversations/direct",
     { targetUserId }
   );
+  if (!res.data) {
+    throw new Error("Invalid response from server");
+  }
   return res.data;
 }

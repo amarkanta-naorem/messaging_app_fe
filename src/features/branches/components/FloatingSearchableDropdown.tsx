@@ -5,7 +5,7 @@ import { useState, useEffect, useRef, useCallback, KeyboardEvent } from "react";
 
 export interface FloatingSearchableDropdownProps<T extends string | number> {
   id: string;
-  label: string;
+  label: string | React.ReactNode;
   value: T | "";
   onChange: (value: T) => void;
   options: T[];
@@ -184,7 +184,7 @@ export function FloatingSearchableDropdown<T extends string | number>({ id, labe
         aria-haspopup="listbox"
         aria-expanded={isOpen}
         aria-controls={`${id}-listbox`}
-        aria-label={label}
+        aria-label={typeof label === 'string' ? label : id}
         aria-required={required}
         aria-invalid={hasError}
         aria-describedby={hasError ? `${id}-error` : hint ? `${id}-hint` : undefined}

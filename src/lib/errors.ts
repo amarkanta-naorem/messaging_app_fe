@@ -10,12 +10,12 @@
  */
 export class AppError extends Error {
   status: number;
-  errors?: Array<{ path: string; message: string }>;
+  errors?: Array<{ field: string; message: string }>;
 
   constructor(
     message: string,
     status: number,
-    errors?: Array<{ path: string; message: string }>
+    errors?: Array<{ field: string; message: string }>
   ) {
     super(message);
     this.name = "AppError";

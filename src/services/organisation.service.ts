@@ -12,6 +12,9 @@ export async function getOrganisations(page = 1, limit = 20): Promise<Organisati
   const res = await get<ApiEnvelope<{ data: Organisation[]; pagination: { page: number; limit: number; total: number } }>>(
     `/organisations?page=${page}&limit=${limit}`
   );
+  if (!res.data) {
+    throw new Error("Invalid response from server");
+  }
   return {
     data: res.data.data,
     pagination: res.data.pagination,
@@ -20,11 +23,17 @@ export async function getOrganisations(page = 1, limit = 20): Promise<Organisati
 
 export async function getOrganisation(organisationId: number): Promise<Organisation> {
   const res = await get<ApiEnvelope<Organisation>>(`/organisations/${organisationId}`);
+  if (!res.data) {
+    throw new Error("Invalid response from server");
+  }
   return res.data;
 }
 
 export async function createOrganisation(payload: OrganisationPayload): Promise<Organisation> {
   const res = await post<ApiEnvelope<Organisation>>("/organisations", payload);
+  if (!res.data) {
+    throw new Error("Invalid response from server");
+  }
   return res.data;
 }
 
@@ -33,17 +42,23 @@ export async function updateOrganisation(
   payload: OrganisationPayload
 ): Promise<Organisation> {
   const res = await patch<ApiEnvelope<Organisation>>(`/organisations/${organisationId}`, payload);
+  if (!res.data) {
+    throw new Error("Invalid response from server");
+  }
   return res.data;
 }
 
 export async function deleteOrganisation(organisationId: number): Promise<Organisation> {
   const res = await del<ApiEnvelope<Organisation>>(`/organisations/${organisationId}`);
+  if (!res.data) {
+    throw new Error("Invalid response from server");
+  }
   return res.data;
 }
 
 export class OrganisationApiError extends AppError {
-  errors?: Array<{ path: string; message: string }>;
-  constructor(message: string, status: number, errors?: Array<{ path: string; message: string }>) {
+  errors?: Array<{ field: string; message: string }>;
+  constructor(message: string, status: number, errors?: Array<{ field: string; message: string }>) {
     super(message, status, errors);
     this.errors = errors;
   }

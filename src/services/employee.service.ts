@@ -9,16 +9,25 @@ import type { ApiEnvelope } from "@/types/api";
 
 export async function getOrganizationEmployees(): Promise<Employee[]> {
   const res = await get<ApiEnvelope<Employee[]>>("/contacts/organization");
+  if (!res.data) {
+    throw new Error("Invalid response from server");
+  }
   return res.data;
 }
 
 export async function getContactByPhone(phone: string): Promise<Contact> {
   const res = await get<ApiEnvelope<Contact>>(`/contacts/${phone}/organization`);
+  if (!res.data) {
+    throw new Error("Invalid response from server");
+  }
   return res.data;
 }
 
 export async function getOrganizationGroups(organisationId: number): Promise<OrgGroup[]> {
   const res = await get<ApiEnvelope<OrgGroup[]>>(`/organizations/${organisationId}/groups`);
+  if (!res.data) {
+    throw new Error("Invalid response from server");
+  }
   return res.data;
 }
 
@@ -38,15 +47,24 @@ export async function createEmployee(
     `/organizations/${organisationId}/employees`,
     payload
   );
+  if (!res.data) {
+    throw new Error("Invalid response from server");
+  }
   return res.data;
 }
 
 export async function getGroupDetails(groupId: number): Promise<GroupDetails> {
   const res = await get<ApiEnvelope<GroupDetails>>(`/groups/${groupId}`);
+  if (!res.data) {
+    throw new Error("Invalid response from server");
+  }
   return res.data;
 }
 
 export async function getGroupMembers(groupId: number): Promise<GroupMember[]> {
   const res = await get<ApiEnvelope<GroupMember[]>>(`/groups/${groupId}/members`);
+  if (!res.data) {
+    throw new Error("Invalid response from server");
+  }
   return res.data;
 }

@@ -15,6 +15,9 @@ export async function sendOtp(phone: string): Promise<SendOtpResponse> {
     "/auth/otp/send",
     { phone }
   );
+  if (!res.data) {
+    throw new Error("Invalid response from server");
+  }
   return { message: res.message, expiresIn: res.data.expiresIn, otp: res.data.otp };
 }
 
@@ -23,6 +26,9 @@ export async function resendOtp(phone: string): Promise<SendOtpResponse> {
     "/auth/otp/resend",
     { phone }
   );
+  if (!res.data) {
+    throw new Error("Invalid response from server");
+  }
   return { message: res.message, expiresIn: res.data.expiresIn, otp: res.data.otp };
 }
 
@@ -31,6 +37,9 @@ export async function verifyOtp(phone: string, code: string): Promise<VerifyOtpR
     "/auth/otp/verify",
     { phone, code }
   );
+  if (!res.data) {
+    throw new Error("Invalid response from server");
+  }
   return { message: res.message, token: res.data.token, user: res.data.user };
 }
 
@@ -41,6 +50,9 @@ export async function sendOtpNewOrganisation(phone: string): Promise<SendOtpResp
     "/otp/send",
     { phone }
   );
+  if (!res.data) {
+    throw new Error("Invalid response from server");
+  }
   return { message: res.message, expiresIn: res.data.expiresIn, otp: res.data.otp };
 }
 
@@ -49,6 +61,9 @@ export async function resendOtpNewOrganisation(phone: string): Promise<SendOtpRe
     "/otp/resend",
     { phone }
   );
+  if (!res.data) {
+    throw new Error("Invalid response from server");
+  }
   return { message: res.message, expiresIn: res.data.expiresIn, otp: res.data.otp };
 }
 
@@ -57,6 +72,9 @@ export async function verifyOtpNewOrganisation(phone: string, code: string): Pro
     "/otp/verify",
     { phone, code }
   );
+  if (!res.data) {
+    throw new Error("Invalid response from server");
+  }
   return { message: res.message, token: res.data.token, user: res.data.user };
 }
 
@@ -64,11 +82,17 @@ export async function verifyOtpNewOrganisation(phone: string, code: string): Pro
 
 export async function getProfile(): Promise<ProfileResponse> {
   const res = await get<ApiEnvelope<User>>("/auth/profile");
+  if (!res.data) {
+    throw new Error("Invalid response from server");
+  }
   return { message: res.message, user: res.data };
 }
 
 export async function updateProfile(payload: UpdateProfilePayload): Promise<ProfileResponse> {
   const res = await patch<ApiEnvelope<User>>("/auth/profile", payload);
+  if (!res.data) {
+    throw new Error("Invalid response from server");
+  }
   return { message: res.message, user: res.data };
 }
 
