@@ -1,18 +1,20 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { Key, FolderOpen, FileText } from "lucide-react";
+import { FloatingLabelInput } from "@/features/branches/components";
 import type { Permission, PermissionPayload } from "@/types/permission";
+import { PermissionFormHeader, FormSection, FormActions } from "./components";
 
 interface PermissionFormProps {
   initialData?: Permission | null;
   onSubmit: (payload: PermissionPayload) => Promise<void>;
-  onCancel: () => void;
   loading?: boolean;
+  isOpen: boolean;
+  onClose: () => void;
 }
 
-export function PermissionForm({ initialData, onSubmit, onCancel, loading = false }: PermissionFormProps) {
+export function PermissionForm({ initialData, onSubmit, loading = false, isOpen, onClose }: PermissionFormProps) {
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [module, setModule] = useState("");
@@ -25,8 +27,14 @@ export function PermissionForm({ initialData, onSubmit, onCancel, loading = fals
       setSlug(initialData.slug || "");
       setModule(initialData.module || "");
       setDescription(initialData.description || "");
+    } else if (isOpen) {
+      setName("");
+      setSlug("");
+      setModule("");
+      setDescription("");
     }
-  }, [initialData]);
+    setErrors({});
+  }, [initialData, isOpen]);
 
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -53,31 +61,70 @@ export function PermissionForm({ initialData, onSubmit, onCancel, loading = fals
     await onSubmit(payload);
   };
 
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4 p-4">
-      <Input label="Name" value={name} onChange={(e) => setName(e.target.value)} required error={!!errors.name} errorMessage={errors.name} placeholder="Create Project" />
-      <Input label="Slug" value={slug} onChange={(e) => setSlug(e.target.value)} required error={!!errors.slug} errorMessage={errors.slug} placeholder="project.create" />
-      <Input label="Module" value={module} onChange={(e) => setModule(e.target.value)} required error={!!errors.module} errorMessage={errors.module} placeholder="projects" />
-      <div>
-        <label className="block text-sm font-medium text-(--text-primary) mb-1">Description</label>
-        <textarea
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="Allows creating new projects"
-          rows={3}
-          className="w-full px-3 py-2 rounded-lg border border-(--border-primary) text-sm bg-(--bg-input) text-(--text-primary) focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 resize-none placeholder:text-(--text-muted)"
-        />
-      </div>
+  if (!isOpen) return null;
 
-      <div className="flex items-center justify-end gap-3 pt-4 border-t border-(--border-primary)">
-        <Button variant="secondary" size="md" type="button" onClick={onCancel} disabled={loading}>
-          Cancel
-        </Button>
-        <Button variant="primary" size="md" type="submit" loading={loading}>
-          {initialData ? "Update Permission" : "Create Permission"}
-        </Button>
-      </div>
-    </form>
+  const handleCancel = () => {
+    onClose();
+  };
+
+  return (
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+      <PermissionFormHeader initialData={initialData} onClose={onClose} />
+
+      <form onSubmit={handleSubmit} className="flex flex-col bg-(--bg-card) min-h-[83vh] rounded-xl border border-(--border-primary) shadow-sm overflow-hidden p-5">
+        <div className="flex-1 overflow-y-auto custom-scrollbar space-y-7">
+          <FormSection>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <FloatingLabelInput
+                id="permission-name"
+                label="Permission Name"
+                value={name}
+                onChange={setName}
+                required
+                error={errors.name}
+                icon={<FileText className="h-4 w-4" />}
+              />
+              <FloatingLabelInput
+                id="permission-slug"
+                label="Slug"
+                value={slug}
+                onChange={setSlug}
+                required
+                error={errors.slug}
+                icon={<Key className="h-4 w-4" />}
+              />
+              <FloatingLabelInput
+                id="permission-module"
+                label="Module"
+                value={module}
+                onChange={setModule}
+                required
+                error={errors.module}
+                icon={<FolderOpen className="h-4 w-4" />}
+                placeholder="projects"
+              />
+            </div>
+          </FormSection>
+
+          <FormSection>
+            <div>
+              <label className="block text-sm font-medium text-(--text-primary) mb-2">Description</label>
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Allows creating new projects"
+                rows={4}
+                className="w-full px-4 py-3 rounded-xl border border-(--border-primary) text-sm bg-(--bg-input) text-(--text-primary) focus:outline-none focus:ring-2 focus:ring-(--accent-primary)/20 focus:border-(--accent-primary) resize-none placeholder:text-(--text-muted) transition-all duration-200"
+              />
+            </div>
+          </FormSection>
+        </div>
+
+        <div className="shrink-0 pt-4">
+          <FormActions loading={loading} onCancel={handleCancel} isEdit={!!initialData} />
+        </div>
+      </form>
+    </div>
   );
 }
 
