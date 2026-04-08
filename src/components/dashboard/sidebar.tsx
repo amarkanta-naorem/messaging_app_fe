@@ -81,7 +81,7 @@ export default function Sidebar() {
         </div>
       </aside>
 
-      <button onClick={() => setExpanded(curr => !curr)} className="absolute -right-4 top-1/2 p-2 rounded-lg bg-(--bg-hover) hover:bg-(--bg-active) text-(--accent-primary) cursor-pointer transition-colors">
+      <button onClick={() => setExpanded(curr => !curr)} className="absolute -right-3 top-14 p-1.5 rounded-lg bg-(--bg-hover) hover:bg-(--bg-active) text-(--accent-primary) cursor-pointer transition-colors">
         {expanded ? <ChevronFirst size={20} /> : <ChevronLast size={20} />}
       </button>
 

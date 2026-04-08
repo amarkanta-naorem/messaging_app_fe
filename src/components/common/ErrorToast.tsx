@@ -43,6 +43,16 @@ export function ErrorToast() {
 
   const getErrorStyles = () => {
     switch (globalError.type) {
+      case 'success':
+        return {
+          bg: 'bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/90 dark:to-emerald-950/90',
+          border: 'border-l-4 border-green-500 dark:border-green-400',
+          iconBg: 'bg-green-100 dark:bg-green-900/50',
+          icon: '✓',
+          text: 'text-green-800 dark:text-green-200',
+          title: 'Success',
+          progress: 'bg-green-500 dark:bg-green-400'
+        };
       case 'warning':
         return {
           bg: 'bg-gradient-to-r from-amber-50 to-amber-100 dark:from-amber-950/90 dark:to-amber-900/90',

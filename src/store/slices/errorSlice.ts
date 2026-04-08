@@ -8,7 +8,7 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 interface ErrorState {
   globalError: {
     message: string;
-    type: 'error' | 'warning' | 'info';
+    type: 'error' | 'warning' | 'info' | 'success';
     timestamp: number;
   } | null;
   isVisible: boolean;
@@ -30,7 +30,7 @@ const errorSlice = createSlice({
       state, 
       action: PayloadAction<{
         message: string;
-        type?: 'error' | 'warning' | 'info';
+        type?: 'error' | 'warning' | 'info' | 'success';
       }>
     ) => {
       state.globalError = {

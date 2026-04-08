@@ -53,10 +53,15 @@ export async function proxyRequest({
   };
 
   if (body !== undefined && method !== "GET") {
-    if (isMultipart && body instanceof FormData) {
-      // For multipart requests, let the browser set the content-type with boundary
-      delete headers["Content-Type"];
-      fetchOptions.body = body;
+    if (isMultipart) {
+      // For multipart requests (including FormData with files or JSON fields)
+      // Check if it's FormData to let browser set content-type with boundary
+      if (body instanceof FormData) {
+        delete headers["Content-Type"];
+        fetchOptions.body = body;
+      } else {
+        fetchOptions.body = JSON.stringify(body);
+      }
     } else {
       headers["Content-Type"] = "application/json";
       fetchOptions.body = JSON.stringify(body);
