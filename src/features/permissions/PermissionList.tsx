@@ -1,6 +1,7 @@
 "use client";
 
 import { useAppDispatch } from "@/store/store";
+import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { PermissionForm } from "./PermissionForm";
 import { PermissionDetails } from "./PermissionDetails";
@@ -16,6 +17,8 @@ export function PermissionList() {
   const dispatch = useAppDispatch();
   const router = useRouter();
   const pathname = usePathname();
+  const { user } = useAuth();
+  const organisationId = user?.organisation_employees?.organisation?.id;
 
   const [permissions, setPermissions] = useState<Permission[]>([]);
   const [loading, setLoading] = useState(true);
@@ -34,9 +37,10 @@ export function PermissionList() {
   const [formLoading, setFormLoading] = useState(false);
 
   const fetchPermissions = useCallback(async () => {
+    if (!organisationId) return;
     try {
       setLoading(true);
-      const data = await getPermissions(1, 100);
+      const data = await getPermissions(organisationId, 1, 100);
       setPermissions(data.permissions);
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Failed to fetch permissions";
@@ -44,7 +48,7 @@ export function PermissionList() {
     } finally {
       setLoading(false);
     }
-  }, [dispatch]);
+  }, [organisationId, dispatch]);
 
   useEffect(() => {
     fetchPermissions();
@@ -58,9 +62,10 @@ export function PermissionList() {
   };
 
   const handleEdit = async (item: Permission) => {
+    if (!organisationId) return;
     try {
       setFormLoading(true);
-      const permission = await getPermission(item.id);
+      const permission = await getPermission(organisationId, item.id);
       setEditingPermission(permission);
       setFormMode("edit");
       setIsFormOpen(true);
@@ -74,8 +79,9 @@ export function PermissionList() {
   };
 
   const handleView = async (item: Permission) => {
+    if (!organisationId) return;
     try {
-      const permission = await getPermission(item.id);
+      const permission = await getPermission(organisationId, item.id);
       setViewingPermission(permission);
       setIsDetailsOpen(true);
     } catch (error: unknown) {
@@ -85,12 +91,13 @@ export function PermissionList() {
   };
 
   const handleFormSubmit = async (payload: PermissionPayload) => {
+    if (!organisationId) return;
     try {
       setFormLoading(true);
       if (formMode === "create") {
-        await createPermission(payload);
+        await createPermission(organisationId, payload);
       } else if (editingPermission) {
-        await updatePermission(editingPermission.id, payload);
+        await updatePermission(organisationId, editingPermission.id, payload);
       }
       setIsFormOpen(false);
       setEditingPermission(null);
@@ -105,10 +112,10 @@ export function PermissionList() {
   };
 
   const handleDelete = async () => {
-    if (!deleteTarget) return;
+    if (!organisationId || !deleteTarget) return;
     try {
       setIsDeleting(true);
-      await deletePermission(deleteTarget.id);
+      await deletePermission(organisationId, deleteTarget.id);
       setDeleteTarget(null);
       fetchPermissions();
     } catch (error: unknown) {

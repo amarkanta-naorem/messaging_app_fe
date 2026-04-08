@@ -21,28 +21,26 @@ export default function Sidebar() {
   if (!user) return null;
 
   return (
-    <>
-      <aside className={`sticky top-0 flex flex-col bg-(--bg-card) border-r border-(--border-primary) rounded-3xl shadow-sm transition-all duration-300 ease-in-out ${expanded ? 'w-59' : 'w-20'}`}>
+    <div className="relative">
+      <aside className={`sticky top-0 h-[calc(100vh-2rem)] flex flex-col bg-(--bg-card) border-r border-(--border-primary) rounded-3xl shadow-sm transition-all duration-300 ease-in-out ${expanded ? 'w-59' : 'w-20'}`}>
         <div className={`p-4 pb-2 flex items-center h-16 ${expanded ? "justify-between" : "justify-center"}`}>
+          <div className="w-9 h-9 rounded-full bg-[#e9ecef] dark:bg-[#3d4a51] shrink-0 mr-1.5 mb-0.5 overflow-hidden">
+            {user.organisation_employees?.organisation.logo ? (
+              <Image src={user.organisation_employees?.organisation.logo} alt="Avatar" width={36} height={36} className="w-full h-full object-cover"/>
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-white text-sm font-medium bg-[#00a884]">{user.organisation_employees?.organisation.name?.charAt(0)?.toUpperCase()}</div>
+            )}
+          </div>
           <div className={`flex items-center gap-3 overflow-hidden transition-all duration-300 ${expanded ? "w-full opacity-100" : "w-0 opacity-0 hidden"}`}>
             <h1 className="font-bold text-xl text-(--text-primary) whitespace-nowrap truncate tracking-tight">{user.organisation_employees?.organisation?.name}</h1>
           </div>
-          <button onClick={() => setExpanded(curr => !curr)} className="p-2 rounded-lg bg-(--bg-hover) hover:bg-(--bg-active) text-(--text-secondary) hover:text-(--text-primary) transition-colors">
-            {expanded ? <ChevronFirst size={20} /> : <ChevronLast size={20} />}
-          </button>
         </div>
 
         <SidebarContext.Provider value={{ expanded }}>
           <ul className="flex-1 px-3 py-4 space-y-4">
             <SidebarItem icon={<LayoutDashboard size={20} />} text="Dashboard" href="/system/dashboard" active={pathname === '/system/dashboard'} />
             <SidebarItem icon={<ShieldUser size={20} />} text="Employees" href="/system/employees" active={pathname === '/system/employees'} />
-            <SidebarItem
-              icon={<Settings size={20} />}
-              text="System Setting"
-              href="/system/setting"
-              active={pathname === '/system/setting'}
-              subItems={settingsManifest.map((s) => ({ label: s.label, href: s.href }))}
-            />
+            <SidebarItem icon={<Settings size={20} />} text="System Setting" href="/system/setting" active={pathname === '/system/setting'} subItems={settingsManifest.map((s) => ({ label: s.label, href: s.href }))}/>
           </ul>
         </SidebarContext.Provider>
 
@@ -83,6 +81,10 @@ export default function Sidebar() {
         </div>
       </aside>
 
+      <button onClick={() => setExpanded(curr => !curr)} className="absolute -right-4 top-1/2 p-2 rounded-lg bg-(--bg-hover) hover:bg-(--bg-active) text-(--accent-primary) cursor-pointer transition-colors">
+        {expanded ? <ChevronFirst size={20} /> : <ChevronLast size={20} />}
+      </button>
+
       <div className={`fixed inset-0 z-50 ${settingsOpen ? 'pointer-events-auto' : 'pointer-events-none'}`}>
         <div className={`absolute inset-0 bg-black/20 backdrop-blur-sm transition-opacity duration-300 ${settingsOpen ? 'opacity-100' : 'opacity-0'}`} onClick={() => setSettingsOpen(false)}/>
         <div className={`absolute inset-y-0 right-0 w-full max-w-sm bg-(--bg-card) theme-bg-card shadow-2xl transform transition-transform duration-300 ease-in-out flex flex-col ${settingsOpen ? 'translate-x-0' : 'translate-x-full'}`}>
@@ -106,6 +108,6 @@ export default function Sidebar() {
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }
