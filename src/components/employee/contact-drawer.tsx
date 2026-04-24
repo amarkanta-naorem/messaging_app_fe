@@ -430,9 +430,13 @@ export const ContactDrawer = ({ isOpen, onClose, phone, conversation }: ContactD
   };
 
   const getRoleLabel = (member: any, user: any) => {
-    if (member.role === 'admin') return 'admin';
-    if (member.id === user?.id) return 'current user';
-    return 'member';
+    const isCurrentUser = member.id === user?.id;
+    const isAdmin = member.role === 'admin';
+
+    if (isAdmin && isCurrentUser) return 'Admin (You)';
+    if (isAdmin) return 'Admin';
+    if (isCurrentUser) return 'Member (You)';
+    return 'Member';
   };
 
   return (
