@@ -429,6 +429,12 @@ export const ContactDrawer = ({ isOpen, onClose, phone, conversation }: ContactD
     }
   };
 
+  const getRoleLabel = (member: any, user: any) => {
+    if (member.role === 'admin') return 'admin';
+    if (member.id === user?.id) return 'current user';
+    return 'member';
+  };
+
   return (
     <div className={`fixed inset-0 z-50 ${isOpen ? 'pointer-events-auto' : 'pointer-events-none'}`}>
       <div className={`absolute inset-0 bg-black/20 backdrop-blur-sm transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0'}`} onClick={onClose}/>
@@ -718,13 +724,7 @@ export const ContactDrawer = ({ isOpen, onClose, phone, conversation }: ContactD
                           }
                           <div className="flex flex-col">
                             <span className="font-medium text-(--text-primary)">{member.name}</span>
-                            {member.role === 'admin' ? (
-                              <span className="text-xs text-(--accent-primary) flex items-center gap-1">admin</span>
-                            ) : member.id === user?.id ? (
-                              <span className="text-xs text-(--accent-primary) flex items-center gap-1">current user</span>
-                            ) : (
-                              <span className="text-xs text-(--text-muted) flex items-center gap-1">member</span>
-                            )}
+                            <span className="text-xs text-(--text-muted) flex items-center gap-1">{getRoleLabel(member, user)}</span>
                           </div>
                         </div>
                         {canAddMembers && member.id !== user?.id && (
