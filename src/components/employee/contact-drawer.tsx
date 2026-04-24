@@ -1,20 +1,21 @@
-import { updateGroup, assignAdmin } from "@/services";
-import { useEffect, useState, useRef } from "react";
 import { get } from "@/services/api-client";
+import { useAppDispatch } from "@/store/store";
 import type { ApiEnvelope } from "@/types/api";
 import { useAuth } from "@/context/AuthContext";
 import { ContactHeader } from "./contact-header";
+import { updateGroup, assignAdmin } from "@/services";
 import { AddMembersDrawer } from "./add-members-drawer";
 import { ContactGroupsList } from "./contact-groups-list";
-import { Calendar, Info, Mail, Users, X, UserPlus, Pencil, Image, Loader2, Shield, Check, ShieldUser, ChevronDown } from "lucide-react";
-import { useAppDispatch } from "@/store/store";
 import { setGlobalError } from "@/store/slices/errorSlice";
+import { useEffect, useState, useRef, useMemo } from "react";
+import { Calendar, Info, Mail, Users, X, UserPlus, Pencil, Image, Loader2, Shield, ChevronDown } from "lucide-react";
 
 interface GroupMember {
   id: number;
   name: string;
   phone: string;
   role: "admin" | "member";
+  avatar: string | null;
 }
 
 interface ContactDetails {
@@ -66,20 +67,31 @@ export const ContactDrawer = ({ isOpen, onClose, phone, conversation }: ContactD
   const [fieldError, setFieldError] = useState<string | null>(null);
   const [fieldSuccess, setFieldSuccess] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [formData, setFormData] = useState({
-    name: "",
-    description: "",
-  });
+  const [formData, setFormData] = useState({ name: "", description: "" });
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [assigningAdminId, setAssigningAdminId] = useState<number | null>(null);
   const [openPopoverId, setOpenPopoverId] = useState<number | null>(null);
-
-  // Check user's role from group members (if available) or fall back to organization role
   const groupMemberRole = contact?.group_members?.find(member => member.id === user?.id)?.role;
   const canAddMembers = groupMemberRole === "admin";
   const canEditGroup = groupMemberRole === "admin";
+
+  const sortedMembers = useMemo(() => {
+    if (!contact?.group_members) return [];
+    return [...contact.group_members].sort((a, b) => {
+      const aIsCurrentUser = a.id === user?.id;
+      const bIsCurrentUser = b.id === user?.id;
+      if (aIsCurrentUser && !bIsCurrentUser) return -1;
+      if (!aIsCurrentUser && bIsCurrentUser) return 1;
+
+      const aIsAdmin = a.role === "admin";
+      const bIsAdmin = b.role === "admin";
+      if (aIsAdmin && !bIsAdmin) return -1;
+      if (!aIsAdmin && bIsAdmin) return 1;
+
+      return a.name.localeCompare(b.name);
+    });
+  }, [contact?.group_members, user?.id]);
 
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
@@ -290,7 +302,6 @@ export const ContactDrawer = ({ isOpen, onClose, phone, conversation }: ContactD
     
     if (!file) return;
     
-    // Validate file type
     const allowedTypes = ["image/jpeg", "image/jpg", "image/png"];
     if (!allowedTypes.includes(file.type)) {
       setFieldError("Invalid file type. Please upload a JPEG, JPG, or PNG image.");
@@ -300,7 +311,6 @@ export const ContactDrawer = ({ isOpen, onClose, phone, conversation }: ContactD
       return;
     }
     
-    // Validate file size (max 2MB)
     const maxSize = 2 * 1024 * 1024;
     if (file.size > maxSize) {
       const sizeInMB = (file.size / (1024 * 1024)).toFixed(2);
@@ -311,11 +321,9 @@ export const ContactDrawer = ({ isOpen, onClose, phone, conversation }: ContactD
       return;
     }
     
-    // Set the logo file and preview
     setLogoFile(file);
     setLogoPreview(URL.createObjectURL(file));
     
-    // Reset input so same file can be selected again
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -358,7 +366,6 @@ export const ContactDrawer = ({ isOpen, onClose, phone, conversation }: ContactD
   };
 
   const handleRemoveMember = async (memberId: number, memberName: string) => {
-    // TODO: Implement remove member functionality
     dispatch(setGlobalError({
       message: `Remove ${memberName} functionality not yet implemented`,
       type: "info",
@@ -369,21 +376,14 @@ export const ContactDrawer = ({ isOpen, onClose, phone, conversation }: ContactD
   const handleAssignAdmin = async (memberId: number, memberName: string) => {
     if (!contact?.id) return;
 
-    setAssigningAdminId(memberId);
-
     try {
       await assignAdmin(contact.id as number, memberId);
       
-      // Update local state to reflect the new role
       setContact(prev => {
         if (!prev || !prev.group_members) return prev;
         return {
           ...prev,
-          group_members: prev.group_members.map(member =>
-            member.id === memberId
-              ? { ...member, role: "admin" as const }
-              : member
-          ),
+          group_members: prev.group_members.map(member => member.id === memberId ? { ...member, role: "admin" as const } : member),
         };
       });
 
@@ -426,8 +426,6 @@ export const ContactDrawer = ({ isOpen, onClose, phone, conversation }: ContactD
           type: "error",
         }));
       }
-    } finally {
-      setAssigningAdminId(null);
     }
   };
 
@@ -462,17 +460,12 @@ export const ContactDrawer = ({ isOpen, onClose, phone, conversation }: ContactD
             <>
               {!contact.isGroup && <ContactHeader contact={contact as ContactDetails} />}
               
-              {/* Logo Display for Groups (read-only for non-admins) */}
               {contact.isGroup && !canEditGroup && (
                 <div className="pt-3">
                   <div className="flex flex-col items-center">
                     <div className="w-24 h-24 rounded-full bg-(--bg-tertiary) flex items-center justify-center text-(--text-secondary) overflow-hidden">
                       {contact.avatar ? (
-                        <img 
-                          src={contact.avatar} 
-                          alt={contact.name || "Group"} 
-                          className="w-24 h-24 rounded-full object-cover"
-                        />
+                        <img src={contact.avatar} alt={contact.name || "Group"} className="w-24 h-24 rounded-full object-cover"/>
                       ) : (
                         <span className="font-semibold text-4xl">{contact.name?.charAt(0).toUpperCase()}</span>
                       )}
@@ -481,19 +474,13 @@ export const ContactDrawer = ({ isOpen, onClose, phone, conversation }: ContactD
                 </div>
               )}
               
-              {/* Logo Upload Section for Groups (editable for admins) */}
               {contact.isGroup && canEditGroup && (
                 <div className="pt-3">
                   <div className="flex flex-col items-center">
                     <div className="relative group cursor-pointer">
                       {logoPreview ? (
                         <div className="relative">
-                          <img 
-                            src={logoPreview} 
-                            alt={contact.name || "Group"} 
-                            className="w-24 h-24 rounded-full object-cover hover:opacity-90 transition-opacity"
-                            onClick={handleLogoClick}
-                          />
+                          <img src={logoPreview} alt={contact.name || "Group"} className="w-24 h-24 rounded-full object-cover hover:opacity-90 transition-opacity" onClick={handleLogoClick}/>
                           <div
                             className="absolute inset-0 rounded-full bg-black/60 flex flex-col items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity duration-200"
                             onClick={handleLogoClick}
@@ -517,11 +504,7 @@ export const ContactDrawer = ({ isOpen, onClose, phone, conversation }: ContactD
                             onClick={handleLogoClick}
                           >
                             {contact.avatar ? (
-                              <img 
-                                src={contact.avatar} 
-                                alt={contact.name || "Group"} 
-                                className="w-24 h-24 rounded-full object-cover"
-                              />
+                              <img src={contact.avatar} alt={contact.name || "Group"} className="w-24 h-24 rounded-full object-cover"/>
                             ) : (
                               <span className="font-semibold text-4xl">{contact.name?.charAt(0).toUpperCase()}</span>
                             )}
@@ -546,21 +529,10 @@ export const ContactDrawer = ({ isOpen, onClose, phone, conversation }: ContactD
                     </div>
                     <input ref={fileInputRef} type="file" accept="image/jpeg,image/jpg,image/png" onChange={handleLogoChange} className="hidden"/>
                     
-                    {/* Save/Cancel buttons when logo is changed */}
                     {logoFile && (
                       <div className="flex items-center gap-2 mt-3">
-                        <button 
-                          onClick={handleLogoCancel}
-                          disabled={isSaving}
-                          className="text-sm text-(--text-muted) hover:text-red-600 transition-colors disabled:opacity-50"
-                        >
-                          Cancel
-                        </button>
-                        <button 
-                          onClick={handleLogoSave}
-                          disabled={isSaving}
-                          className="text-sm text-(--text-inverse) bg-(--accent-primary) hover:bg-(--accent-hover) px-3 py-1 rounded-lg font-medium transition-colors disabled:opacity-50 flex items-center gap-1"
-                        >
+                        <button onClick={handleLogoCancel} disabled={isSaving} className="text-sm text-(--text-muted) hover:text-red-600 transition-colors disabled:opacity-50">Cancel</button>
+                        <button onClick={handleLogoSave} disabled={isSaving} className="text-sm text-(--text-inverse) bg-(--accent-primary) hover:bg-(--accent-hover) px-3 py-1 rounded-lg font-medium transition-colors disabled:opacity-50 flex items-center gap-1">
                           {isSaving ? (
                             <>
                               <Loader2 className="w-3 h-3 animate-spin" />
@@ -619,17 +591,10 @@ export const ContactDrawer = ({ isOpen, onClose, phone, conversation }: ContactD
                           </div>
                         </div>
                       ) : (
-                        <div 
-                          className={`flex items-center justify-between ${canEditGroup ? 'cursor-pointer hover:bg-(--bg-hover) dark:hover:bg-(--bg-hover)' : ''} rounded-lg -mx-2 px-2 py-1 transition-colors`}
-                          onClick={() => handleFieldEdit('name')}
-                        >
+                        <div className={`flex items-center justify-between ${canEditGroup ? 'cursor-pointer hover:bg-(--bg-hover) dark:hover:bg-(--bg-hover)' : ''} rounded-lg -mx-2 px-2 py-1 transition-colors`} onClick={() => handleFieldEdit('name')}>
                           <p className="text-(--text-primary) font-semibold">{contact.name}</p>
                           {canEditGroup && (
-                            <button 
-                              onClick={(e) => { e.stopPropagation(); handleFieldEdit('name'); }} 
-                              className="p-2 text-(--text-muted) hover:text-[#25d366] hover:bg-[#25d366]/10 dark:hover:bg-[#25d366]/20 rounded-lg transition-all duration-200 cursor-pointer" 
-                              aria-label="Edit name"
-                            >
+                            <button onClick={(e) => { e.stopPropagation(); handleFieldEdit('name'); }} className="p-2 text-(--text-muted) hover:text-[#25d366] hover:bg-[#25d366]/10 dark:hover:bg-[#25d366]/20 rounded-lg transition-all duration-200 cursor-pointer" aria-label="Edit name">
                               <Pencil size={16} />
                             </button>
                           )}
@@ -650,33 +615,17 @@ export const ContactDrawer = ({ isOpen, onClose, phone, conversation }: ContactD
                       <p className="text-sm text-(--text-muted)">Bio</p>
                       {editingField === 'description' ? (
                         <div className="mt-1">
-                          <textarea
-                            name="description"
-                            value={formData.description}
-                            onChange={handleInputChange}
-                            placeholder="Group description"
-                            maxLength={2000}
-                            className="w-full bg-transparent text-[15px] text-(--text-primary) placeholder:text-(--text-muted) focus:outline-none resize-none border border-gray-300 dark:border-[#3d4a51] rounded px-2 py-1 focus:border-[#25d366]"
-                            rows={3}
-                            autoFocus
-                          />
+                          <textarea name="description" value={formData.description} onChange={handleInputChange} placeholder="Group description" maxLength={2000} className="w-full bg-transparent text-[15px] text-(--text-primary) placeholder:text-(--text-muted) focus:outline-none resize-none border border-gray-300 dark:border-[#3d4a51] rounded px-2 py-1 focus:border-[#25d366]" rows={3} autoFocus />
                           <div className="flex items-center justify-end gap-2 mt-2">
                             <button onClick={handleFieldCancel} disabled={isSaving} className="text-xs text-(--text-muted) hover:text-red-600 transition-colors disabled:opacity-50">Cancel</button>
                             <button onClick={() => handleFieldSave('description')} disabled={isSaving} className="text-xs text-[#25d366] hover:text-[#1da851] font-medium transition-colors disabled:opacity-50">{isSaving ? 'Saving...' : 'Save'}</button>
                           </div>
                         </div>
                       ) : (
-                        <div 
-                          className={`flex items-center justify-between ${canEditGroup ? 'cursor-pointer hover:bg-(--bg-hover) dark:hover:bg-(--bg-hover)' : ''} rounded-lg -mx-2 px-2 py-1 transition-colors`}
-                          onClick={() => handleFieldEdit('description')}
-                        >
+                        <div className={`flex items-center justify-between ${canEditGroup ? 'cursor-pointer hover:bg-(--bg-hover) dark:hover:bg-(--bg-hover)' : ''} rounded-lg -mx-2 px-2 py-1 transition-colors`} onClick={() => handleFieldEdit('description')}>
                           <p className="text-(--text-primary) text-[15px]">{contact.bio || "No description"}</p>
                           {canEditGroup && (
-                            <button 
-                              onClick={(e) => { e.stopPropagation(); handleFieldEdit('description'); }} 
-                              className="p-2 text-(--text-muted) hover:text-[#25d366] hover:bg-[#25d366]/10 dark:hover:bg-[#25d366]/20 rounded-lg transition-all duration-200 cursor-pointer" 
-                              aria-label="Edit description"
-                            >
+                            <button onClick={(e) => { e.stopPropagation(); handleFieldEdit('description'); }} className="p-2 text-(--text-muted) hover:text-[#25d366] hover:bg-[#25d366]/10 dark:hover:bg-[#25d366]/20 rounded-lg transition-all duration-200 cursor-pointer" aria-label="Edit description">
                               <Pencil size={16} />
                             </button>
                           )}
@@ -715,11 +664,7 @@ export const ContactDrawer = ({ isOpen, onClose, phone, conversation }: ContactD
                             contact.isAnnouncementOnly ? 'bg-[#25d366]' : 'bg-gray-200 dark:bg-gray-700'
                           }`}
                         >
-                          <span
-                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                              contact.isAnnouncementOnly ? 'translate-x-6' : 'translate-x-1'
-                            }`}
-                          />
+                          <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${contact.isAnnouncementOnly ? 'translate-x-6' : 'translate-x-1'}`}/>
                         </button>
                       </div>
                       <div className="flex items-center justify-between">
@@ -744,50 +689,47 @@ export const ContactDrawer = ({ isOpen, onClose, phone, conversation }: ContactD
 
               {contact.groups && <ContactGroupsList groups={contact.groups} />}
 
-              {contact.isGroup && contact.group_members && (
+              {contact.isGroup && sortedMembers.length > 0 && (
                 <div className="p-6">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-sm font-semibold text-(--text-muted) uppercase tracking-wider flex items-center gap-2">
                       <Users size={16} />
-                      {contact.group_members.length} Members
+                      {sortedMembers.length} Members
                     </h3>
                     {canAddMembers && (
-                      <button 
-                        onClick={() => setIsAddMembersOpen(true)}
-                        className="text-(--accent-primary) text-sm font-medium hover:underline flex items-center gap-1 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                        disabled={!canAddMembers}
-                        title="Add Members"
-                      >
+                      <button onClick={() => setIsAddMembersOpen(true)} className="text-(--accent-primary) text-sm font-medium hover:underline flex items-center gap-1 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed" disabled={!canAddMembers} title="Add Members">
                         <UserPlus size={16} />
                         Add Members
                       </button>
                     )}
                   </div>
                   <div className="space-y-3">
-                    {contact.group_members.map((member) => (
+                    {sortedMembers.map((member) => (
                       <div key={member.id} className="flex items-center justify-between gap-3 p-2 rounded-lg hover:bg-(--bg-hover) transition-colors">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-(--bg-tertiary) flex items-center justify-center overflow-hidden shrink-0">
-                            <span className="text-(--text-muted) font-medium text-lg">
-                              {member.name.charAt(0).toUpperCase()}
-                            </span>
-                          </div>
+                          {
+                            member.avatar ? (
+                              <img src={member.avatar} alt={member.name} className="w-10 h-10 rounded-full object-cover" />
+                            ) : (
+                              <div className="w-10 h-10 rounded-full bg-(--bg-tertiary) flex items-center justify-center overflow-hidden shrink-0">
+                                <span className="text-(--text-muted) font-medium text-lg">{member.name.charAt(0).toUpperCase()}</span>
+                              </div>
+                            )
+                          }
                           <div className="flex flex-col">
                             <span className="font-medium text-(--text-primary)">{member.name}</span>
-                            {member.role === 'admin' && (
-                              <span className="text-xs text-(--text-muted) flex items-center gap-1">
-                                <Shield size={12} className="text-(--accent-primary)" />
-                                Admin
-                              </span>
+                            {member.role === 'admin' ? (
+                              <span className="text-xs text-(--accent-primary) flex items-center gap-1">admin</span>
+                            ) : member.id === user?.id ? (
+                              <span className="text-xs text-(--accent-primary) flex items-center gap-1">current user</span>
+                            ) : (
+                              <span className="text-xs text-(--text-muted) flex items-center gap-1">member</span>
                             )}
                           </div>
                         </div>
                         {canAddMembers && member.id !== user?.id && (
                           <div className="relative">
-                            <button 
-                              className="cursor-pointer p-1 hover:bg-(--bg-hover) rounded transition-colors"
-                              onClick={() => handleTogglePopover(member.id)}
-                            >
+                            <button className="cursor-pointer p-1 hover:bg-(--bg-hover) rounded transition-colors" onClick={() => handleTogglePopover(member.id)}>
                               <ChevronDown size={14} />
                             </button>
                             {openPopoverId === member.id && (
@@ -814,23 +756,6 @@ export const ContactDrawer = ({ isOpen, onClose, phone, conversation }: ContactD
                             )}
                           </div>
                         )}
-                        {/* <div className="flex items-center gap-2">
-                          {canAddMembers && member.role !== 'admin' && member.id !== user?.id && (
-                            <button
-                              onClick={() => handleAssignAdmin(member.id, member.name)}
-                              disabled={assigningAdminId === member.id}
-                              className="text-xs text-(--accent-primary) hover:text-(--accent-hover) font-medium flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-(--accent-muted) transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                              title="Assign as Admin"
-                            >
-                              {assigningAdminId === member.id ? (
-                                <Loader2 size={14} className="animate-spin" />
-                              ) : (
-                                <Shield size={14} />
-                              )}
-                              {assigningAdminId === member.id ? "Assigning..." : "Make Admin"}
-                            </button>
-                          )}
-                        </div> */}
                       </div>
                     ))}
                   </div>
@@ -842,15 +767,8 @@ export const ContactDrawer = ({ isOpen, onClose, phone, conversation }: ContactD
       </div>
 
       {contact?.isGroup && contact.id && (
-        <AddMembersDrawer
-          isOpen={isAddMembersOpen}
-          onClose={() => setIsAddMembersOpen(false)}
-          groupId={contact.id}
-          onMembersAdded={() => setRefreshKey(prev => prev + 1)}
-        />
+        <AddMembersDrawer isOpen={isAddMembersOpen} onClose={() => setIsAddMembersOpen(false)} groupId={contact.id} onMembersAdded={() => setRefreshKey(prev => prev + 1)} />
       )}
-
-
     </div>
   );
 };
