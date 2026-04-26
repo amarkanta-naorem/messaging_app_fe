@@ -99,7 +99,7 @@ export default function ChatView() {
   const isGroup = (activeConversation as any).isGroup;
 
   return (
-    <div className="flex flex-col md:w-250 h-full bg-(--chat-bg) theme-chat-bg" onContextMenu={handleContextMenu}>
+    <div className="flex flex-col h-full bg-(--chat-bg) theme-chat-bg" onContextMenu={handleContextMenu}>
       {/* Chat Background */}
       {isDark ? (
         <>

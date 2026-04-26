@@ -192,7 +192,7 @@ export default function ChatPage() {
           </div>
 
           {/* Chat Area - Full width on mobile, flex-1 on desktop */}
-          <div className={`${activeConversation ? 'flex' : 'hidden md:flex'} flex-col h-full bg-(--chat-bg) border-t border-(--border-primary) relative overflow-hidden`}>
+          <div className={`${activeConversation ? 'flex' : 'hidden md:flex'} flex-col h-full w-full bg-(--chat-bg) border-t border-(--border-primary) relative overflow-hidden`}>
             {showCreateGroup ? (
               <CreateGroup onClose={handleCloseCreateGroup} />
             ) : (
