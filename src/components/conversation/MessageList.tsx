@@ -1,5 +1,5 @@
-import { useEffect, useRef, useMemo } from "react";
 import { MessageBubble } from "./MessageBubble";
+import { useEffect, useRef, useMemo } from "react";
 
 interface MessageContent {
   type?: string;
@@ -35,12 +35,13 @@ interface Message {
 interface MessageListProps {
   messages: Message[];
   currentUserId?: number;
+  conversationId: number;
   isGroup?: boolean;
   loading?: boolean;
   onMessagesChange?: () => void;
 }
 
-export function MessageList({ messages, currentUserId, isGroup = false, loading = false, onMessagesChange }: MessageListProps) {
+export function MessageList({ messages, currentUserId, conversationId, isGroup = false, loading = false, onMessagesChange }: MessageListProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const processedMessages = useMemo(() => {
@@ -81,13 +82,15 @@ export function MessageList({ messages, currentUserId, isGroup = false, loading 
     <div className="flex-1 overflow-y-auto custom-scrollbar p-2 md:p-3 pb-3 md:pb-4">
       <div className="flex flex-col">
         {processedMessages.map((msg) => (
-          <MessageBubble
+        <MessageBubble
             key={msg.id || msg.clientMessageId}
             message={msg}
+            conversationId={conversationId}
             isOwn={!!msg.isOwn}
             showAvatar={!!msg.showAvatar}
             showSenderName={!!msg.showSenderName}
           />
+
         ))}
       </div>
       <div ref={messagesEndRef} />

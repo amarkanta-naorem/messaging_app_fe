@@ -3,13 +3,13 @@
 import { ChatHeader } from "./ChatHeader";
 import { MessageList } from "./MessageList";
 import { MessageInput } from "./MessageInput";
-import { useChat } from "@/context/ChatContext";
+import { useAppDispatch } from "@/store/store";
 import { useAuth } from "@/context/AuthContext";
+import { useChat } from "@/context/ChatContext";
 import { ChatEmptyState } from "./ChatEmptyState";
 import { useState, useRef, useEffect } from "react";
 import { useTheme } from "../providers/ThemeProvider";
 import { ContactDrawer } from "../employee/contact-drawer";
-import { useAppDispatch } from "@/store/store";
 import { setGlobalError } from "@/store/slices/errorSlice";
 
 interface FileAttachment {
@@ -47,13 +47,11 @@ export default function ChatView() {
     if (activeConversation) {
       setIsSending(true);
       try {
-        // If there are attachments, send them as file messages
         if (attachments && attachments.length > 0) {
           for (const attachment of attachments) {
             await sendFile(attachment.file, text || undefined);
           }
         } else if (contentType === "task" && taskList && taskList.length > 0) {
-          // Send task message
           const content = {
             type: "task",
             task_title: taskTitle || undefined,
@@ -61,11 +59,9 @@ export default function ChatView() {
           };
           sendMessage(content);
         } else if (text.trim()) {
-          // Send text-only message
           sendMessage(text);
         }
       } catch (error: any) {
-        // Display user-friendly error instead of console error
         const errorMessage = error?.message || "Failed to send message";
         dispatch(setGlobalError({
           message: errorMessage,
@@ -91,7 +87,6 @@ export default function ChatView() {
     selectConversation(null as any);
   };
 
-  // Empty state when no conversation is selected
   if (!activeConversation) {
     return <ChatEmptyState />;
   }
@@ -100,7 +95,6 @@ export default function ChatView() {
 
   return (
     <div className="flex flex-col h-full bg-(--chat-bg) theme-chat-bg" onContextMenu={handleContextMenu}>
-      {/* Chat Background */}
       {isDark ? (
         <>
           <div className="absolute inset-0 z-0" style={{ backgroundImage: "url('/image/chat-bg.png')", opacity: 0.18 }}/>
@@ -113,9 +107,7 @@ export default function ChatView() {
         </>
       )}
       
-      {/* Content */}
       <div className="relative z-10 flex flex-col h-full">
-        {/* Header */}
         <ChatHeader
           participant={activeConversation.participant}
           isGroup={isGroup}
@@ -125,34 +117,23 @@ export default function ChatView() {
           onBackClick={handleBackClick}
         />
 
-        {/* Messages */}
         <MessageList
           messages={messages}
           currentUserId={user?.id}
           isGroup={isGroup}
+          conversationId={activeConversation!.id}
           loading={loadingMessages}
         />
-
-        {/* Input */}
-        <MessageInput 
-          onSend={handleSend} 
-          isSending={isSending || sendingMessage}
-        />
+        <MessageInput onSend={handleSend} isSending={isSending || sendingMessage}/>
         
-        {/* Context Menu */}
         {contextMenu && (
           <div className="fixed bg-(--bg-card) shadow-lg p-2 z-100 rounded-lg" style={{ top: contextMenu.y, left: contextMenu.x }}>
             <button className="block w-full text-left px-3 py-2 text-sm hover:bg-(--bg-hover) rounded text-(--text-primary)" onClick={handleCloseChat}>Close chat</button>
           </div>
         )}
         
-        {/* Contact Drawer */}
         {showContactDrawer && (
-          <ContactDrawer
-            isOpen={showContactDrawer}
-            onClose={() => setShowContactDrawer(false)}
-            conversation={activeConversation}
-          />
+          <ContactDrawer isOpen={showContactDrawer} onClose={() => setShowContactDrawer(false)} conversation={activeConversation} />
         )}
       </div>
     </div>

@@ -1,8 +1,3 @@
-/**
- * Avatar component for displaying user/group avatars.
- * Supports fallback to initials when no image is provided.
- */
-
 import Image from "next/image";
 
 export interface AvatarProps {
@@ -43,7 +38,7 @@ export function Avatar({ src, name = "", size = "md", className = "", showStatus
     <div className={`relative inline-block shrink-0 ${className}`}>
       <div className={`${sizeClasses[size]} rounded-full bg-(--bg-tertiary) overflow-hidden flex items-center justify-center`}>
         {src ? (
-          <Image src={src} alt={name || "Avatar"} fill className="object-cover" />
+          <Image src={src} alt={name || "Avatar"} fill className="object-cover rounded-full" />
         ) : (
           <span className="text-(--text-inverse) font-semibold">{initials}</span>
         )}

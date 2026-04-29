@@ -1,7 +1,3 @@
-/**
- * UI Primitives - Reusable base components
- */
-
 export { Avatar, type AvatarProps } from "./avatar";
 export { Input, type InputProps } from "./input";
 export { Button, type ButtonProps } from "./button";
@@ -10,3 +6,7 @@ export { Badge, type BadgeProps } from "./badge";
 export { Modal, type ModalProps } from "./modal";
 export { ConfirmDialog, type ConfirmDialogProps } from "./confirm-dialog";
 export { LocationPicker } from "./location-picker";
+export { default as Dropdown } from "./dropdown";
+export { DropdownItem, DropdownSeparator, DropdownLabel } from "./dropdown";
+export { Switch, type SwitchProps } from "./switch";
+export { ComboBox, type ComboBoxOption, type ComboBoxProps } from "./combo-box";

@@ -1,24 +1,14 @@
-/**
- * Organisation service - client-side.
- * SRP: Handles all organisation-related API calls through BFF.
- */
-
-import { get, post, patch, del } from "./api-client";
-import type { Organisation, OrganisationListResponse, OrganisationPayload } from "@/types";
-import type { ApiEnvelope } from "@/types/api";
 import { AppError } from "@/lib/errors";
+import type { ApiEnvelope } from "@/types/api";
+import { get, post, patch, del, patchFormData } from "./api-client";
+import type { Organisation, OrganisationListResponse, OrganisationPayload } from "@/types";
 
 export async function getOrganisations(page = 1, limit = 20): Promise<OrganisationListResponse> {
-  const res = await get<ApiEnvelope<{ data: Organisation[]; pagination: { page: number; limit: number; total: number } }>>(
-    `/organisations?page=${page}&limit=${limit}`
-  );
+  const res = await get<ApiEnvelope<{ data: Organisation[]; pagination: { page: number; limit: number; total: number } }>>(`/organisations?page=${page}&limit=${limit}`);
   if (!res.data) {
     throw new Error("Invalid response from server");
   }
-  return {
-    data: res.data.data,
-    pagination: res.data.pagination,
-  };
+  return { data: res.data.data, pagination: res.data.pagination };
 }
 
 export async function getOrganisation(organisationId: number): Promise<Organisation> {
@@ -37,10 +27,7 @@ export async function createOrganisation(payload: OrganisationPayload): Promise<
   return res.data;
 }
 
-export async function updateOrganisation(
-  organisationId: number,
-  payload: OrganisationPayload
-): Promise<Organisation> {
+export async function updateOrganisation(organisationId: number, payload: OrganisationPayload): Promise<Organisation> {
   const res = await patch<ApiEnvelope<Organisation>>(`/organisations/${organisationId}`, payload);
   if (!res.data) {
     throw new Error("Invalid response from server");
@@ -121,27 +108,11 @@ export async function updateActiveOrganisation(payload: OrganisationUpdatePayloa
   if (payload.metadata) formData.append("metadata", JSON.stringify(payload.metadata));
   if (payload.logo) formData.append("logo", payload.logo);
 
-  const url = "/api/organisations/active";
-  const token = typeof window !== "undefined" ? localStorage.getItem("auth_token") : null;
-  
-  const headers: Record<string, string> = {};
-  if (token) {
-    headers.Authorization = `Bearer ${token}`;
+  const res = await patchFormData<ApiEnvelope<ActiveOrganisationResponse>>("/organisations/active", formData);
+  if (!res.data) {
+    throw new Error("Invalid response from server");
   }
-
-  const response = await fetch(url, {
-    method: "PATCH",
-    headers,
-    body: formData,
-  });
-
-  const data = await response.json();
-  
-  if (!response.ok) {
-    throw new Error(data.message || "Failed to update organisation");
-  }
-  
-  return data as ActiveOrganisationResponse;
+  return res.data;
 }
 
 export function mapApiError(error: unknown): OrganisationApiError {

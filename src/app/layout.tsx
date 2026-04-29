@@ -1,11 +1,12 @@
 import "./globals.css";
-import type { Metadata } from "next";
+import type { Viewport } from "next";
+import { ReduxProvider } from "@/store/store";
+import { getBaseMetadata } from "@/lib/metadata";
 import { Geist, Geist_Mono } from "next/font/google";
 import { AuthProvider } from "@/context/AuthContext";
-import { ChatProvider } from "@/context/ChatContext";
-import { ReduxProvider } from "@/store/store";
-import { ThemeProvider } from "@/components/providers/ThemeProvider";
+import { ChatProvider } from "@/context/ChatProvider";
 import { ErrorToast } from "@/components/common/ErrorToast";
+import { ThemeProvider } from "@/components/providers/ThemeProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -17,8 +18,6 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-import { getBaseMetadata } from "@/lib/metadata";
-import type { Viewport } from "next";
 
 export const metadata = getBaseMetadata();
 

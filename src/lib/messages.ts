@@ -1,10 +1,3 @@
-/**
- * Messages module - wraps the message service.
- * Kept for backward compatibility - delegates to services.
- *
- * DEPRECATED: Import directly from @/services/message.service instead.
- */
-
 import * as messageService from "@/services/message.service";
 import * as conversationService from "@/services/conversation.service";
 import type { Message, MessageContent, MessagesResponse, SendMessagePayload, SendMessageResponse, SendFileMessagePayload } from "@/types";
@@ -21,6 +14,7 @@ export async function getMessages(conversationId: number, isGroup?: boolean): Pr
 export const createDirectConversation = conversationService.createDirectConversation;
 export const sendMessage = messageService.sendMessage;
 export const sendFileMessage = messageService.sendFileMessage;
+export const deleteMessage = messageService.deleteMessage;
 
 export async function sendMessageToPhone(payload: SendMessagePayload): Promise<SendMessageResponse> {
   return messageService.sendMessage({ ...payload, receiverPhone: payload.receiverPhone });

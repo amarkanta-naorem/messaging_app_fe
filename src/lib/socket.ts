@@ -1,39 +1,21 @@
-/**
- * Socket service - client-side WebSocket communication.
- * 
- * SECURITY: The socket URL is now fetched from the server (BFF pattern)
- * to prevent exposing the backend URL in the browser's network tab.
- */
-
 import { io, Socket } from "socket.io-client";
 
 let socket: Socket | null = null;
 let cachedSocketUrl: string | null = null;
 
-/**
- * Fetch the socket URL from the server (BFF).
- * This keeps the backend URL hidden from the client.
- * Includes timeout to prevent hanging.
- */
 async function getSocketUrl(): Promise<string> {
   if (cachedSocketUrl) return cachedSocketUrl;
   
   try {
-    // Add timeout controller to prevent hanging
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000);
-    
-    const res = await fetch("/api/config/socket", {
-      signal: controller.signal,
-    });
+    const res = await fetch("/api/config/socket", { signal: controller.signal });
     clearTimeout(timeoutId);
     
     const data = await res.json();
     cachedSocketUrl = data.socketUrl;
-    console.log("Socket URL fetched:", cachedSocketUrl);
     return cachedSocketUrl!;
   } catch (error) {
-    // Fallback for development - in production this should never happen
     console.warn("Failed to fetch socket URL, using default:", error);
     return "http://localhost:3001";
   }
@@ -79,6 +61,12 @@ export interface SocketError {
   clientMessageId?: string;
 }
 
+export interface MessageDeletePayload {
+  messageId: number;
+  conversationId?: number;
+  groupId?: number;
+}
+
 export async function connectSocket(token: string): Promise<Socket> {
   const socketUrl = await getSocketUrl();
   
@@ -92,12 +80,10 @@ export async function connectSocket(token: string): Promise<Socket> {
 
   socket = io(socketUrl, {
     auth: { token },
-    // Limit reconnection attempts to prevent infinite loading
     reconnection: true,
     reconnectionAttempts: 5,
     reconnectionDelay: 1000,
     reconnectionDelayMax: 5000,
-    // Add timeout for initial connection
     timeout: 10000,
   });
 
@@ -111,7 +97,6 @@ export async function connectSocket(token: string): Promise<Socket> {
 
   socket.on("connect_error", (error) => {
     console.error("Socket connection error:", error.message);
-    // Don't retry indefinitely - give up after max attempts
     if (socket && (socket as any).io?.reconnectionAttempts) {
       const attempts = (socket as any).io.reconnectionAttempts;
       if (attempts >= 5) {
@@ -169,6 +154,14 @@ export function onError(callback: (error: SocketError) => void): void {
 
 export function offError(callback: (error: SocketError) => void): void {
   socket?.off("error", callback);
+}
+
+export function onMessageDelete(callback: (payload: MessageDeletePayload) => void): void {
+  socket?.on("message:delete", callback);
+}
+
+export function offMessageDelete(callback: (payload: MessageDeletePayload) => void): void {
+  socket?.off("message:delete", callback);
 }
 
 export interface NewConversationEvent {

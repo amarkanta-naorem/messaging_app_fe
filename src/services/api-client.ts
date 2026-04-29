@@ -1,31 +1,12 @@
-/**
- * Client-side API client.
- * All requests go through Next.js API routes (BFF pattern).
- * The external API URL is never exposed to the browser.
- *
- * DIP: Components depend on this abstraction, not on direct fetch calls.
- * SRP: This module's sole responsibility is HTTP communication with the BFF.
- */
-
 import { AppError } from "@/lib/errors";
 
-/**
- * Get the auth token from localStorage.
- * Kept here as a thin utility; the token is still stored client-side
- * for WebSocket auth and request headers.
- */
 export function getToken(): string | null {
   if (typeof window === "undefined") return null;
   return localStorage.getItem("auth_token");
 }
 
-/**
- * Build standard headers for authenticated requests.
- */
 function buildHeaders(token?: string | null): Record<string, string> {
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-  };
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
   const authToken = token ?? getToken();
   if (authToken) {
     headers.Authorization = `Bearer ${authToken}`;
@@ -33,19 +14,10 @@ function buildHeaders(token?: string | null): Record<string, string> {
   return headers;
 }
 
-/**
- * Generic fetch wrapper that targets our BFF API routes.
- * Includes timeout to prevent hanging requests.
- */
-async function _request<T>(
-  path: string,
-  options: RequestInit = {}
-): Promise<T> {
+async function _request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const url = `/api${path}`;
-
-  // Add timeout controller
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
+  const timeoutId = setTimeout(() => controller.abort(), 30000);
 
   try {
     const response = await fetch(url, {
@@ -62,17 +34,13 @@ async function _request<T>(
     const data = await response.json().catch(() => null);
 
     if (!response.ok) {
-      const message =
-        data && typeof data === "object" && "message" in data
-          ? String(data.message)
-          : "Request failed";
+      const message = data && typeof data === "object" && "message" in data ? String(data.message) : "Request failed";
       throw new AppError(message, response.status, data?.errors);
     }
 
     return data as T;
   } catch (error: any) {
     clearTimeout(timeoutId);
-    // Handle abort errors specifically
     if (error.name === 'AbortError') {
       throw new AppError("Request timed out", 408);
     }
@@ -80,47 +48,26 @@ async function _request<T>(
   }
 }
 
-/**
- * Enhanced request wrapper that handles errors by dispatching to ErrorToast.
- * This function should be used when you want errors to be displayed in the UI
- * instead of being thrown as exceptions.
- */
-export async function requestWithToast<T>(
-  path: string,
-  options: RequestInit = {}
-): Promise<T | null> {
+export async function requestWithToast<T>(path: string, options: RequestInit = {}): Promise<T | null> {
   try {
     return await _request<T>(path, options);
   } catch (error: any) {
-    // Import the store dynamically to avoid circular dependencies
     const { store } = await import("@/store/index");
     const { setGlobalError } = await import("@/store/slices/errorSlice");
     
     if (error instanceof AppError) {
-      store.dispatch(setGlobalError({
-        message: error.message,
-        type: 'error'
-      }));
+      store.dispatch(setGlobalError({ message: error.message, type: 'error' }));
     } else {
-      store.dispatch(setGlobalError({
-        message: error?.message || "An unexpected error occurred",
-        type: 'error'
-      }));
+      store.dispatch(setGlobalError({ message: error?.message || "An unexpected error occurred", type: 'error' }));
     }
     return null;
   }
 }
 
-/**
- * GET request through BFF.
- */
 export function get<T>(path: string): Promise<T> {
   return _request<T>(path, { method: "GET" });
 }
 
-/**
- * POST request through BFF.
- */
 export function post<T>(path: string, body?: unknown): Promise<T> {
   return _request<T>(path, {
     method: "POST",
@@ -128,9 +75,6 @@ export function post<T>(path: string, body?: unknown): Promise<T> {
   });
 }
 
-/**
- * PATCH request through BFF.
- */
 export function patch<T>(path: string, body?: unknown): Promise<T> {
   return _request<T>(path, {
     method: "PATCH",
@@ -138,9 +82,37 @@ export function patch<T>(path: string, body?: unknown): Promise<T> {
   });
 }
 
-/**
- * DELETE request through BFF.
- */
+export function patchFormData<T>(path: string, formData: FormData): Promise<T> {
+  const url = `/api${path}`;
+  const token = getToken();
+  const headers: Record<string, string> = {};
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+  try {
+    return fetch(url, { method: "PATCH", body: formData, headers, signal: controller.signal }).then(async (response) => {
+      clearTimeout(timeoutId);
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        const message = data && typeof data === "object" && "message" in data ? String(data.message) : "Request failed";
+        throw new AppError(message, response.status, data?.errors);
+      }
+
+      return data as T;
+    });
+  } catch (error: any) {
+    clearTimeout(timeoutId);
+    if (error.name === "AbortError") {
+      throw new AppError("Request timed out", 408);
+    }
+    throw error;
+  }
+}
+
 export function del<T>(path: string): Promise<T> {
   return _request<T>(path, { method: "DELETE" });
 }

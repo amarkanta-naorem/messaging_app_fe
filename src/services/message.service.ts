@@ -1,23 +1,14 @@
-/**
- * Message service - client-side.
- * SRP: Handles all message-related API calls through BFF.
- */
-
-import { get, requestWithToast } from "./api-client";
-import type { Message, SendMessagePayload, SendMessageResponse, SendFileMessagePayload } from "@/types";
 import type { ApiEnvelope } from "@/types/api";
+import { del, get, requestWithToast } from "./api-client";
+import type { Message, SendMessagePayload, SendMessageResponse, SendFileMessagePayload } from "@/types";
 
 export async function getMessages(conversationId: number): Promise<Message[]> {
-  const res = await get<ApiEnvelope<{ messages: Message[] }>>(
-    `/conversations/${conversationId}/messages/proxy`
-  );
+  const res = await get<ApiEnvelope<{ messages: Message[] }>>(`/conversations/${conversationId}/messages/proxy`);
   return res.data?.messages ?? [];
 }
 
 export async function getGroupMessages(groupId: number): Promise<Message[]> {
-  const res = await get<ApiEnvelope<{ messages: Message[] }>>(
-    `/groups/${groupId}/messages`
-  );
+  const res = await get<ApiEnvelope<{ messages: Message[] }>>(`/groups/${groupId}/messages`);
   return res.data?.messages ?? [];
 }
 
@@ -25,9 +16,7 @@ export async function sendMessage(payload: SendMessagePayload): Promise<SendMess
   const res = await requestWithToast<ApiEnvelope<SendMessageResponse>>("/messages", {
     method: "POST",
     body: JSON.stringify(payload),
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: { "Content-Type": "application/json" },
   });
   if (!res || !res.data) {
     throw new Error("Failed to send message");
@@ -35,12 +24,7 @@ export async function sendMessage(payload: SendMessagePayload): Promise<SendMess
   return res.data;
 }
 
-/**
- * Send a file message using multipart/form-data
- * Use bracket notation for nested content object
- */
 export async function sendFileMessage(payload: SendFileMessagePayload): Promise<SendMessageResponse> {
-  // Get caption from content
   let caption = "";
   if (typeof payload.content === 'string') {
     try {
@@ -53,44 +37,29 @@ export async function sendFileMessage(payload: SendFileMessagePayload): Promise<
     caption = (payload.content as { caption?: string }).caption || "";
   }
   
-  // Create FormData for multipart upload
   const formData = new FormData();
   
-  // Add client message ID if provided
   if (payload.clientMessageId) {
     formData.append('clientMessageId', payload.clientMessageId);
   }
   
-  // Add receiverPhone OR groupId - one must be present
   if (payload.receiverPhone) {
     formData.append('receiverPhone', payload.receiverPhone);
   } else if (payload.groupId) {
     formData.append('groupId', String(payload.groupId));
   }
   
-  // Use bracket notation for nested content object
-  // content[type] = "file"
-  // content[caption] = "caption value"
   formData.append('content[type]', 'file');
   if (caption) {
     formData.append('content[caption]', caption);
   }
   
-  // Add the file
   formData.append('file', payload.file);
   
-  console.log("Sending file as multipart/form-data with bracket notation");
-  console.log("File:", payload.file.name, payload.file.size, payload.file.type);
-  
-  // Get token
   const token = typeof window !== "undefined" ? localStorage.getItem("auth_token") : null;
-  
-  // Use the Next.js API proxy route with FormData
   const response = await requestWithToast<Response>("/messages", {
     method: "POST",
-    headers: {
-      ...(token ? { Authorization: `Bearer ${token}` } : {})
-    },
+    headers: {...(token ? { Authorization: `Bearer ${token}` } : {})},
     body: formData
   });
   
@@ -100,4 +69,12 @@ export async function sendFileMessage(payload: SendFileMessagePayload): Promise<
   
   const data = await response.json();
   return data.data;
+}
+
+export async function deleteMessage(messageId: number): Promise<{ messageId: number }> {
+  const res = await del<ApiEnvelope<{ messageId: number }>>(`/messages/${messageId}`);
+  if (!res.data) {
+    throw new Error("Delete response missing data");
+  }
+  return res.data;
 }

@@ -35,6 +35,7 @@ export interface ExtendedMessage {
 
 export interface MessageBubbleProps {
   message: ExtendedMessage;
+  conversationId: number;
   isOwn: boolean;
   showAvatar?: boolean;
   showSenderName?: boolean;
