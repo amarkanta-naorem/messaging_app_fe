@@ -1,18 +1,92 @@
 import Image from "next/image";
-import { ChevronDown } from "lucide-react";
 import { useAppDispatch } from "@/store/hooks";
 import { deleteMessage } from "@/lib/messages";
-import { memo, useMemo, useState } from "react";
 import { FormatTime } from "@/utils/FormatTime";
 import { removeMessage } from "@/store/slices/chatSlice";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { memo, useMemo, useState, useEffect, useRef, useCallback } from "react";
+import { ChevronDown, Trash2, Reply, Smile, Pencil, ArrowUpRight } from "lucide-react";
 import { TaskListMsg, ImageMsg, VideoMsg, AudioMsg, FileMsg, TextMsg, MessageBubbleProps, TaskItem } from "./MessageBubble/index";
 
-export const MessageBubble = memo(function MessageBubble({ message, conversationId, isOwn, showAvatar = false, showSenderName = false, currentUserId }: MessageBubbleProps) {
+type MenuPosition = 'top' | 'bottom' | 'left' | 'right';
+
+export const MessageBubble = memo(function MessageBubble({ message, conversationId, isOwn, showAvatar = false, showSenderName = false }: MessageBubbleProps) {
   const dispatch = useAppDispatch();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showOptionsMenu, setShowOptionsMenu] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [menuPosition, setMenuPosition] = useState<MenuPosition>('bottom');
+  const optionsMenuRef = useRef<HTMLDivElement>(null);
+  const bubbleRef = useRef<HTMLDivElement>(null);
+  const closeOptionsMenu = useCallback(() => { setShowOptionsMenu(false) }, []);
+
+  useEffect(() => {
+    if (showOptionsMenu && bubbleRef.current) {
+      const bubble = bubbleRef.current;
+      const rect = bubble.getBoundingClientRect();
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      const menuHeight = 280;
+      const menuWidth = 240;
+      const menuMargin = 8;
+      
+      const spaceBelow = viewportHeight - rect.bottom - menuMargin;
+      const spaceAbove = rect.top - menuMargin;
+      const spaceRight = viewportWidth - rect.right - menuMargin;
+      const spaceLeft = rect.left - menuMargin;
+      
+      let bestPosition: MenuPosition = 'bottom';
+      const canBottom = spaceBelow >= menuHeight;
+      const canTop = spaceAbove >= menuHeight;
+      const canLeft = spaceLeft >= menuWidth;
+      const canRight = spaceRight >= menuWidth;
+      
+      if (canBottom) {
+        bestPosition = 'bottom';
+      } else if (canTop) {
+        bestPosition = 'top';
+      } else if (canRight) {
+        bestPosition = 'right';
+      } else if (canLeft) {
+        bestPosition = 'left';
+      } else {
+        const available = [
+          { pos: 'bottom' as MenuPosition, space: spaceBelow },
+          { pos: 'top' as MenuPosition, space: spaceAbove },
+          { pos: 'right' as MenuPosition, space: spaceRight },
+          { pos: 'left' as MenuPosition, space: spaceLeft }
+        ];
+        
+        available.sort((a, b) => b.space - a.space);
+        bestPosition = available[0].space > 0 ? available[0].pos : 'bottom';
+      }
+      setMenuPosition(bestPosition);
+    }
+  }, [showOptionsMenu]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (optionsMenuRef.current && !optionsMenuRef.current.contains(event.target as Node)) {
+        setShowOptionsMenu(false);
+      }
+    };
+
+    const handleEscapeKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setShowOptionsMenu(false);
+      }
+    };
+
+    if (showOptionsMenu) {
+      document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener("keydown", handleEscapeKey);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleEscapeKey);
+    };
+  }, [showOptionsMenu]);
 
    const handleConfirmDelete = async () => {
      setShowDeleteConfirm(false);
@@ -121,25 +195,52 @@ export const MessageBubble = memo(function MessageBubble({ message, conversation
         {!showAvatar && !isOwn && <div className="w-9 mr-1.5 shrink-0" />}
 
         <div className="flex flex-col">
-          {showSenderName && !isOwn && (
-            <div className="text-[#00a884] text-xs font-medium ml-2 mb-0.5">{message.senderName}</div>
-          )}
-
-          <div className={bubbleClass}>
+          {showSenderName && !isOwn && <div className="text-[#00a884] text-xs font-medium ml-2 mb-0.5">{message.senderName}</div>}
+          <div ref={bubbleRef} className={bubbleClass}>
             {renderedContent}
-             {isOwn && (
+            {isOwn && (
                <>
-                 <ChevronDown size={14} onClick={handleMoreClick} className="absolute top-1 right-1 text-white opacity-0 group-hover:opacity-100 transition-all cursor-pointer" />
+                 <ChevronDown size={14} onClick={handleMoreClick} className="absolute top-1 right-1 text-white opacity-0 group-hover:opacity-100 transition-all cursor-pointer" aria-label="Message options" aria-expanded={showOptionsMenu} aria-haspopup="menu"/>
                  {showOptionsMenu && (
-                   <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-[#2a2f32] rounded-md shadow-lg z-10 p-1 border border-[#e2e8f0] dark:border-[#4a5568]">
-                     <div className="space-y-1">
-                       <button onClick={() => { setShowOptionsMenu(false); }} className="w-full text-left px-3 py-2 text-sm text-[#4a5568] dark:text-[#e2e8f0] hover:bg-[#f0f4f8] dark:hover:bg-[#4a5568]/20 rounded">Edit</button>
-                       <button onClick={() => { setShowOptionsMenu(false); setShowDeleteConfirm(true); }} className="w-full text-left px-3 py-2 text-sm text-[#4a5568] dark:text-[#e2e8f0] hover:bg-[#f0f4f8] dark:hover:bg-[#4a5568]/20 rounded">Delete</button>
-                       <button onClick={() => { setShowOptionsMenu(false); }} className="w-full text-left px-3 py-2 text-sm text-[#4a5568] dark:text-[#e2e8f0] hover:bg-[#f0f4f8] dark:hover:bg-[#4a5568]/20 rounded">Reply</button>
-                       <button onClick={() => { setShowOptionsMenu(false); }} className="w-full text-left px-3 py-2 text-sm text-[#4a5568] dark:text-[#e2e8f0] hover:bg-[#f0f4f8] dark:hover:bg-[#4a5568]/20 rounded">Forward</button>
-                       <button onClick={() => { setShowOptionsMenu(false); }} className="w-full text-left px-3 py-2 text-sm text-[#4a5568] dark:text-[#e2e8f0] hover:bg-[#f0f4f8] dark:hover:bg-[#4a5568]/20 rounded">React</button>
+                   <>
+                     <div className="fixed inset-0 z-10" aria-hidden="true"onClick={closeOptionsMenu}/>
+                     <div ref={optionsMenuRef} role="menu" aria-label="Message actions"
+                       className={`absolute w-60 bg-white dark:bg-[#2a2f32] rounded-lg shadow-xl z-20 py-1 border border-[#e2e8f0] dark:border-[#4a5568] animate-in fade-in zoom-in-95 duration-150 ${
+                         menuPosition === 'top' ? 'bottom-full mb-1 -left-30' :
+                         menuPosition === 'bottom' ? 'mt-5 -left-30' :
+                         menuPosition === 'left' ? 'right-full mr-2 top-0' :
+                         menuPosition === 'right' ? 'left-full ml-2 top-0' : 'mt-2 left-0'
+                       } ${menuPosition === 'left' || menuPosition === 'right' ? 'h-auto' : ''}`}
+                       style={{ animationFillMode: 'both' }}
+                     >
+                       <button onClick={closeOptionsMenu} role="menuitem" className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-[#333333] dark:text-[#e2e8f0] hover:bg-[#f5f6f7] dark:hover:bg-[#3d4a51] transition-colors rounded-t-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00a884] focus-visible:ring-inset">
+                         <Pencil size={16} className="text-[#5b6c7d] dark:text-[#8fa6b2]" />
+                         <span className="font-medium">Edit</span>
+                       </button>
+                       
+                       <button onClick={() => { closeOptionsMenu(); setShowDeleteConfirm(true); }} role="menuitem" className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-inset">
+                         <Trash2 size={16} />
+                         <span className="font-medium">Delete</span>
+                       </button>
+                       
+                       <div className="h-px bg-[#e2e8f0] dark:bg-[#4a5568] my-1" />
+                       
+                       <button onClick={closeOptionsMenu} role="menuitem" className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-[#333333] dark:text-[#e2e8f0] hover:bg-[#f5f6f7] dark:hover:bg-[#3d4a51] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00a884] focus-visible:ring-inset">
+                         <Reply size={16} className="text-[#5b6c7d] dark:text-[#8fa6b2]" />
+                         <span className="font-medium">Reply</span>
+                       </button>
+                       
+                       <button onClick={closeOptionsMenu} role="menuitem" className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-[#333333] dark:text-[#e2e8f0] hover:bg-[#f5f6f7] dark:hover:bg-[#3d4a51] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00a884] focus-visible:ring-inset">
+                         <ArrowUpRight size={16} className="text-[#5b6c7d] dark:text-[#8fa6b2]" />
+                         <span className="font-medium">Forward</span>
+                       </button>
+                       
+                       <button onClick={closeOptionsMenu} role="menuitem" className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-[#333333] dark:text-[#e2e8f0] hover:bg-[#f5f6f7] dark:hover:bg-[#3d4a51] transition-colors rounded-b-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00a884] focus-visible:ring-inset">
+                         <Smile size={16} className="text-[#5b6c7d] dark:text-[#8fa6b2]" />
+                         <span className="font-medium">React</span>
+                       </button>
                      </div>
-                   </div>
+                   </>
                  )}
                </>
              )}
@@ -147,7 +248,7 @@ export const MessageBubble = memo(function MessageBubble({ message, conversation
               <span className="text-[10px] text-[#667781] dark:text-[#aebac2] leading-none">{messageTime}</span>
             </div>
           </div>
-           <ConfirmDialog isOpen={showDeleteConfirm} onClose={() => setShowDeleteConfirm(false)} onConfirm={handleConfirmDelete} title="Delete message" message="Delete this message for everyone in the chat?" confirmLabel="Delete" variant="danger" loading={deleting} />
+          <ConfirmDialog isOpen={showDeleteConfirm} onClose={() => setShowDeleteConfirm(false)} onConfirm={handleConfirmDelete} title="Delete message" message="Delete this message for everyone in the chat?" confirmLabel="Delete" variant="danger" loading={deleting} />
         </div>
       </div>
     </div>

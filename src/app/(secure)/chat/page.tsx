@@ -93,7 +93,6 @@ export default function ChatPage() {
           <span className="text-[#25d366]">Chat</span>
         </h1>
       </div>
-      {/* Main Content */}
       <div className="flex-1 flex overflow-hidden">
         <div className="hidden md:flex w-10 shrink-0 bg-(--bg-secondary) py-4 flex-col items-center justify-between">
           <button type="button" title="All Conversation" onClick={() => setShowSettings(false)} className="hover:bg-(--bg-hover) p-2 rounded-full transition-colors text-(--text-secondary) cursor-pointer">
@@ -108,7 +107,6 @@ export default function ChatPage() {
             <button type="button" title="Setting" onClick={() => { setShowSettings(true); setShowProfile(false); }} className="text-(--text-secondary) hover:text-(--text-primary) p-2 rounded-full hover:bg-(--bg-hover) transition-colors cursor-pointer">
               <Settings size={22} />
             </button>
-            {/* Profile Preloader */}
             {profileLoading ? (
               <div className="w-8 h-8 rounded-full bg-(--bg-hover) flex items-center justify-center animate-pulse">
                 <Loader2 size={16} className="text-(--text-muted) animate-spin" />
@@ -126,11 +124,8 @@ export default function ChatPage() {
             )}
           </div>
         </div>
-        {/* Right Side - Sidebar & Chat */}
         <div className="flex-1 flex overflow-hidden">
-          {/* Sidebar - Full width on mobile, fixed width on desktop */}
           <div className={`${activeConversation ? 'hidden md:flex' : 'flex'} w-full md:w-100 shrink-0 bg-(--bg-card) border md:border-(--border-primary) md:rounded-tl-2xl flex-col overflow-y-scroll custom-scrollbar`}>
-            {/* Search Bar */}
             <div className={`flex items-center justify-between px-3 py-1.5 bg-(--bg-card) ${showSettings || showProfile ? 'hidden' : ''}`}>
               <h1 className="font-semibold text-xl text-(--text-secondary)">Chats</h1>
               <div className="flex">
@@ -157,20 +152,12 @@ export default function ChatPage() {
             <div className={`px-3 pb-2 border-b border-(--border-primary) bg-(--bg-card) ${showSettings || showProfile ? 'hidden' : ''}`}>
               <div className="col-span-11 bg-(--bg-input) rounded-lg flex items-center px-4 py-2">
                 <Search size={18} className="text-(--text-tertiary) mr-4" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search or start new chat"
-                  className="bg-transparent w-full focus:outline-none text-[15px] text-(--text-primary) placeholder:text-(--text-secondary)"
-                />
+                <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search or start new chat" className="bg-transparent w-full focus:outline-none text-[15px] text-(--text-primary) placeholder:text-(--text-secondary)"/>
               </div>
             </div>
 
             {showSettings && <SettingView isDark={isDark} toggle={toggle} onClose={() => setShowSettings(false)}/>}
             {showProfile && <ProfileView user={user} onClose={() => setShowProfile(false)} />}
-
-            {/* Conversation List */}
             {!showSettings && !showProfile && (
               <div className="flex-1 overflow-y-auto custom-scrollbar relative">
                 {loadingConversations ? (
@@ -180,18 +167,12 @@ export default function ChatPage() {
                 ) : (!Array.isArray(conversations) || conversations.length === 0) && !showNewMessage ? (
                   <div className="p-8 text-center text-(--text-muted) text-sm">No conversations yet. Click the new chat icon to start messaging.</div>
                 ) : (
-                  <AllConversation
-                      data={Array.isArray(conversations) ? conversations : []}
-                      showNewMessage={showNewMessage}
-                      onClose={() => setShowNewMessage(false)}
-                      searchQuery={searchQuery}
-                    />
+                  <AllConversation data={Array.isArray(conversations) ? conversations : []} showNewMessage={showNewMessage} onClose={() => setShowNewMessage(false)} searchQuery={searchQuery}/>
                 )}
               </div>
             )}
           </div>
 
-          {/* Chat Area - Full width on mobile, flex-1 on desktop */}
           <div className={`${activeConversation ? 'flex' : 'hidden md:flex'} flex-col h-full w-full bg-(--chat-bg) border-t border-(--border-primary) relative overflow-hidden`}>
             {showCreateGroup ? (
               <CreateGroup onClose={handleCloseCreateGroup} />
