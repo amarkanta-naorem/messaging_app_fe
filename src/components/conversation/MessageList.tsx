@@ -30,6 +30,8 @@ interface Message {
     mimeType?: string;
     fileUrl?: string;
   };
+  isDeletedForMe?: boolean;
+  isDeletedForEveryone?: boolean;
 }
 
 interface MessageListProps {
@@ -44,17 +46,19 @@ interface MessageListProps {
 export function MessageList({ messages, currentUserId, conversationId, isGroup = false, loading = false, onMessagesChange }: MessageListProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const processedMessages = useMemo(() => {
-    return messages.map((msg, index) => {
-      const isOwn = msg.isFromCurrentUser || msg.senderId === currentUserId || (msg.clientMessageId && !msg.senderId);
-      const prevMsg = index > 0 ? messages[index - 1] : null;
-      const prevIsOwn = prevMsg?.isFromCurrentUser || prevMsg?.senderId === currentUserId || (prevMsg?.clientMessageId && !prevMsg?.senderId);
-      const isNewGroup = !prevMsg || prevMsg.senderId !== msg.senderId || prevIsOwn !== isOwn;
-      const showAvatar = !isOwn && isGroup && isNewGroup;
-      const showSenderName = !isOwn && isGroup && msg.senderName && isNewGroup;
-      
-      return { ...msg, isOwn, showAvatar, showSenderName };
-    });
+const processedMessages = useMemo(() => {
+    // Process messages - do not filter out deleted messages as they should display deleted text
+    return messages
+      .map((msg, index) => {
+        const isOwn = msg.isFromCurrentUser || msg.senderId === currentUserId || (msg.clientMessageId && !msg.senderId);
+        const prevMsg = index > 0 ? messages[index - 1] : null;
+        const prevIsOwn = prevMsg?.isFromCurrentUser || prevMsg?.senderId === currentUserId || (prevMsg?.clientMessageId && !prevMsg?.senderId);
+        const isNewGroup = !prevMsg || prevMsg.senderId !== msg.senderId || prevIsOwn !== isOwn;
+        const showAvatar = !isOwn && isGroup && isNewGroup;
+        const showSenderName = !isOwn && isGroup && msg.senderName && isNewGroup;
+        
+        return { ...msg, isOwn, showAvatar, showSenderName };
+      });
   }, [messages, currentUserId, isGroup]);
 
   useEffect(() => {

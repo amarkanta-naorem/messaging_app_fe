@@ -3,7 +3,7 @@
 import { ChatHeader } from "./ChatHeader";
 import { MessageList } from "./MessageList";
 import { MessageInput } from "./MessageInput";
-import { useAppDispatch } from "@/store/store";
+import { useAppDispatch, useAppSelector } from "@/store/store";
 import { useAuth } from "@/context/AuthContext";
 import { useChat } from "@/context/ChatContext";
 import { ChatEmptyState } from "./ChatEmptyState";
@@ -132,7 +132,7 @@ export default function ChatView() {
           </div>
         )}
         
-        {showContactDrawer && (
+{showContactDrawer && (
           <ContactDrawer isOpen={showContactDrawer} onClose={() => setShowContactDrawer(false)} conversation={activeConversation} />
         )}
       </div>

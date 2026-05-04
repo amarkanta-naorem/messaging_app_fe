@@ -2,6 +2,31 @@ import { NextRequest } from "next/server";
 import { proxyRequest } from "@/lib/server-proxy";
 import { errorResponse } from "@/lib/errors";
 
+export async function DELETE(request: NextRequest) {
+  try {
+    const body = await request.json();
+    
+    if (!body.messageIds || !Array.isArray(body.messageIds) || body.messageIds.length === 0) {
+      return errorResponse("messageIds is required and must be a non-empty array", 400);
+    }
+    
+    if (body.messageIds.length > 50) {
+      return errorResponse("Cannot delete more than 50 messages at once", 400);
+    }
+    
+    // Forward the delete request to the backend
+    return proxyRequest({
+      path: "/messages",
+      method: "DELETE",
+      request,
+      body,
+    });
+  } catch (error) {
+    console.error("Delete messages proxy error:", error);
+    return errorResponse("Invalid request body", 400);
+  }
+}
+
 export async function POST(request: NextRequest) {
   const contentType = request.headers.get("content-type") || "";
   

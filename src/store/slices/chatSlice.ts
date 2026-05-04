@@ -16,6 +16,8 @@ interface ChatState {
   lastConversationFetchTime: number | null;
   lastMessagesFetchTime: Record<number, number>;
   socketError: string | null;
+  selectionMode: boolean;
+  selectedMessages: number[];
 }
 
 const initialState: ChatState = {
@@ -31,6 +33,8 @@ const initialState: ChatState = {
   lastConversationFetchTime: null,
   lastMessagesFetchTime: {},
   socketError: null,
+  selectionMode: false,
+  selectedMessages: [],
 };
   
 export const fetchConversations = createAsyncThunk("chat/fetchConversations", async (_, { getState, rejectWithValue }) => {
@@ -178,7 +182,7 @@ const chatSlice = createSlice({
       }
     },
 
-    removeMessage: (state, action: PayloadAction<{ conversationId: number; messageId: number }>) => {
+removeMessage: (state, action: PayloadAction<{ conversationId: number; messageId: number }>) => {
       const { conversationId, messageId } = action.payload;
       const messages = state.messages[conversationId];
       if (messages) {
@@ -186,7 +190,50 @@ const chatSlice = createSlice({
       }
     },
     
-    updateConversationLastMessage: (
+    markMessageDeletedForMe: (state, action: PayloadAction<{ conversationId: number; messageId: number }>) => {
+      const { conversationId, messageId } = action.payload;
+      const messages = state.messages[conversationId];
+      if (messages) {
+        const message = messages.find(msg => msg.id === messageId);
+        if (message) {
+          (message as any).isDeletedForMe = true;
+        }
+      }
+    },
+    
+    markMessageDeletedForEveryone: (state, action: PayloadAction<{ conversationId: number; messageId: number }>) => {
+      const { conversationId, messageId } = action.payload;
+      const messages = state.messages[conversationId];
+      if (messages) {
+        const index = messages.findIndex(msg => msg.id === messageId);
+        if (index !== -1) {
+          messages.splice(index, 1);
+        }
+      }
+    },
+    
+    markMessagesDeletedForMe: (state, action: PayloadAction<{ conversationId: number; messageIds: number[] }>) => {
+      const { conversationId, messageIds } = action.payload;
+      const messages = state.messages[conversationId];
+      if (messages) {
+        messageIds.forEach(messageId => {
+          const message = messages.find(msg => msg.id === messageId);
+          if (message) {
+            (message as any).isDeletedForMe = true;
+          }
+        });
+      }
+    },
+    
+markMessagesDeletedForEveryone: (state, action: PayloadAction<{ conversationId: number; messageIds: number[] }>) => {
+      const { conversationId, messageIds } = action.payload;
+      const messages = state.messages[conversationId];
+      if (messages) {
+        state.messages[conversationId] = messages.filter(msg => !messageIds.includes(msg.id));
+      }
+    },
+    
+updateConversationLastMessage: (
       state,
       action: PayloadAction<{
         conversationId: number;
@@ -240,7 +287,7 @@ const chatSlice = createSlice({
       }
     },
     
-    switchConversation: (state, action: PayloadAction<Conversation | null>) => {
+switchConversation: (state, action: PayloadAction<Conversation | null>) => {
       if (state.activeConversationId !== null) {
         delete state.messages[state.activeConversationId];
         delete state.lastMessagesFetchTime[state.activeConversationId];
@@ -249,6 +296,45 @@ const chatSlice = createSlice({
       state.activeConversation = action.payload;
       state.activeConversationId = action.payload?.id || null;
       state.messagesError = null;
+      state.selectionMode = false;
+      state.selectedMessages = [];
+    },
+    
+    // Selection mode actions
+    toggleSelectionMode: (state, action: PayloadAction<boolean | undefined>) => {
+      state.selectionMode = action.payload !== undefined ? action.payload : !state.selectionMode;
+      if (!state.selectionMode) {
+        state.selectedMessages = [];
+      }
+    },
+    
+    toggleMessageSelection: (state, action: PayloadAction<number>) => {
+      const messageId = action.payload;
+      const index = state.selectedMessages.indexOf(messageId);
+      if (index === -1) {
+        state.selectedMessages.push(messageId);
+      } else {
+        state.selectedMessages.splice(index, 1);
+      }
+    },
+    
+    clearSelection: (state) => {
+      state.selectedMessages = [];
+      state.selectionMode = false;
+    },
+    
+    updateMessageContent: (
+      state,
+      action: PayloadAction<{ conversationId: number; messageId: number; content: { type: string; text: string } }>
+    ) => {
+      const { conversationId, messageId, content } = action.payload;
+      const messages = state.messages[conversationId];
+      if (messages) {
+        const message = messages.find(msg => msg.id === messageId);
+        if (message) {
+          (message as any).content = content;
+        }
+      }
     },
   },
   extraReducers: (builder) => {
@@ -322,6 +408,10 @@ export const selectSendingMessage = (state: { chat: ChatState }) => state.chat.s
 export const selectConversationsError = (state: { chat: ChatState }) => state.chat.conversationsError;
 export const selectMessagesError = (state: { chat: ChatState }) => state.chat.messagesError;
 export const selectSocketError = (state: { chat: ChatState }) => state.chat.socketError;
-export const { setActiveConversationId, setActiveConversation, switchConversation, addMessageOptimistic, updateMessageInState, replaceOptimisticMessage, addIncomingMessage, updateConversationLastMessage, removeMessage, setChatSocketError, clearAllChatState, clearConversationMessages, clearActiveConversation, addConversation } = chatSlice.actions;
+export const { setActiveConversationId, setActiveConversation, switchConversation, addMessageOptimistic, updateMessageInState, replaceOptimisticMessage, addIncomingMessage, updateConversationLastMessage, removeMessage, markMessageDeletedForMe, markMessageDeletedForEveryone, markMessagesDeletedForMe, markMessagesDeletedForEveryone, setChatSocketError, clearAllChatState, clearConversationMessages, clearActiveConversation, addConversation, toggleSelectionMode, toggleMessageSelection, clearSelection, updateMessageContent } = chatSlice.actions;
+
+// Additional selectors for selection mode
+export const selectSelectionMode = (state: { chat: ChatState }) => state.chat.selectionMode;
+export const selectSelectedMessages = (state: { chat: ChatState }) => state.chat.selectedMessages;
 
 export default chatSlice.reducer;

@@ -8,7 +8,7 @@ import { useCallback, ReactNode, useEffect, useRef } from "react";
 import { MessageContent, Message, sendMessage as sendMessageApi, sendFileMessage } from "@/lib/messages";
 import { connectSocket, disconnectSocket, IncomingMessage, SocketError, MessagePayload, NewConversationEvent, MessageDeletePayload } from "@/lib/socket";
 import { selectConversations, selectActiveConversationId, selectActiveConversation, selectMessagesForConversation, selectLoadingConversations, selectLoadingMessages, selectSendingMessage, selectSocketError } from "@/store/slices/chatSlice";
-import { fetchConversations, fetchMessagesForConversation, setActiveConversation, switchConversation, addMessageOptimistic, updateMessageInState, replaceOptimisticMessage, addIncomingMessage, updateConversationLastMessage, removeMessage, setChatSocketError, addConversation } from "@/store/slices/chatSlice";
+import { fetchConversations, fetchMessagesForConversation, setActiveConversation, switchConversation, addMessageOptimistic, updateMessageInState, replaceOptimisticMessage, addIncomingMessage, updateConversationLastMessage, removeMessage, markMessageDeletedForEveryone, setChatSocketError, addConversation } from "@/store/slices/chatSlice";
 
 export function ChatProvider({ children }: { children: ReactNode }) {
   const dispatch = useAppDispatch();
@@ -83,10 +83,10 @@ export function ChatProvider({ children }: { children: ReactNode }) {
           }
         };
 
-        const handleMessageDelete = (payload: MessageDeletePayload) => {
+const handleMessageDelete = (payload: MessageDeletePayload) => {
           if (mounted) {
             const conversationId = payload.conversationId || payload.groupId!;
-            dispatch(removeMessage({ conversationId, messageId: payload.messageId }));
+            dispatch(markMessageDeletedForEveryone({ conversationId, messageId: payload.messageId }));
           }
         };
 

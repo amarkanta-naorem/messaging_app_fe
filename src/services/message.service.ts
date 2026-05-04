@@ -1,6 +1,6 @@
 import type { ApiEnvelope } from "@/types/api";
-import { del, get, requestWithToast } from "./api-client";
-import type { Message, SendMessagePayload, SendMessageResponse, SendFileMessagePayload } from "@/types";
+import { del, get, post, requestWithToast, _request } from "./api-client";
+import type { Message, MessageContent, SendMessagePayload, SendMessageResponse, SendFileMessagePayload } from "@/types";
 
 export async function getMessages(conversationId: number): Promise<Message[]> {
   const res = await get<ApiEnvelope<{ messages: Message[] }>>(`/conversations/${conversationId}/messages/proxy`);
@@ -77,4 +77,45 @@ export async function deleteMessage(messageId: number): Promise<{ messageId: num
     throw new Error("Delete response missing data");
   }
   return res.data;
+}
+
+export interface DeleteMessagesPayload {
+  messageIds: number[];
+  deleteForEveryone?: boolean;
+}
+
+export interface DeletedMessageInfo {
+  id: number;
+  conversationId: number;
+  senderId: number;
+  content: MessageContent;
+  status: string;
+  createdAt: string;
+  isDeletedForEveryone: boolean;
+  isDeletedForMe: boolean;
+}
+
+export interface DeleteMessagesResponse {
+  deleted: DeletedMessageInfo[];
+  failed: { messageId: number; reason: string }[];
+}
+
+export async function deleteMessages(payload: DeleteMessagesPayload): Promise<DeleteMessagesResponse> {
+  const res = await _request<ApiEnvelope<DeleteMessagesResponse>>("/messages", {
+    method: "DELETE",
+    body: JSON.stringify(payload),
+    headers: { "Content-Type": "application/json" },
+  });
+  if (!res.data) {
+    throw new Error("Delete response missing data");
+  }
+  return res.data;
+}
+
+export async function deleteMessagesForMe(messageIds: number[]): Promise<DeleteMessagesResponse> {
+  return deleteMessages({ messageIds, deleteForEveryone: false });
+}
+
+export async function deleteMessagesForEveryone(messageIds: number[]): Promise<DeleteMessagesResponse> {
+  return deleteMessages({ messageIds, deleteForEveryone: true });
 }

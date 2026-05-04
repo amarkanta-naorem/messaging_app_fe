@@ -1,5 +1,8 @@
 import { useState, useRef, KeyboardEvent, ChangeEvent, useEffect } from "react";
 import { SendHorizontal, Paperclip, X, File, Video, Mic, Plus, ListTodo } from "lucide-react";
+import { BottomActionBar } from "./BottomActionBar";
+import { useAppSelector } from "@/store/hooks";
+import { selectSelectionMode, selectActiveConversation, selectMessagesForConversation } from "@/store/slices/chatSlice";
 
 interface FileAttachment {
   file: File;
@@ -198,6 +201,12 @@ export function MessageInput({ onSend, onFileUpload, placeholder = "Type a messa
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isOpen, setIsOpen] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
+
+// Get selection state from store
+  const selectionMode = useAppSelector(selectSelectionMode);
+  const activeConversation = useAppSelector(selectActiveConversation);
+  const messages = useAppSelector(selectMessagesForConversation(activeConversation?.id || 0));
+
 
   // Task modal state
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
@@ -470,7 +479,7 @@ export function MessageInput({ onSend, onFileUpload, placeholder = "Type a messa
         </div>
       )}
 
-    {isTaskModalOpen && (
+{isTaskModalOpen && (
       <div className="absolute left-0 right-0 bottom-14 z-50 px-4 animate-in slide-in-from-bottom-2 fade-in duration-200" ref={taskModalRef}>
         <div className="theme-header-bg rounded-2xl shadow-2xl border border-gray-200/50 dark:border-gray-700/50 backdrop-blur-sm overflow-visible h-112">
           
@@ -578,6 +587,11 @@ export function MessageInput({ onSend, onFileUpload, placeholder = "Type a messa
           </div>
         </div>
       </div>
+    )}
+
+{/* BottomActionBar - positioned within MessageInput area when in selection mode */}
+    {selectionMode && activeConversation && messages && messages.length > 0 && (
+      <BottomActionBar />
     )}
     </div>
   );

@@ -32,6 +32,8 @@ export interface Message {
   status: "sent" | "delivered" | "stored" | "read" | "failed";
   createdAt: string | number;
   clientMessageId?: string;
+  isDeletedForMe?: boolean;
+  isDeletedForEveryone?: boolean;
 }
 
 export interface MessagesResponse {

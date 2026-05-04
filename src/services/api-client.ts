@@ -14,7 +14,7 @@ function buildHeaders(token?: string | null): Record<string, string> {
   return headers;
 }
 
-async function _request<T>(path: string, options: RequestInit = {}): Promise<T> {
+export async function _request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const url = `/api${path}`;
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 30000);

@@ -1,24 +1,32 @@
 import Image from "next/image";
-import { useAppDispatch } from "@/store/hooks";
-import { deleteMessage } from "@/lib/messages";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { deleteMessagesForMe, deleteMessagesForEveryone } from "@/lib/messages";
 import { FormatTime } from "@/utils/FormatTime";
-import { removeMessage } from "@/store/slices/chatSlice";
+import { removeMessage, markMessagesDeletedForMe, markMessagesDeletedForEveryone, toggleSelectionMode, toggleMessageSelection, selectSelectionMode, selectSelectedMessages } from "@/store/slices/chatSlice";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { memo, useMemo, useState, useEffect, useRef, useCallback } from "react";
-import { ChevronDown, Trash2, Reply, Smile, Pencil, ArrowUpRight } from "lucide-react";
+import { ChevronDown, Trash2, Check, CircleAlert } from "lucide-react";
 import { TaskListMsg, ImageMsg, VideoMsg, AudioMsg, FileMsg, TextMsg, MessageBubbleProps, TaskItem } from "./MessageBubble/index";
 
 type MenuPosition = 'top' | 'bottom' | 'left' | 'right';
+type DeleteMode = 'me' | 'everyone';
 
 export const MessageBubble = memo(function MessageBubble({ message, conversationId, isOwn, showAvatar = false, showSenderName = false }: MessageBubbleProps) {
   const dispatch = useAppDispatch();
+  const selectionMode = useAppSelector(selectSelectionMode);
+  const selectedMessages = useAppSelector(selectSelectedMessages);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteMode, setDeleteMode] = useState<DeleteMode>('everyone');
   const [showOptionsMenu, setShowOptionsMenu] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [menuPosition, setMenuPosition] = useState<MenuPosition>('bottom');
   const optionsMenuRef = useRef<HTMLDivElement>(null);
   const bubbleRef = useRef<HTMLDivElement>(null);
   const closeOptionsMenu = useCallback(() => { setShowOptionsMenu(false) }, []);
+
+  // Check if this message is selected
+  const messageId = typeof message.id === 'number' ? message.id : Number(message.id);
+  const isSelected = selectedMessages.includes(messageId);
 
   useEffect(() => {
     if (showOptionsMenu && bubbleRef.current) {
@@ -88,14 +96,31 @@ export const MessageBubble = memo(function MessageBubble({ message, conversation
     };
   }, [showOptionsMenu]);
 
-   const handleConfirmDelete = async () => {
+  const handleConfirmDelete = async () => {
      setShowDeleteConfirm(false);
-     dispatch(removeMessage({ conversationId, messageId: Number(message.id) }));
+     const messageId = Number(message.id);
+     const isDeleteForEveryone = deleteMode === 'everyone';
+     
      try {
        setDeleting(true);
-       await deleteMessage(Number(message.id));
+       
+       if (isDeleteForEveryone) {
+         const result = await deleteMessagesForEveryone([messageId]);
+         // Get deleted message IDs from the response
+         const deletedIds = result.deleted?.map(m => m.id) || [];
+         if (deletedIds.includes(messageId)) {
+           dispatch(markMessagesDeletedForEveryone({ conversationId, messageIds: [messageId] }));
+         }
+       } else {
+         const result = await deleteMessagesForMe([messageId]);
+         // Get deleted message IDs from the response
+         const deletedIds = result.deleted?.map(m => m.id) || [];
+         if (deletedIds.includes(messageId)) {
+           dispatch(markMessagesDeletedForMe({ conversationId, messageIds: [messageId] }));
+         }
+       }
      } catch (error) {
-       dispatch(removeMessage({ conversationId, messageId: Number(message.id) }));
+       dispatch(removeMessage({ conversationId, messageId }));
        console.error("Delete failed:", error);
      } finally {
        setDeleting(false);
@@ -139,7 +164,24 @@ export const MessageBubble = memo(function MessageBubble({ message, conversation
     return null;
   }, [message.metadata]);
 
-  const renderedContent = useMemo(() => {
+const renderedContent = useMemo(() => {
+    if ((message as any).isDeletedForMe === true) {
+      return (
+        <div className="flex items-center gap-2 opacity-70">
+          <CircleAlert size={14} className="text-[#667781] dark:text-[#aebac2] shrink-0" />
+          <span className="text-[12px] text-[#667781] dark:text-[#aebac2] italic">You have deleted this message.</span>
+        </div>
+      );
+    }
+    if ((message as any).isDeletedForEveryone === true) {
+      return (
+        <div className="flex items-center gap-2 opacity-70">
+          <CircleAlert size={14} className="text-[#667781] dark:text-[#aebac2] shrink-0" />
+          <span className="text-[12px] text-[#667781] dark:text-[#aebac2] italic">This message has been deleted for everyone.</span>
+        </div>
+      );
+    }
+
     if (contentType === "image" && url) return <ImageMsg url={url} caption={caption} />;
     if (contentType === "video" && url) return <VideoMsg url={url} caption={caption} />;
     if (contentType === "audio" && url) return <AudioMsg url={url} isOwn={isOwn} />;
@@ -163,21 +205,46 @@ export const MessageBubble = memo(function MessageBubble({ message, conversation
     }
 
     return <TextMsg text={text || caption || ""} />;
-  }, [contentType, url, caption, fileData, metadataFileData, text, isOwn, content]);
+  }, [contentType, url, caption, fileData, metadataFileData, text, isOwn, content, message]);
+
+  const isDeletedMessage = (message as any).isDeletedForMe === true || (message as any).isDeletedForEveryone === true;
 
   const bubbleClass = useMemo(() => {
     const base = "min-w-[6rem] md:min-w-[7rem] max-w-[18rem] md:max-w-[25rem] group relative shadow-sm hover:bg-opacity-90";
     const bg = isOwn ? "bg-[#d9fdd3] dark:bg-[#005c4b]" : "bg-[#ffffff] dark:bg-[#2a2f32]";
-    const tail = isOwn ? `after:content-[''] after:absolute after:-right-[7.5px] after:bottom-[0px] after:w-0 after:h-0 after:border-t-[8px] after:border-t-transparent after:border-b-[0px] after:border-b-transparent after:border-l-[10px] after:border-l-[#d9fdd3] dark:after:border-l-[#005c4b] rounded-t-lg rounded-bl-lg` : `after:content-[''] after:absolute after:-left-[7.5px] after:bottom-0 after:w-0 after:h-0 after:border-t-[8px] after:border-t-transparent after:border-b-[0px] after:border-b-transparent after:border-r-[10px] after:border-r-[#ffffff] dark:after:border-r-[#2a2f32] rounded-t-lg rounded-br-lg`;
-    return `${base} ${bg} ${tail} px-2 py-1`;
-  }, [isOwn]);
+    const tail = isDeletedMessage ? "rounded-xl" : (isOwn ? `after:content-[''] after:absolute after:-right-[7.5px] after:bottom-[0px] after:w-0 after:h-0 after:border-t-[8px] after:border-t-transparent after:border-b-[0px] after:border-b-transparent after:border-l-[10px] after:border-l-[#d9fdd3] dark:after:border-l-[#005c4b] rounded-t-lg rounded-bl-lg` : `after:content-[''] after:absolute after:-left-[7.5px] after:bottom-0 after:w-0 after:h-0 after:border-t-[8px] after:border-t-transparent after:border-b-[0px] after:border-b-transparent after:border-r-[10px] after:border-r-[#ffffff] dark:after:border-r-[#2a2f32] rounded-t-lg rounded-br-lg`);
+    return `${base} ${bg} ${tail} px-2 py-1 ${isDeletedMessage ? "" : "mb-2"}`;
+  }, [isOwn, isDeletedMessage]);
 
-   const handleMoreClick = (e: React.MouseEvent) => {
-     e.stopPropagation();
-     if (typeof message.id === "number") {
-       setShowOptionsMenu(!showOptionsMenu);
-     }
-   };
+  const handleMoreClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (typeof message.id === "number") {
+      setShowOptionsMenu(!showOptionsMenu);
+    }
+  };
+
+  // Handle enabling selection mode via delete button
+  const handleEnableSelectionMode = () => {
+    setShowOptionsMenu(false);
+    dispatch(toggleSelectionMode(true));
+  };
+
+  // Handle checkbox click for selection
+  const handleCheckboxClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const msgId = typeof message.id === 'number' ? message.id : parseInt(String(message.id), 10);
+    if (!isNaN(msgId)) {
+      dispatch(toggleMessageSelection(msgId));
+    }
+  };
+
+  // Determine if message is deletable for everyone (within 1 hour)
+  const canDeleteForEveryone = useMemo(() => {
+    if (!message.createdAt) return false;
+    const createdTime = new Date(message.createdAt).getTime();
+    const oneHourAgo = Date.now() - (60 * 60 * 1000);
+    return createdTime > oneHourAgo;
+  }, [message.createdAt]);
 
   return (
     <div className={`flex ${isOwn ? "justify-end" : "justify-start"} mb-1 last:mb-0`} role="message">
@@ -192,7 +259,22 @@ export const MessageBubble = memo(function MessageBubble({ message, conversation
           </div>
         )}
 
-        {!showAvatar && !isOwn && <div className="w-9 mr-1.5 shrink-0" />}
+{/* Selection checkbox - shown when in selection mode */}
+        {selectionMode && (
+          <div 
+            className={`w-6 h-6 rounded border-2 mr-2 flex items-center justify-center cursor-pointer transition-colors ${
+              isSelected 
+                ? 'bg-[#00a884] border-[#00a884]' 
+                : 'border-[#667781] dark:border-[#aebac2] hover:border-[#00a884]'
+            }`}
+            onClick={handleCheckboxClick}
+          >
+            {isSelected && <Check size={14} className="text-white" />}
+          </div>
+        )}
+
+        {!showAvatar && !isOwn && !selectionMode && <div className="w-9 mr-1.5 shrink-0" />}
+        {!showAvatar && !isOwn && selectionMode && <div className="w-6 mr-2 shrink-0" />}
 
         <div className="flex flex-col">
           {showSenderName && !isOwn && <div className="text-[#00a884] text-xs font-medium ml-2 mb-0.5">{message.senderName}</div>}
@@ -203,7 +285,7 @@ export const MessageBubble = memo(function MessageBubble({ message, conversation
                  <ChevronDown size={14} onClick={handleMoreClick} className="absolute top-1 right-1 text-white opacity-0 group-hover:opacity-100 transition-all cursor-pointer" aria-label="Message options" aria-expanded={showOptionsMenu} aria-haspopup="menu"/>
                  {showOptionsMenu && (
                    <>
-                     <div className="fixed inset-0 z-10" aria-hidden="true"onClick={closeOptionsMenu}/>
+                     <div className="fixed inset-0 z-10" aria-hidden="true" onClick={closeOptionsMenu}/>
                      <div ref={optionsMenuRef} role="menu" aria-label="Message actions"
                        className={`absolute w-60 bg-white dark:bg-[#2a2f32] rounded-lg shadow-xl z-20 py-1 border border-[#e2e8f0] dark:border-[#4a5568] animate-in fade-in zoom-in-95 duration-150 ${
                          menuPosition === 'top' ? 'bottom-full mb-1 -left-30' :
@@ -213,42 +295,23 @@ export const MessageBubble = memo(function MessageBubble({ message, conversation
                        } ${menuPosition === 'left' || menuPosition === 'right' ? 'h-auto' : ''}`}
                        style={{ animationFillMode: 'both' }}
                      >
-                       <button onClick={closeOptionsMenu} role="menuitem" className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-[#333333] dark:text-[#e2e8f0] hover:bg-[#f5f6f7] dark:hover:bg-[#3d4a51] transition-colors rounded-t-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00a884] focus-visible:ring-inset">
-                         <Pencil size={16} className="text-[#5b6c7d] dark:text-[#8fa6b2]" />
-                         <span className="font-medium">Edit</span>
-                       </button>
-                       
-                       <button onClick={() => { closeOptionsMenu(); setShowDeleteConfirm(true); }} role="menuitem" className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-inset">
+                       {/* Single Delete button to enable selection mode */}
+                       <button onClick={handleEnableSelectionMode} role="menuitem" className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-inset">
                          <Trash2 size={16} />
                          <span className="font-medium">Delete</span>
-                       </button>
-                       
-                       <div className="h-px bg-[#e2e8f0] dark:bg-[#4a5568] my-1" />
-                       
-                       <button onClick={closeOptionsMenu} role="menuitem" className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-[#333333] dark:text-[#e2e8f0] hover:bg-[#f5f6f7] dark:hover:bg-[#3d4a51] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00a884] focus-visible:ring-inset">
-                         <Reply size={16} className="text-[#5b6c7d] dark:text-[#8fa6b2]" />
-                         <span className="font-medium">Reply</span>
-                       </button>
-                       
-                       <button onClick={closeOptionsMenu} role="menuitem" className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-[#333333] dark:text-[#e2e8f0] hover:bg-[#f5f6f7] dark:hover:bg-[#3d4a51] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00a884] focus-visible:ring-inset">
-                         <ArrowUpRight size={16} className="text-[#5b6c7d] dark:text-[#8fa6b2]" />
-                         <span className="font-medium">Forward</span>
-                       </button>
-                       
-                       <button onClick={closeOptionsMenu} role="menuitem" className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-[#333333] dark:text-[#e2e8f0] hover:bg-[#f5f6f7] dark:hover:bg-[#3d4a51] transition-colors rounded-b-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00a884] focus-visible:ring-inset">
-                         <Smile size={16} className="text-[#5b6c7d] dark:text-[#8fa6b2]" />
-                         <span className="font-medium">React</span>
                        </button>
                      </div>
                    </>
                  )}
                </>
              )}
-            <div className="flex items-center justify-end gap-1 mt-0.5">
-              <span className="text-[10px] text-[#667781] dark:text-[#aebac2] leading-none">{messageTime}</span>
-            </div>
+{!isDeletedMessage && (
+              <div className="flex items-center justify-end gap-1 mt-0.5">
+                <span className="text-[10px] text-[#667781] dark:text-[#aebac2] leading-none">{messageTime}</span>
+              </div>
+            )}
           </div>
-          <ConfirmDialog isOpen={showDeleteConfirm} onClose={() => setShowDeleteConfirm(false)} onConfirm={handleConfirmDelete} title="Delete message" message="Delete this message for everyone in the chat?" confirmLabel="Delete" variant="danger" loading={deleting} />
+<ConfirmDialog isOpen={showDeleteConfirm} onClose={() => setShowDeleteConfirm(false)} onConfirm={handleConfirmDelete} title="Delete message" message={deleteMode === 'everyone' ? "Delete this message for everyone in the chat? This cannot be undone." : "Delete this message just for you? The message will be hidden from your view."} confirmLabel="Delete" variant="danger" loading={deleting} />
         </div>
       </div>
     </div>
